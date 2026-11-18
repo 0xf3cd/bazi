@@ -19,7 +19,6 @@ def example_package(tmp_path, monkeypatch):
   package = tmp_path / 'sample'
   package.mkdir()
   monkeypatch.setattr(api_examples, 'PROSE_EXAMPLES', frozenset())
-  monkeypatch.setattr(api_examples, 'QUOTED_BLOCKS', {})
   return package
 
 
@@ -75,8 +74,7 @@ def test_new_examples_are_discovered(example_package):
 
 
 @pytest.mark.parametrize('defect', [None, 'missing-page', 'missing-code', 'changed-output', 'extra-code'])
-def test_visible_code_and_output_match(monkeypatch, defect):
-  monkeypatch.setattr(api_examples, 'QUOTED_BLOCKS', {})
+def test_visible_code_and_output_match(defect):
   example = ApiExample('sample', 'sample.demo', "print('result')\n", 'result\n')
   assert example.output is not None
   pages = {'api/sample.html': [example.code, example.output]}
@@ -99,20 +97,6 @@ def test_indented_programs_are_not_filtered(example_package):
   write_example(example_package, '  Indented program:\n\n      assert False')
   with pytest.raises(AssertionError, match='API example fences'):
     collect_examples(example_package)
-
-
-@pytest.mark.parametrize('text', ['原文\n', '改写后的原文\n'])
-def test_quoted_blocks_are_checked(example_package, monkeypatch, text):
-  monkeypatch.setattr(api_examples, 'QUOTED_BLOCKS', {'sample.demo': ('sample', '原文\n')})
-  write_example(example_package, '  Quoted text:\n\n      ' + text.rstrip())
-  if text == '原文\n':
-    assert collect_examples(example_package) == ()
-    check_example_blocks((), {'api/sample.html': [text]})
-    with pytest.raises(AssertionError, match='Rendered API examples'):
-      check_example_blocks((), {'api/sample.html': []})
-  else:
-    with pytest.raises(AssertionError, match='Quoted block content'):
-      collect_examples(example_package)
 
 
 @pytest.mark.parametrize('code, output, message', [

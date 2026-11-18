@@ -16,15 +16,15 @@
 
 示例用虚构的出生时间，按东八区（UTC+8）公历钟填写。默认入口的年月与东八区节气表比较，
 日时按输入的钟读取，不自动换算时区；海外当地钟的用法见 {doc}`configuration`。
-`BaziChart` 在 `Bazi` 之上提供十神、藏干、纳音和流运等信息。
+`命盘`（`BaziChart`）在 `八字`（`Bazi`）之上提供十神、藏干、纳音和流运等信息。
 
 ```{testcode} quickstart-chart
-from bazi.bazi import Bazi
-from bazi.bazi_chart import BaziChart
+from bazi.bazi import 八字
+from bazi.bazi_chart import 命盘
 
-chart = BaziChart(Bazi.create('1990-05-17 10:30', 'female'))
-print('四柱', ' '.join(map(str, chart.bazi.pillars)))
-print('日主', chart.bazi.day_master)
+chart = 命盘(八字.create('1990-05-17 10:30', '女'))
+print('四柱', ' '.join(map(str, chart.八字.四柱)))
+print('日主', chart.八字.日主)
 print('性别', chart.bazi.gender)
 ```
 
@@ -37,6 +37,8 @@ print('性别', chart.bazi.gender)
 把出生时间换成你的公历出生钟时；也可传无时区的 `datetime(年, 月, 日, 时, 分)`。
 性别接受 `男`、`女`、`male`、`female`，输出为拉丁写法。
 四柱依次为年、月、日、时，日主是日柱的天干。
+中文类型名指向原类型，中文只读属性读取既有结果；可以和原名混用。
+例如 `chart.十神.年.天干` 与 `chart.shishen.year.tiangan` 都是年干十神。
 
 上例可直接在 Python 交互环境中运行；直接输入 `chart` 还会看到一行对象摘要。
 若喜欢脚本，把程序保存为 UTF-8 文件 `show_chart.py`，在该文件所在目录运行：

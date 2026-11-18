@@ -13,10 +13,11 @@
 直接按中文名查询；下面只读定义主题：
 
 ```{testcode} load
-from bazi.knowledge import KnowledgeBase
+from bazi.defines import 天干
+from bazi.knowledge import 知识库
 
-kb = KnowledgeBase.load()
-for entry in kb.query('丁', topic='定义'):
+kb = 知识库.load()
+for entry in kb.query(天干.丁, topic='定义'):
   print(entry.text)
 ```
 
@@ -24,8 +25,9 @@ for entry in kb.query('丁', topic='定义'):
 丁为阴火。
 ```
 
-`kb.query('丁')` 返回丁的全部相关材料，也可传 `Tiangan.丁`、十神或五行枚举。
-枚举按类别和中文名称对应对象，例如 `Wuxing.WOOD` 对应“木”，不靠英文成员名拼 ID。
+`知识库` 与 `KnowledgeBase` 是同一个类型。`kb.query('丁')` 返回丁的全部相关材料，
+也可传 `天干.丁`、`十神.正官`、`五行.木` 等从 `bazi.defines` 导入的领域枚举。
+枚举按类别和中文名称对应对象。
 字符串可以是对象 ID 或精确名称；重名时抛 `ValueError` 并列出候选，未知名称也报错。
 需要查看候选时，用 `find_objects(name)`，它返回全部同名对象，无匹配返回空元组。
 查询不去掉两侧空格，也不作模糊匹配；`'丁火'` 或 `'丁 '` 不会匹配“丁”。
@@ -78,13 +80,14 @@ PDF 第 70 页左右两半叶，「十干体象」
 多个条件取交集，结果保持语料顺序；不传条件返回全部条目。多对象条目在每个对象下都能查到，
 关系方向由正文说明，对象列表不区分主次。
 
-例如查阅文昌的两种读法：
+例如分别查阅文昌的辛戌与现代问真读法：
 
 ```{testcode} shensha-knowledge
 from bazi.knowledge import KnowledgeBase
 
 kb = KnowledgeBase.load()
-for entry in kb.query('文昌'):
+for viewpoint in ('XIN_XU', '现代问真'):
+  entry, = kb.query('文昌', viewpoint=viewpoint)
   source = kb.sources[entry.sources[0]]
   print(entry.text)
   print(entry.viewpoint, source.work)
@@ -100,6 +103,10 @@ XIN_XU 星学大成
 `kb.query('文昌', viewpoint='XIN_XU')` 只取辛戌读法。
 来源的 `limitations` 说明摘录属于正文、夹注还是原创说明；`supports` 说明它支持表值、锚点或查找位置中的哪一部分。
 天乙、桃花、驿马、华盖、羊刃也有参考对象；规则与条目入口见 {doc}`rule-coverage`。
+
+查完整来源说明时，用 `kb.entry('shensha.wenchang.readings')`。这类条目保留表值、
+锚点与查找位置各自的依据；所引 `repository.rule_readings` 指向迁移前的固定源码快照，
+来源状态为 `repository_attributed`，不因进入知识目录变成新的古籍核验记录。
 
 用 `kb.filter_values('topic')` 等调用列出某个维度的全部合法值，或浏览 {doc}`../catalog/filters`。
 值合法但没有交集时返回空元组；未知值抛 `ValueError`，与无匹配不同。

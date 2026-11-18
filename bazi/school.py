@@ -114,7 +114,7 @@ class PeiouXingDef(Enum):
 
   - ZHENGCAI_ZHENGGUAN：男命取正财干、女命取正官干。默认。
   - YINYANGGAN：《三命通会·卷七·论六亲》读法：男命取我所克五行中的阴干，女命取克我五行中的阳干。
-    书证直例仅甲、乙两干的男女四格；其余十六格按「其餘八干俱以類推」与「陽男陰女」原则类推重建，单源，未获第二独立来源。
+    读法与出处见知识条目 `editorial.liuqin.spouse_star_yinyanggan.v1`。
 
   Note:
   - 两读在阳男、阴女十格上目标相同，在阴男、阳女十格上不同；每个（日主，性别）仍恰有一个目标天干。
@@ -134,7 +134,7 @@ class Anchor(Enum):
   - YEAR_AND_DAY：年、日两柱分别为锚，各查一遍。
 
   成员只指定锚柱；取该柱天干、地支还是完整干支由神煞自身的查法决定，记录在分析层注册表中。
-  `_ANCHOR_CHOICES` 按字段列出支持的取值及出处或已知出处缺口，`BaziSchool` 拒绝表外取值。
+  `_ANCHOR_CHOICES` 按字段列出支持的取值与知识入口，`BaziSchool` 拒绝表外取值。
 
   不修改既有定义；新读法须另加定义。
   '''
@@ -161,66 +161,29 @@ class TuwangDef(Enum):
   BEFORE_EIGHTEEN_DAYS = 'before_eighteen_days'
 
 
-'''各锚选项支持的取值，连同出处或已知出处缺口逐行记录。表外取值只表示本库不支持，不表示没有
-流派如此读（见驿马）；新增取值属于知识变更，须有出处。
-出处计数规则见 `ShenshaRules` 的 docstring。'''
+'''各锚选项支持的取值。表外取值只表示本库不支持；查法与出处沿各行条目 ID 查阅。'''
 _ANCHOR_CHOICES: Final[frozendict[str, frozenset[Anchor]]] = frozendict({
-  # 红艳：DAY 依问真（https://book.taiyi.me/命/神煞大全，「以日干查四地支」）及高人，
-  # 高人将红艳列于「日干查地支」节。《三命通会》四库本卷三〈總論諸神煞〉
-  # “桃花紅艶煞”条只给干支表，未定锚柱；三格表值分歧见 ShenshaRules.HONGYAN。
-  # YEAR 的查法讨论见 #69，出处仍缺；所查材料亦未见 YEAR_AND_DAY 读法。
+  # 红艳：shensha.hongyan.readings。
   'hongyan_anchor':   frozenset({Anchor.DAY, Anchor.YEAR}),
-  # 天乙贵人：DAY 为子平法，袁树珊《命理探原》NLC 刊本印页六三（PDF94）
-  # 「以日爲主。如甲日見丑見未」。YEAR 为以年柱取贵神的禄命法；
-  # 《三命通会》四库本转录卷三所载陈希烈说作：
-  # 「假如丑未生人月日時得甲戊庚是遇正天乙甲子人十二月生是遇貴神」
-  # https://zh.wikisource.org/w/index.php?oldid=657369
-  # 《五行精纪》卷十四〈论天乙贵神（二）〉网页转录所引为同一段，不多算独立来源：
-  # https://www.suanzhun.net/book/2742.html ；两法的现代注释另见 https://www.suanzhun.net/book/2728.html 。
-  # YEAR_AND_DAY 为问真、高人的现代主流读法，也是本库默认值。
+  # 天乙贵人：shensha.tianyi.readings。
   'tianyi_anchor':    frozenset({Anchor.DAY, Anchor.YEAR, Anchor.YEAR_AND_DAY}),
-  # 金舆：DAY 依袁树珊《命理探源》
-  # （https://ctext.org/wiki.pl?if=gb&chapter=827425&remap=gb），该转录的原字与日锚明文仍待复核；YEAR_AND_DAY 依问真
-  # （https://book.taiyi.me/命/神煞大全）。
+  # 金舆：shensha.jinyu.readings。
   'jinyu_anchor':     frozenset({Anchor.DAY, Anchor.YEAR_AND_DAY}),
-  # 灾煞：YEAR 依问真（https://book.taiyi.me/命/神煞大全#灾煞）；YEAR_AND_DAY 依高人
-  # （https://github.com/gaorenyes/gaorenyes.github.io/blob/817ad1f8f463d489087ac6c44ec69165e1181454/README.md#L367-L439）。
+  # 灾煞：shensha.zaisha.readings。
   'zaisha_anchor':    frozenset({Anchor.YEAR, Anchor.YEAR_AND_DAY}),
-  # 驿马、华盖、将星、劫煞、亡神共用两种锚读法：YEAR_AND_DAY 依问真现代查法
-  # （https://book.taiyi.me/命/神煞大全），为本库默认。驿马、华盖、将星的 DAY 依袁树珊《命理探原》NLC 刊本；
-  # 劫煞、亡神的 DAY 沿用既有档案，原刊出处仍待核。完整日锚档案见 BaziSchool.mingli_tanyuan。
-  # 《命理探原·卷上强弱》印页六五（PDF96）引《子平約言》另载驿马 YEAR 读法：「申子辰年馬在寅。
-  # 以年爲主。亦是一法」。#181 不添加新读法，因此尚不支持。
+  # 驿马、华盖、将星、劫煞、亡神：concept.mingli_tanyuan.readings。
   'yima_anchor':      frozenset({Anchor.DAY, Anchor.YEAR_AND_DAY}),
   'huagai_anchor':    frozenset({Anchor.DAY, Anchor.YEAR_AND_DAY}),
   'jiangxing_anchor': frozenset({Anchor.DAY, Anchor.YEAR_AND_DAY}),
   'jiesha_anchor':    frozenset({Anchor.DAY, Anchor.YEAR_AND_DAY}),
   'wangshen_anchor':  frozenset({Anchor.DAY, Anchor.YEAR_AND_DAY}),
-  # 文昌：DAY 依袁树珊《命理探原》NLC 刊本印页六三（PDF94）
-  # 「以日爲主。如甲日見巳。乙日見午是也。」；直接载体见 BaziSchool.mingli_tanyuan。
-  # 旧引 ctext 对应“甲日見巳”的位置作“己”；该转录仍待复核，不据此判为刊本异文。YEAR_AND_DAY 依问真
-  # （https://book.taiyi.me/命/神煞大全，「以日/年干查四地支」）与高人，为本库默认。
-  # 年干部分仅有这些现代来源，所查古籍未见以年干查文昌的明文。
+  # 文昌：shensha.wenchang.readings。
   'wenchang_anchor':  frozenset({Anchor.DAY, Anchor.YEAR_AND_DAY}),
-  # 太极贵人：YEAR 依《五行精纪注释》卷十三「太极贵人，从年干取」
-  # （https://www.suanzhun.net/book/2728.html）。YEAR_AND_DAY 依问真
-  # （https://book.taiyi.me/命/神煞大全，「以日/年干查四地支」）与高人，为本库默认。
-  # 与文昌的出处缺口相反：文昌古籍锚为日干，现代来源加年干；太极古籍锚为年干，现代来源加日干。
+  # 太极贵人：shensha.taiji.readings。
   'taiji_anchor':     frozenset({Anchor.YEAR, Anchor.YEAR_AND_DAY}),
-  # 国印贵人：YEAR 依《五行精纪注释》卷十三今人【注释】：
-  # 「国印星，命局见年干禄前第八位的地支」
-  # （https://www.suanzhun.net/book/2731.html），同页举例「甲禄在寅，
-  # 寅前八位是酉」。YEAR_AND_DAY 依问真、高人的现代读法，为本库默认。
-  # GuoyinDef 的抄本见证不能证明此今人注释所取的锚。
+  # 国印贵人：shensha.guoyin.readings。
   'guoyin_anchor':    frozenset({Anchor.YEAR, Anchor.YEAR_AND_DAY}),
-  # 六甲旬空取完整干支。DAY 依《五行精纪》卷二十五转引《神白经》：
-  # 「此空亡只用生日旬中空亡極緊」，并有运、太岁语境；这里只见汇编转录，未见所引原书。
-  # 同卷转引《林开五命》有「論空亡止以年日所在」，为年、日分别查的依据：
-  # https://zh.wikisource.org/w/index.php?oldid=10494296
-  # YEAR 与年日互查例另见《三命通会》四库本卷三「假令甲子年壬戌日」：
-  # https://zh.wikisource.org/w/index.php?oldid=657369
-  # 现代日柱为主且兼看其他柱／流运的读法：https://www.xifengduzui.com/article461.html
-  # DAY 是本库默认选择，不宣称古籍一致只看日柱；本轮只记本命锚查原局及流运支的原始命中。
+  # 六甲旬空取完整干支；查法见 shensha.kongwang.lookup、shensha.kongwang.repository。
   'kongwang_anchor':  frozenset({Anchor.DAY, Anchor.YEAR, Anchor.YEAR_AND_DAY}),
 })
 
@@ -302,23 +265,12 @@ class BaziSchool:
   @classmethod
   def mingli_tanyuan(cls) -> 'BaziSchool':
     '''
-    据袁树珊《命理探原》NLC 刊本与既有 ctext 来源记录整理的日锚档案。
+    返回《命理探原》日锚档案，出处见知识条目 concept.mingli_tanyuan.readings。
     驿马、华盖、将星以日支为锚（原局随之查年、月、时支）；天乙贵人与文昌以日干为锚。
-    劫煞、亡神的日支锚沿用既有档案，原刊出处仍待核。
-    金舆的日干锚沿用 ctext 来源记录，原字与载体仍待复核；它恰好也是当前默认，预设仍显式声明，
-    默认值日后改动不该悄悄改写这份档案。
+    劫煞、亡神取日支，金舆取日干。
 
     Note:
     - 其余选项保持默认。
-
-    出处：
-    - 《命理探原·卷上强弱》NLC 刊本：
-      https://commons.wikimedia.org/wiki/File:NLC416-07jh011647-5318_命理探源.pdf
-      扫描文件题《命理探源》，所核页版心题《命理探原》。天乙、文昌见印页六三（PDF94），
-      华盖、将星见六四（PDF95），驿马见六五（PDF96）。
-      已核〈强弱〉印页六二至六六（PDF93–97）未见金輿条，不据此判断全书无此条。
-    - 《命理探源》ctext 金輿祿来源记录，日干锚明文与原字待复核：
-      https://ctext.org/wiki.pl?if=gb&chapter=827425&remap=gb
 
     Return: (BaziSchool) 冻结的流派档案。
     '''

@@ -19,13 +19,13 @@ python -m pip install bazi
 可在 Python 交互环境中直接运行，也可保存为 UTF-8 脚本后运行；不要命名为 `bazi.py`，以免遮蔽安装包。
 
 ```python
-from bazi.bazi import Bazi
-from bazi.bazi_chart import BaziChart
+from bazi.bazi import 八字
+from bazi.bazi_chart import 命盘
 
-chart = BaziChart(Bazi.create('1990-05-17 10:30', 'female'))
-print('四柱', ' '.join(map(str, chart.bazi.pillars)))
-print('日主', chart.bazi.day_master)
-print('年干十神', chart.shishen.year.tiangan)
+盘 = 命盘(八字.create('1990-05-17 10:30', '女'))
+print('四柱', ' '.join(map(str, 盘.八字.四柱)))
+print('日主', 盘.八字.日主)
+print('年干十神', 盘.十神.年.天干)
 ```
 
 ```text
@@ -34,7 +34,8 @@ print('年干十神', chart.shishen.year.tiangan)
 年干十神 偏印
 ```
 
-四柱依次为年、月、日、时。性别用 `female`（女）或 `male`（男）；类型从定义模块导入。
+四柱依次为年、月、日、时。性别接受 `女`／`男` 或 `female`／`male`。
+中文名与 `Bazi`、`BaziChart` 等原名可混用；类型从定义模块导入。
 默认采用 `DAY` 精度和 23:00 换日柱。`DAY` 只按日期比较节气，出生小时仍用于时柱。
 海外当地钟与真太阳时的输入方法，见[文档站](https://0xf3cd.github.io/bazi/)中对应版本的“配置与时间口径”。
 
@@ -46,20 +47,20 @@ print('年干十神', chart.shishen.year.tiangan)
 “集成开发”和“查阅知识库”，知识目录与 API 参考供随时查阅。
 
 只需公历与农历换算时，从 `bazi.calendar.utils` 导入 `to_lunar`、`to_date`，无需创建命盘。
-当前源码的往返示例及闰月编号见[公历、农历与节气](docs/guides/calendar.md)。
+v3.0.0 的往返示例及闰月编号见[公历、农历与节气](https://github.com/0xf3cd/bazi/blob/milestone/v3.0.0/docs/guides/calendar.md)。
 
 不写 Python 时可使用安装后的 `bazi` 命令，先运行 `bazi chart --help` 查看排盘选项，更多用法见站点的“命令行”指南。
 
-知识的来源状态、默认展示和命盘前提分别记录；已核出处不证明条文本身为真或适用于某张命盘。
+知识条目带有来源、前提与读法；已核出处不证明条文本身为真或适用于某张命盘。
 关系与前提匹配返回结构事实，不预测现实事件。
 
 ## 开发
 
-开发环境和完整检查见[贡献指南](CONTRIBUTING.md)，升级旧调用见[发布与迁移](RELEASE_NOTES.md)。
+开发环境和完整检查见[贡献指南](https://github.com/0xf3cd/bazi/blob/main/CONTRIBUTING.md)，升级旧调用见[发布与迁移](https://github.com/0xf3cd/bazi/blob/main/RELEASE_NOTES.md)。
 
 ## 贡献与许可
 
 欢迎通过 issue 提交勘误和出处；PR 先开 issue 讨论。
 
-作者自有材料采用 [MIT License](LICENSE)；[第三方材料说明](THIRD_PARTY_NOTICES.md) 另列历法数据、引文等权利范围，
+作者自有材料采用 [MIT License](https://github.com/0xf3cd/bazi/blob/main/LICENSE)；[第三方材料说明](https://github.com/0xf3cd/bazi/blob/main/THIRD_PARTY_NOTICES.md) 另列历法数据、引文等权利范围，
 不由作者的 MIT 授权重新许可。

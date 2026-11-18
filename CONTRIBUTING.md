@@ -61,6 +61,10 @@
 修改工作流不会自动启用这些设置。正式发布仍从 `main` 执行，见[发布说明](RELEASING.md)。
 
 知识编辑来源是 [bazi/knowledge_data.json](bazi/knowledge_data.json)，不是生成的目录页面。
+内容保护测试将每个对象、来源和条目分别与 `tests/data/knowledge_content.json` 的指纹比较。
+有意修改知识后，先核对文字及出处，再只更新受影响记录的指纹，不重建整份基准。
+计算式为 `sha256(json.dumps(asdict(record), ensure_ascii=False, sort_keys=True).encode('utf-8')).hexdigest()`；
+`record` 是 `KnowledgeBase.load()` 中对应的记录，三个函数分别来自 `hashlib`、`json` 和 `dataclasses`。
 
 维护规则与知识关联时：
 

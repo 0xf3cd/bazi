@@ -32,6 +32,12 @@ StarAppearance(Zhu.月, target, "明干", Tiangan.甲)
 ChartOccurrence("年", target, TianganLayer.明干, Tiangan.甲, "比肩")
 CriterionResult(info.criterion_id, "invalid", frozendict({}))
 matched.bazi = chart.bazi
+盘.八字 = chart.bazi
+盘.八字.日主 = 天干.甲
+盘.十神.年 = 盘.十神.月
+盘.十神.年.天干 = 十神.正官
+if 岁运 is not None:
+  岁运.大运 = None
 GanzhiYearMonth(2000, "1")
 GanzhiYearMonth.from_dizhi(2000, 1)
 GanzhiYearMonth.from_jie(datetime.now())

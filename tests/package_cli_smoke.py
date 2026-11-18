@@ -63,6 +63,8 @@ def main() -> None:
     check(run() == help_text, 'Bare CLI differs from help')
     for task in ('chart', 'knowledge', 'match'):
       check(f'bazi {task}' in help_text and f'bazi {task}' in run(task, '--help'), 'CLI help lost a task')
+    check('--output' in run('chart', '--help'), 'Chart help lost output option')
+    check('--ganzhi-month' in run('match', '--help'), 'Match help lost month coordinate')
     for flags in ((), ('--transits',), ('--relationship',)):
       output = run('chart', '--seed', '236', *flags)
       check(output == run('chart', '--seed', '236', *flags) and output.startswith('random seed: 236\n'), 'Seed replay differs')
@@ -86,6 +88,10 @@ def main() -> None:
     check(criterion in run('match'), 'Criterion listing missing')
     check('SATISFIED' in run('match', criterion, *fixed, '--observation-scope', 'natal'), 'Installed matching failed')
     check('也许' in run('match', criterion, *fixed, '--observation-scope', 'natal', '--knowledge'), 'Installed explicit reading missing')
+    month = run('match', 'editorial.spouse_palace_xingchong.v1', *fixed,
+      '--observation-scope', 'natal_and_transits', '--transit-entry', 'at_month',
+      '--ganzhi-year', '2024', '--ganzhi-month', '午', '--transit-kinds', 'liunian,liuyue')
+    check('UNKNOWN' not in month and '2024' in month and '午' in month, 'Installed Chinese month query failed')
     local = run('chart', '--birth-time', '2024-01-01T12:00:00+14:00', '--gender', 'female',
       '--precision', 'minute', '--longitude', '-157.4')
     check('2024-01-01T12:00:00+14:00' in local, 'Installed location input lost civil time')

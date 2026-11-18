@@ -306,6 +306,11 @@ def expected_typing_diagnostics(source: str) -> dict[str, str]:
     ('KnowledgeSource', 'work', 'witness.work = "changed"'),
     ('CriterionInfo', 'definition', 'info.definition = "changed"'),
     ('ContextResult', 'bazi', 'matched.bazi = chart.bazi'),
+    ('BaziChart', '八字', '盘.八字 = chart.bazi'),
+    ('Bazi', '日主', '盘.八字.日主 = 天干.甲'),
+    ('BaziData', '年', '盘.十神.年 = 盘.十神.月'),
+    ('GanzhiData', '天干', '盘.十神.年.天干 = 十神.正官'),
+    ('TransitSet', '大运', '  岁运.大运 = None'),
   ):
     line_number = lines.index(trigger) + 1
     expected[f'{owner}.{member}'] = f'\nbad.py:{line_number}: error: Property "{member}" defined in "{owner}" is read-only  [misc]\n'

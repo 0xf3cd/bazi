@@ -122,7 +122,7 @@ class KnowledgeCatalog(SphinxDirective):
     return result
 
   def fields(self, fields: list[tuple[str, Any]], labels: Mapping[str, str]) -> nodes.field_list:
-    description = nodes.field_list()
+    description = nodes.field_list(classes=['catalog-fields'])
     for name, content in fields:
       field = nodes.field()
       field += nodes.field_name(text=labels.get(name, name), classes=['catalog-field-' + name])

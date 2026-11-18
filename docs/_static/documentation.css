@@ -86,6 +86,10 @@ a:focus-visible {
   font-weight: normal;
 }
 
+.catalog-fields dd p {
+  white-space: pre-line;
+}
+
 @media (max-width: 875px) {
   div.document {
     margin: 0;
