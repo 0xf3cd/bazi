@@ -1,24 +1,21 @@
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
-# bazi/calendar/hko_data/decoder.py
+# tests/calendar/hko_data/decoder.py
 #
 # 解码 encoder.py 生成的数据；只读取 hko_data/data/ 中已提交的二进制文件。
 # 不下载或重新编码，重建数据须运行离线工具 encoder.py。
 
-'''读取随包 HKO 节气与阴历二进制表。
+'''读取 HKO 测试对照用的节气与阴历二进制表。
 
-JieqiDates 与 DecodedLunarYears 提供解码后的数据，不负责下载或生成文件。
-两个后端共用 bazi.calendar.dates 中定义的 LunarYearInfo。
-也可继续从本模块导入，取得的是同一个类型。'''
+DecodedJieqiDates 与 DecodedLunarYears 只解码数据，不负责日期换算、下载或生成文件。'''
 
 import functools
 
 from pathlib import Path
 from datetime import date
 from typing import Final
-from collections.abc import Callable
 
-from ...defines import Jieqi, Ganzhi
-from ..dates import LunarYearInfo as LunarYearInfo # noqa: PLC0414 # 这里的 as 让 mypy 接受调用方从本模块导入这个类型。
+from bazi.defines import Jieqi, Ganzhi
+from bazi.calendar.dates import LunarYearInfo as LunarYearInfo # noqa: PLC0414 # 解码记录也供对拍测试导入。
 
 from .common import (
   START_YEAR, END_YEAR, date_to_bytes, bytes_to_date, bytes_to_int,
@@ -30,14 +27,6 @@ from .common import (
 JieqiDates = dict[Jieqi, date]
 
 
-def _validate_year(year: int, supported_year_range: Callable[[], range]) -> None:
-  '''先检查年份类型，再查询解码器自己的支持范围。'''
-  if not isinstance(year, int):
-    raise TypeError(f'Expected int, got {type(year)}')
-  if year not in supported_year_range():
-    raise ValueError(f'Year {year} is out of the supported range {supported_year_range()}')
-
-
 class DecodedJieqiDates:
   '''
   查询各公历年的节气日期。
@@ -46,9 +35,8 @@ class DecodedJieqiDates:
   date_bytes_len: int = len(date_to_bytes(date(2000, 1, 1)))
 
   def __init__(self) -> None:
-    # 显式抛异常，保证公开入口在 python -O 下仍会立即失败。
     if not encoded_data_ready():
-      raise RuntimeError('Encoded HKO data files are missing. Reinstall bazi; in a source checkout, run `python -m bazi.calendar.hko_data.encoder` with the optional generation tools.')
+      raise RuntimeError('Encoded HKO test data files are missing. Run `PYTHONPATH=tests/calendar:. python -m hko_data.encoder` in the source checkout.')
 
     self._start_year: Final[int] = START_YEAR
     self._end_year: Final[int] = END_YEAR
@@ -87,7 +75,7 @@ class DecodedJieqiDates:
 
   def __getitem__(self, year: int) -> JieqiDates:
     '''查询公历年 year 的全部节气日期。'''
-    _validate_year(year, lambda: self.supported_year_range())
+    assert isinstance(year, int) and year in self.supported_year_range()
 
     # 提取输入年份的字节。
     year_bytes: bytes = self._bytes[(year - self.start_year) * 24 * DecodedJieqiDates.date_bytes_len : (year - self.start_year + 1) * 24 * DecodedJieqiDates.date_bytes_len]
@@ -97,17 +85,12 @@ class DecodedJieqiDates:
     return { jq : bytes_to_date(self.__read_bytes_for_jieqi(year, jq)) for jq in self._actual_jieqi_order }
 
   @functools.cache
-  def __cached_date(self, year: int, jieqi: Jieqi) -> date:
-    return self[year][jieqi]
-
   def get(self, year: int, jieqi: Jieqi) -> date:
     '''
     查询公历年 year 的指定节气日期；复用缓存，优先于直接调用 __getitem__。
     '''
-    _validate_year(year, lambda: self.supported_year_range())
-    if not isinstance(jieqi, Jieqi):
-      raise TypeError(f'Expected Jieqi, got {type(jieqi)}')
-    return self.__cached_date(year, jieqi)
+    assert isinstance(jieqi, Jieqi)
+    return self[year][jieqi]
   
   def supported_year_range(self) -> range:
     '''支持的公历年份范围。'''
@@ -122,9 +105,8 @@ class DecodedLunarYears:
   sexagenary_cycle: list[Ganzhi] = Ganzhi.list_sexagenary_cycle()
 
   def __init__(self) -> None:
-    # 显式抛异常，保证公开入口在 python -O 下仍会立即失败。
     if not encoded_data_ready():
-      raise RuntimeError('Encoded HKO data files are missing. Reinstall bazi; in a source checkout, run `python -m bazi.calendar.hko_data.encoder` with the optional generation tools.')
+      raise RuntimeError('Encoded HKO test data files are missing. Run `PYTHONPATH=tests/calendar:. python -m hko_data.encoder` in the source checkout.')
 
     self._start_year: Final[int] = START_YEAR
     self._end_year: Final[int] = END_YEAR - 1 # END_YEAR 的数据不完整，故不包含。
@@ -155,7 +137,7 @@ class DecodedLunarYears:
     return self._bytes[(lunar_year - self.start_year) * 8 : (lunar_year - self.start_year + 1) * 8]
   
   def __getitem__(self, lunar_year: int) -> LunarYearInfo:
-    _validate_year(lunar_year, lambda: self.supported_year_range())
+    assert isinstance(lunar_year, int) and lunar_year in self.supported_year_range()
 
     data_bytes: bytes = self.__read_bytes_for_lunar_year(lunar_year)
     assert len(data_bytes) == 8
@@ -175,32 +157,21 @@ class DecodedLunarYears:
       else:
         days_count_of_each_month.append(29)
 
-    return {
-      'first_solar_day': first_solar_day,
-      'leap': leap_month != 0,
-      'leap_month': leap_month if leap_month != 0 else None,
-      'days_counts': days_count_of_each_month,
-      'ganzhi': ganzhi
-    }
+    return LunarYearInfo(
+      first_solar_day=first_solar_day,
+      leap=leap_month != 0,
+      leap_month=leap_month if leap_month != 0 else None,
+      days_counts=tuple(days_count_of_each_month),
+      ganzhi=ganzhi,
+    )
 
   @functools.cache
-  def __cached_info(self, lunar_year: int) -> LunarYearInfo:
-    return self.__getitem__(lunar_year)
-
   def get(self, lunar_year: int) -> LunarYearInfo:
     '''
     查询农历年信息；复用缓存，优先于直接调用 __getitem__。
-    每次返回新记录与独立 days_counts 列表，外部修改不影响缓存；其余值不可变，可共享。
+    记录与 days_counts 均不可变，可直接共享缓存结果。
     '''
-    _validate_year(lunar_year, lambda: self.supported_year_range())
-    info: LunarYearInfo = self.__cached_info(lunar_year)
-    return LunarYearInfo(
-      first_solar_day=info['first_solar_day'],
-      leap=info['leap'],
-      leap_month=info['leap_month'],
-      days_counts=list(info['days_counts']),
-      ganzhi=info['ganzhi'],
-    )
+    return self[lunar_year]
 
   def supported_year_range(self) -> range:
     '''支持的农历年份范围。'''

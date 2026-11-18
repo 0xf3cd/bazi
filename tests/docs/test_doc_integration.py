@@ -52,6 +52,7 @@ def _check_navigation(source: Path, root: Path) -> None:
     generated = {
       root / 'docs/api-contract.md': root / 'API_CONTRACT.md',
       root / 'docs/release-notes.md': root / 'RELEASE_NOTES.md',
+      root / 'docs/contributing.md': root / 'CONTRIBUTING.md',
     }
     path = generated.get(path.resolve(), path)
     assert path.resolve().is_relative_to(root) and path.is_file(), link
@@ -67,6 +68,7 @@ def _check_navigation(source: Path, root: Path) -> None:
 @pytest.mark.parametrize('name', [
   'README.md', 'RELEASE_NOTES.md', 'API_CONTRACT.md', 'AGENTS.md', 'CONTRIBUTING.md', 'RELEASING.md',
   'docs/guides/quickstart.md', 'docs/guides/integration.md', 'docs/guides/configuration.md',
+  'docs/guides/calendar.md',
   'docs/guides/knowledge.md',
   'docs/guides/cli.md', 'docs/guides/relations-transits.md', 'docs/guides/rule-coverage.md', 'docs/index.md',
 ])

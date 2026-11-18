@@ -32,7 +32,9 @@ from run_package_checks import (
 def test_source_selection() -> None:
   files = set(source_files(ROOT))
   assert set(RUNTIME_DATA) <= files
-  assert {f'bazi/calendar/hko_data/data/{year}.txt' for year in range(1901, 2101)} <= files
+  assert {f'tests/calendar/hko_data/data/{year}.txt' for year in range(1901, 2101)} <= files
+  assert {'run_calendar_generation.py', 'tests/calendar/hko_data/data/jieqi_encoded.bin',
+          'tests/calendar/hko_data/data/lunardate_encoded.bin'} <= files
   assert {'bazi/py.typed', 'tests/package_smoke.py', '.github/workflows/release.yml'} <= files
   assert {'bazi/cli.py', 'tests/package_cli_smoke.py'} <= files
   assert {'tests/fixtures/type_consumer_good.txt', 'tests/fixtures/type_consumer_bad_extra.txt'} <= files

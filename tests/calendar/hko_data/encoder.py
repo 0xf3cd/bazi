@@ -1,16 +1,16 @@
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
-# bazi/calendar/hko_data/encoder.py
+# tests/calendar/hko_data/encoder.py
 #
 # 下载并编码香港天文台（HKO）原始数据。
 #
-# 本模块为重建 hko_data/data/ 的离线工具，运行时解码器只读已提交数据，无需本模块。
+# 本模块为重建测试对照数据 hko_data/data/ 的离线工具。
 # requests 不在 Requirements.txt 中，需要时手动 pip install requests。
 # 在仓库根目录运行，不从安装包运行：
-#   python -m bazi.calendar.hko_data.encoder
+#   PYTHONPATH=tests/calendar:. python -m hko_data.encoder
 
 '''HKO 原始历书的离线下载与编码。
 
-do_download 获取原始材料，do_encode 编码数据；安装后缺表应重装包，不调用此模块修补。'''
+do_download 获取原始材料，do_encode 编码数据；测试中的解码器只读取已提交文件。'''
 
 import re
 
@@ -19,7 +19,7 @@ from importlib import import_module
 from pathlib import Path
 from typing import Any
 
-from ...defines import Ganzhi
+from bazi.defines import Ganzhi
 
 from .common import (
   START_YEAR, END_YEAR,

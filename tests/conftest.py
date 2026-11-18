@@ -1,5 +1,6 @@
 # Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
 
+from collections.abc import Iterator
 from hashlib import sha256
 from random import Random
 
@@ -55,3 +56,21 @@ def rng(request: pytest.FixtureRequest) -> Random:
   seed = int.from_bytes(sha256(f'{base}:{request.node.nodeid}'.encode()).digest()[:8], 'big')
   print(f'random regression base={base} effective={seed} nodeid={request.node.nodeid}')
   return Random(seed)
+
+
+@pytest.fixture
+def short_jie_window(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
+  # A shorter table exercises finite/empty dayun timelines without changing birth-date support.
+  from bazi.calendar import utils
+  from bazi.defines import Jieqi
+
+  first, _ = utils.supported_jie_boundaries()
+  last = utils.jieqi_moment(2100, Jieqi.大雪)
+  for query in (utils._prev_jie, utils._next_jie):
+    query.cache_clear()
+  monkeypatch.setattr(utils, 'supported_jie_boundaries', lambda: (first, last))
+  try:
+    yield
+  finally:
+    for query in (utils._prev_jie, utils._next_jie):
+      query.cache_clear()

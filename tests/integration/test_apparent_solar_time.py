@@ -10,7 +10,7 @@ import pytest
 
 from bazi.bazi import Bazi, BaziGender
 from bazi.bazi_chart import BaziChart
-from bazi.calendar import CalendarBackend
+from bazi.calendar import utils
 from bazi.defines import Dizhi
 from bazi.school import BaziConfig, BaziPrecision
 from bazi.transit_chart import TransitChart
@@ -62,14 +62,8 @@ def test_location_input_matrix(direct: bool) -> None:
     with pytest.raises(ValueError, match=r'\[-180, 180\]'):
       _construct(direct, aware, MINUTE_CONFIG, value)
 
-  unsupported = (
-    BaziConfig(precision=BaziPrecision.DAY),
-    BaziConfig(precision=BaziPrecision.MINUTE, backend=CalendarBackend.HKO),
-    BaziConfig(precision=BaziPrecision.MINUTE, backend=CalendarBackend.CELESTIAL_ALGO2),
-  )
-  for config in unsupported:
-    with pytest.raises(ValueError, match='Longitude requires'):
-      _construct(direct, aware, config, 120.0)
+  with pytest.raises(ValueError, match='Longitude requires'):
+    _construct(direct, aware, BaziConfig(precision=BaziPrecision.DAY), 120.0)
 
 
 @pytest.mark.input_contract('bazi.bazi', 'Bazi Bazi.create')
@@ -87,14 +81,14 @@ def test_overflowing_longitude_is_value_error(direct: bool, kind: str, sign: int
 @pytest.mark.input_contract('bazi.bazi', 'Bazi Bazi.create')
 @pytest.mark.parametrize('direct', [False, True])
 def test_location_validation_precedence(direct: bool) -> None:
-  unsupported = BaziConfig(precision=BaziPrecision.DAY, backend=CalendarBackend.HKO)
+  unsupported = BaziConfig(precision=BaziPrecision.DAY)
   with pytest.raises(TypeError, match='real longitude'):
     _construct(direct, datetime(2000, 1, 1), unsupported, False)
   with pytest.raises(ValueError, match='finite'):
     _construct(direct, datetime(2000, 1, 1), unsupported, float('nan'))
   with pytest.raises(ValueError, match='timezone-aware'):
     _construct(direct, datetime(2000, 1, 1), unsupported, 0.0)
-  with pytest.raises(ValueError, match='CalendarBackend.CELESTIAL'):
+  with pytest.raises(ValueError, match='BaziPrecision.HOUR or BaziPrecision.MINUTE'):
     _construct(direct, datetime(2000, 1, 1, tzinfo=UTC), unsupported, 0.0)
 
 
@@ -171,7 +165,7 @@ def test_apparent_clock_drives_pillars_both_signs() -> None:
   assert rollover.solar_datetime == datetime(1999, 12, 31, 23, 56)
   assert rollover.solar_date == date(1999, 12, 31)
   assert str(rollover.day_pillar) == '戊午'
-  assert rollover.ganzhi_date == rollover._utils.to_ganzhi(date(1999, 12, 31))
+  assert rollover.ganzhi_date == utils.to_ganzhi(date(1999, 12, 31))
 
 
 def test_dayun_transit_bounds_use_absolute_time() -> None:

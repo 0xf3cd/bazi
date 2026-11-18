@@ -216,6 +216,7 @@ def doctest_source(tmp_path):
   )
   for name, groups in (
     ('quickstart', ('quickstart-chart',)), ('relations-transits', ('transits-query',)),
+    ('calendar', ('calendar-lunar-roundtrip',)),
     ('integration', ('integration-context',)), ('knowledge', ('load', 'edit')),
   ):
     (source / 'guides' / (name + '.md')).write_text(
@@ -233,6 +234,7 @@ def doctest_output(singular=False):
   groups_by_document = {
     'readme-example': ('readme-first', 'readme-first (cleanup code)'),
     'guides/quickstart': ('quickstart-chart',),
+    'guides/calendar': ('calendar-lunar-roundtrip',),
     'guides/relations-transits': ('transits-query',),
     'guides/integration': ('integration-context',),
     'guides/knowledge': ('load', 'edit', 'edit (cleanup code)'),
@@ -240,13 +242,13 @@ def doctest_output(singular=False):
   for document, groups in groups_by_document.items():
     sections.append(f'Document: {document}\n------------------------------\n')
     sections.extend(f'   1 {word} in {group}\n' for group in sorted(groups))
-  return ''.join(sections) + 'Doctest summary\n===============\n   6 tests\n     0 failures in tests\n     0 failures in setup code\n     0 failures in cleanup code\n'
+  return ''.join(sections) + 'Doctest summary\n===============\n   7 tests\n     0 failures in tests\n     0 failures in setup code\n     0 failures in cleanup code\n'
 
 
 @pytest.mark.parametrize('singular', [False, True])
 def test_doctest_count_accepts_both_wordings(tmp_path, doctest_source, singular):
   (tmp_path / 'output.txt').write_text(doctest_output(singular), encoding='utf-8')
-  assert check_doctests(tmp_path, doctest_source) == 6
+  assert check_doctests(tmp_path, doctest_source) == 7
 
 
 @pytest.mark.parametrize('phase', ['setup', 'cleanup'])
@@ -258,7 +260,7 @@ def test_doctest_phases_are_not_examples(tmp_path, doctest_source, phase):
     f'   1 tests in quickstart-chart\n   1 tests in quickstart-chart ({phase} code)\n',
   )
   (tmp_path / 'output.txt').write_text(output, encoding='utf-8')
-  assert check_doctests(tmp_path, doctest_source) == 6
+  assert check_doctests(tmp_path, doctest_source) == 7
 
 
 @pytest.mark.parametrize('phase', ['setup', 'cleanup'])
@@ -274,7 +276,7 @@ def test_orphan_doctest_phase_is_rejected(tmp_path, doctest_source, phase):
 
 @pytest.mark.parametrize('old,new', [
   ('1 tests in quickstart-chart', '1 tests in omitted-chart'),
-  ('6 tests', '0 tests'),
+  ('7 tests', '0 tests'),
   ('0 failures in tests', '1 failure in tests'),
   ('0 failures in setup code', '1 failure in setup code'),
   ('0 failures in cleanup code', '1 failure in cleanup code'),
@@ -300,12 +302,12 @@ def test_optional_examples_follow_source(tmp_path, doctest_source, suffix):
     '```{testcode} extra\nassert True\n```\n' if suffix == '.md' else '.. testcode:: extra\n\n   assert True\n',
     encoding='utf-8',
   )
-  output = doctest_output().replace('Doctest summary', 'Document: extra\n---\n   1 tests in extra\nDoctest summary').replace('6 tests', '7 tests')
+  output = doctest_output().replace('Doctest summary', 'Document: extra\n---\n   1 tests in extra\nDoctest summary').replace('7 tests', '8 tests')
   (tmp_path / 'output.txt').write_text(output, encoding='utf-8')
-  assert check_doctests(tmp_path, doctest_source) == 7
+  assert check_doctests(tmp_path, doctest_source) == 8
   extra.unlink()
   (tmp_path / 'output.txt').write_text(doctest_output(), encoding='utf-8')
-  assert check_doctests(tmp_path, doctest_source) == 6
+  assert check_doctests(tmp_path, doctest_source) == 7
 
 
 @pytest.mark.parametrize('document, group', [

@@ -9,7 +9,7 @@ import pytest
 
 from bazi.bazi import Bazi, BaziGender
 from bazi.bazi_chart import BaziChart
-from bazi.calendar import CalendarDate, CalendarType
+from bazi.calendar import CalendarDate, CalendarType, utils
 from bazi.context_matching import NatalObservation, evaluate_context
 from bazi.school import BaziConfig, BaziPrecision, BaziSchool, DayRollover
 from bazi import cli
@@ -103,14 +103,14 @@ def test_apparent_birth_at_lower_boundary() -> None:
   source_apparent = datetime(1901, 2, 19, 0, 3, 44, 914798)
   assert abs((first._clock_datetime - source_apparent).total_seconds()) < 0.16
   assert first.solar_date == date(1901, 2, 19)
-  assert first._utils.to_lunar(first.solar_date) == CalendarDate(1901, 1, 1, CalendarType.LUNAR)
+  assert utils.to_lunar(first.solar_date) == CalendarDate(1901, 1, 1, CalendarType.LUNAR)
 
 
 def test_apparent_birth_at_upper_boundary() -> None:
   config = BaziConfig(precision=BaziPrecision.MINUTE)
   last = Bazi.create('2100-01-01T12:00:00+00:00', 'male', config, longitude=-180.0)
   assert last.solar_date == date(2099, 12, 31)
-  assert last._utils.to_date(last._utils.to_lunar(last.solar_date)) == date(2099, 12, 31)
+  assert utils.to_date(utils.to_lunar(last.solar_date)) == date(2099, 12, 31)
   assert str(last.month_jies[1].jieqi) == '小寒'
 
 

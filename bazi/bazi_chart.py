@@ -20,7 +20,7 @@ from .bazi import Bazi, BaziGender
 from .rules import BaziRules
 from .school import DayunYearRule, BaziConfig, PeiouXingDef, TuwangDef, DEFAULT_CONFIG
 
-from .calendar import CalendarUtilsProtocol, calendar_utils_of
+from .calendar import utils
 from .calendar.dates import GanzhiYearMonth
 from .utils.bazi_utils import (
   traits, hidden_tiangans, shier_zhangsheng, shishen, nayin_str, ganzhi_of_year, taiyuan, minggong,
@@ -108,14 +108,6 @@ class BaziChart:
     '''返回构造时传入的同一个 Bazi。'''
     return self._bazi
 
-  @property
-  def _utils(self) -> CalendarUtilsProtocol:
-    '''
-    每次访问时解析底层 Bazi 所用的历法工具，实例上不存 HKO 模块或 celestial 单例。
-    这样显式 deepcopy 命盘时也不会复制历法工具。
-    '''
-    return calendar_utils_of(self._bazi.config.backend)
-  
   @functools.cached_property
   def taiyuan(self) -> Ganzhi:
     '''月干顺移一、月支顺移三的胎元干支；不是实际受孕时刻，也不扩原盘四柱。'''
@@ -132,7 +124,7 @@ class BaziChart:
     opening = self._bazi.month_jies[0]
     jieqis = Jieqi.as_list()
     zhongqi = jieqis[jieqis.index(opening.jieqi) + 1]
-    boundary = self._utils.jieqi_moment(opening.moment.year, zhongqi)
+    boundary = utils.jieqi_moment(opening.moment.year, zhongqi)
     month_dizhi = self._bazi.month_pillar.dizhi
     if self._bazi._attribution_reached(boundary):
       month_dizhi = Dizhi.from_index((month_dizhi.index + 1) % 12)
@@ -145,8 +137,8 @@ class BaziChart:
     非季月按四时本令；季月按 BaziSchool.tuwang_def，默认采用整月土旺的简化取法。
     分段口径在转土前仍取该季节本令，取法与出处见 TuwangDef。
 
-    一天取连续24小时，先在后端 naive UTC+8 节气时刻上加十二天或减十八天，再按本盘
-    出生精度比较，相等归新。地点盘先把边界换为同一真太阳钟；HKO只作日期级，零点为占位。
+    一天取连续24小时，先在无时区的 UTC+8 节气时刻上加十二天或减十八天，再按本盘
+    出生精度比较，相等归新。地点盘先把边界换为同一真太阳钟。
 
     Return: (frozendict[Wuxing, WuxingState]) 五行各有一个状态，结果不可变。
     '''
@@ -410,12 +402,12 @@ class BaziChart:
   def _dayun_owning_ganzhi_year(self, moment: datetime) -> int:
     '''按所属节返回 `moment` 所在的干支年。'''
     assert isinstance(moment, datetime)
-    return GanzhiYearMonth.from_jie(self._utils.prev_jie(moment)).year
+    return GanzhiYearMonth.from_jie(utils.prev_jie(moment)).year
 
   @property
   def _dayun_empty_timeline_message(self) -> str:
     '''返回大运时刻线无受支持起点时的共享报错消息。'''
-    first, last = self._utils.supported_jie_boundaries()
+    first, last = utils.supported_jie_boundaries()
     return f'No Dayun starts within the supported Jie range [{first}, {last})'
 
   @functools.cached_property
@@ -426,7 +418,7 @@ class BaziChart:
     首步标签取出生干支年为下限；JIE_PROJECTED 后续标签独立按真实起点投影，
     FIXED_DECADE 后续标签按首标签每步递增 10 年。
     '''
-    first, last = self._utils.supported_jie_boundaries()
+    first, last = utils.supported_jie_boundaries()
     first_start_moment: Final[datetime] = self._dayun_start_moment_at(0)
     if not first <= first_start_moment < last:
       raise ValueError(self._dayun_empty_timeline_message)
@@ -445,8 +437,9 @@ class BaziChart:
   @property
   def dayun(self) -> Generator[DayunTuple, None, None]:
     '''
-    从公历交运时刻线生成有限大运；每步覆盖 `[start_moment, end_moment)`，只生成落在所选历法
-    后端半开节气窗口内的起点，因此结果可以为空。
+    从公历交运时刻线生成有限大运；每步覆盖 `[start_moment, end_moment)`。
+    只生成起点位于 `utils.supported_jie_boundaries()` 首末节时刻之间的大运，含首端、不含末端；
+    每步终点可以超出该范围。若首步起点已越界，结果为空。
 
     Usage:
     ```python
@@ -470,7 +463,7 @@ class BaziChart:
     def __dayun_generator() -> Generator[DayunTuple, None, None]:
       step: Final[int] = 1 if self.dayun_order else -1
       gz: Ganzhi = self._bazi.month_pillar.next(step)
-      first, last = self._utils.supported_jie_boundaries()
+      first, last = utils.supported_jie_boundaries()
       index: int = 0
       start_moment: datetime = self._dayun_start_moment_at(index)
 

@@ -127,12 +127,13 @@ _save_directory.cleanup()
 
 ## 下一步
 
-默认采用 `DAY` 精度、`celestial` 后端、23:00 换日柱，以立春换年；`DAY` 不会丢弃出生小时。
+默认采用 `DAY` 精度、23:00 换日柱，以立春换年；`DAY` 不会丢弃出生小时。
 这些是选定的口径，其他读法可以显式配置。
 
 | 想做什么 | 入口 |
 | --- | --- |
-| 选精度、换日点、历法后端、真太阳时或流派 | {doc}`configuration` |
+| 选精度、换日点、真太阳时或流派 | {doc}`configuration` |
+| 换算公历与农历，查询节气时刻 | {doc}`calendar` |
 | 查某年／月／日／时刻的流运，列几步大运，再查关系 | {doc}`relations-transits` |
 | 读取十神、藏干、纳音或检查知识前提 | {doc}`integration` |
 | 不排盘，只读知识文字、出处或编辑本地副本 | {doc}`knowledge` |

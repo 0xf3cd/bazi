@@ -47,7 +47,7 @@ for label, result in queries:
 | `at_year(gz_year)` | 干支年标签，以年份数字填写 | 返回该年流年及可取得的小运／大运；早于出生干支年为 `None`。远年份仍可有流年，不能用 `None` 判断历法表上界。大运按所选年份标签解释。 |
 | `at_month(gz_year, gz_month)` | 干支年和月份地支，如 `Dizhi.午` | 增加流月；出生干支月前或节令表范围外为 `None`，大运按物理交运月边界解释。午月不等于公历六月。 |
 | `at_date(solar_date)` | 东八区公历 `date`，不能传 `datetime` | 增加流月、流日；出生公历日前或历法范围外为 `None`，大运按物理交运日边界解释。 |
-| `at_moment(solar_moment)` | 东八区无时区 `datetime` | 返回流年、流月、流日及可取得的小运／大运，不增加流时。出生前、节令表范围外或配置不支持为 `None`；须用 celestial 系后端及 HOUR／MINUTE 精度。 |
+| `at_moment(solar_moment)` | 东八区无时区 `datetime` | 返回流年、流月、流日及可取得的小运／大运，不增加流时。出生前、节令表范围外或使用 DAY 精度为 `None`；须用 HOUR／MINUTE 精度。 |
 
 `None` 是整次查询不可取得；返回结果中某种流运的字段为 `None`，则只是缺这一层。
 流运种类从 `bazi.transits` 导入 `TransitKind`；例如 `result.select(TransitKind.LIUNIAN)` 只保留流年，
@@ -83,7 +83,9 @@ print('小运', [(step.xusui, str(step.ganzhi)) for step in chart.xiaoyun[:2]])
 
 每步大运覆盖 `[start_moment, end_moment)`，年份是标签，不表示占据整个标签年；规则见 {doc}`configuration`。
 每次访问 `dayun`／`liunian` 都新建生成器，从头开始读取。把生成器保存到变量后，继续遍历这个变量会从上次位置接着读。
-大运数量取决于后端支持范围。
+大运数量由节气表窗口限定：只生成起点位于 `supported_jie_boundaries()` 首末节时刻之间的大运，
+含首端、不含末端，每步终点可以越界。窗口端点见 {doc}`calendar` 的“查询节气与相邻的节”；
+它不同于日期换算的支持范围。
 `xiaoyun` 则是缓存元组，可反复遍历。排成流运文字的例子在本页{ref}`流运文本 <transits-text>`。
 
 后续按任务选择：原局关系看下节，神煞看{ref}`原局神煞 <relations-shensha>`，

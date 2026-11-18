@@ -29,11 +29,8 @@ from functools import cache
 ROOT: Final[Path] = Path(__file__).resolve().parent
 # 独立资源清单，用于核对 pyproject.toml 与 MANIFEST.in 的声明。
 RUNTIME_DATA: Final[tuple[str, ...]] = (
-  'bazi/calendar/hko_data/data/jieqi_encoded.bin',
-  'bazi/calendar/hko_data/data/lunardate_encoded.bin',
   'bazi/calendar/celestial_data/data/jieqi_moments.txt',
-  'bazi/calendar/celestial_data/data/lunar_years_algo1.txt',
-  'bazi/calendar/celestial_data/data/lunar_years_algo2.txt',
+  'bazi/calendar/celestial_data/data/lunar_years.txt',
   'bazi/calendar/celestial_data/data/equation_of_time.bin',
   'bazi/knowledge_data.json',
 )
@@ -41,22 +38,25 @@ SOURCE_FILES: Final[tuple[str, ...]] = (
   'pyproject.toml', 'MANIFEST.in', 'LICENSE', 'THIRD_PARTY_NOTICES.md',
   'README.md', 'API_CONTRACT.md', 'RELEASE_NOTES.md', 'RELEASING.md', 'Requirements.txt', 'ruff.toml',
   'run_tests.py', 'run_package_checks.py', 'run_release.py',
-  'run_docs.py', 'run_doc_checks.py', 'run_docs_site.py',
+  'run_docs.py', 'run_doc_checks.py', 'run_docs_site.py', 'run_calendar_generation.py',
   'CONTRIBUTING.md',
   '.github/workflows/release.yml', '.github/workflows/on_pull_request.yml',
   '.github/workflows/on_push.yml', '.github/workflows/pypy_compatibility.yml', '.github/workflows/docs-publish.yml',
   '.github/ISSUE_TEMPLATE/knowledge-correction.yml', '.github/ISSUE_TEMPLATE/school-reading.yml',
   'docs/requirements.txt', 'docs/conf.py', 'docs/index.md', 'docs/versioning.md',
-  'docs/_ext/api_reference.py', 'docs/_ext/api_examples.py', 'docs/_ext/house_docstrings.py', 'docs/_ext/typeddict_fields.py',
+  'docs/_ext/api_reference.py', 'docs/_ext/api_examples.py', 'docs/_ext/house_docstrings.py',
   'docs/_ext/knowledge_catalog.py', 'docs/_ext/source_links.py',
   'docs/_static/documentation.css',
   'docs/guides/quickstart.md', 'docs/guides/cli.md', 'docs/guides/configuration.md',
+  'docs/guides/calendar.md',
   'docs/guides/relations-transits.md', 'docs/guides/integration.md', 'docs/guides/knowledge.md',
   'docs/guides/rule-coverage.md',
   'docs/catalog/index.rst', 'docs/catalog/objects.rst',
   'docs/catalog/sources.rst', 'docs/catalog/entries.rst', 'docs/catalog/criteria.rst',
   'docs/catalog/topics.rst', 'docs/catalog/viewpoints.rst', 'docs/catalog/filters.rst',
   'bazi/py.typed', 'bazi/calendar/celestial_data/SCHEMA.md',
+  'tests/calendar/hko_data/data/jieqi_encoded.bin',
+  'tests/calendar/hko_data/data/lunardate_encoded.bin',
 )
 
 ENVIRONMENT_ROLES: Final[tuple[str, ...]] = (
@@ -244,7 +244,6 @@ def sha256(path: Path) -> str:
 def source_files(root: Path) -> tuple[str, ...]:
   files = set(SOURCE_FILES) | set(RUNTIME_DATA)
   files.update(path.relative_to(root).as_posix() for path in (root / 'bazi').rglob('*.py'))
-  files.update(f'bazi/calendar/hko_data/data/{year}.txt' for year in range(1901, 2101))
   for path in (root / 'tests').rglob('*'):
     if path.suffix in ('.py', '.ini', '.txt', '.json') and '__pycache__' not in path.parts:
       files.add(path.relative_to(root).as_posix())

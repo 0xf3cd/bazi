@@ -9,7 +9,7 @@ import pytest
 from bazi.analyzer.relationship import RelationshipAnalyzer
 from bazi.bazi import Bazi
 from bazi.bazi_chart import BaziChart
-from bazi.calendar import calendar_utils_of
+from bazi.calendar import utils
 from bazi.calendar.solar_time import apparent_solar_datetime
 from bazi.chart_text import chart_text
 from bazi.defines import Dizhi, Ganzhi, Jieqi, Tiangan
@@ -22,11 +22,6 @@ ZHONGQI_MONTHS = (
   (Jieqi.雨水, 1), (Jieqi.春分, 2), (Jieqi.谷雨, 3), (Jieqi.小满, 4),
   (Jieqi.夏至, 5), (Jieqi.大暑, 6), (Jieqi.处暑, 7), (Jieqi.秋分, 8),
   (Jieqi.霜降, 9), (Jieqi.小雪, 10), (Jieqi.冬至, 11), (Jieqi.大寒, 12),
-)
-BACKEND_PRECISIONS = (
-  ('hko', 'day'),
-  ('celestial', 'day'), ('celestial', 'hour'), ('celestial', 'minute'),
-  ('celestial-algo2', 'day'), ('celestial-algo2', 'hour'), ('celestial-algo2', 'minute'),
 )
 MONTH_BRANCHES = '寅卯辰巳午未申酉戌亥子丑'
 HOUR_BRANCHES = '子丑寅卯辰巳午未申酉戌亥'
@@ -61,15 +56,15 @@ def _grain_start(moment: datetime, precision: str) -> datetime:
   return max(candidate for candidate in candidates if candidate <= moment)
 
 
-@pytest.mark.parametrize('backend,precision', BACKEND_PRECISIONS)
+@pytest.mark.parametrize('precision', ['day', 'hour', 'minute'])
 @pytest.mark.parametrize('zhongqi,month', ZHONGQI_MONTHS)
-def test_twelve_zhongqi_grain_boundaries(backend: str, precision: str, zhongqi: Jieqi, month: int) -> None:
-  boundary = calendar_utils_of(backend).jieqi_moment(2024, zhongqi)
+def test_twelve_zhongqi_grain_boundaries(precision: str, zhongqi: Jieqi, month: int) -> None:
+  boundary = utils.jieqi_moment(2024, zhongqi)
   start = _grain_start(boundary, precision)
   unit = timedelta(days=1) if precision == 'day' else timedelta(hours=2) if precision == 'hour' else timedelta(minutes=1)
   for birth, advanced in ((start - timedelta(minutes=1), False), (start, True),
                           (boundary, True), (start + unit, True)):
-    chart = BaziChart(Bazi.create(birth, 'male', BaziConfig.from_values(backend=backend, precision=precision)))
+    chart = BaziChart(Bazi.create(birth, 'male', BaziConfig.from_values(precision=precision)))
     year = Tiangan.癸 if month == 12 else Tiangan.甲
     effective_month = month % 12 + 1 if advanced else month
     hour = Dizhi(HOUR_BRANCHES[(birth.hour + 1) // 2 % 12])
@@ -80,13 +75,13 @@ def test_twelve_zhongqi_grain_boundaries(backend: str, precision: str, zhongqi: 
     assert chart.minggong is chart.minggong
 
 
-@pytest.mark.parametrize('backend,precision', BACKEND_PRECISIONS)
+@pytest.mark.parametrize('precision', ['day', 'hour', 'minute'])
 @pytest.mark.parametrize('jie,month', [(Jieqi.立春, 1), (Jieqi.清明, 3), (Jieqi.小寒, 12)])
-def test_opening_jie_keeps_effective_month(backend: str, precision: str, jie: Jieqi, month: int) -> None:
-  boundary = calendar_utils_of(backend).jieqi_moment(2024, jie)
+def test_opening_jie_keeps_effective_month(precision: str, jie: Jieqi, month: int) -> None:
+  boundary = utils.jieqi_moment(2024, jie)
   start = _grain_start(boundary, precision)
   for birth, reached in ((start - timedelta(minutes=1), False), (start, True), (boundary, True)):
-    chart = BaziChart(Bazi.create(birth, 'female', BaziConfig.from_values(backend=backend, precision=precision)))
+    chart = BaziChart(Bazi.create(birth, 'female', BaziConfig.from_values(precision=precision)))
     year = Tiangan.癸 if month == 12 or (month == 1 and not reached) else Tiangan.甲
     hour = Dizhi(HOUR_BRANCHES[(birth.hour + 1) // 2 % 12])
     assert chart.bazi.year_pillar.tiangan is year
@@ -107,7 +102,7 @@ def test_dahan_real_chart_retains_natal_year() -> None:
 
 
 def test_hour_zhongqi_crosses_midnight() -> None:
-  midnight_boundary = calendar_utils_of('celestial').jieqi_moment(2022, Jieqi.雨水)
+  midnight_boundary = utils.jieqi_moment(2022, Jieqi.雨水)
   assert midnight_boundary == datetime(2022, 2, 19, 0, 42, 59)
   for birth, reached in (
     (datetime.combine(midnight_boundary.date(), time.min) - timedelta(hours=1, minutes=1), False),
@@ -125,7 +120,7 @@ def test_hour_zhongqi_crosses_midnight() -> None:
 @pytest.mark.parametrize('precision', ['hour', 'minute'])
 def test_location_zhongqi_uses_apparent_grain(precision: str) -> None:
   zone = timezone(timedelta(hours=8))
-  boundary = calendar_utils_of('celestial').jieqi_moment(2024, Jieqi.谷雨)
+  boundary = utils.jieqi_moment(2024, Jieqi.谷雨)
   longitude = 0.1
   apparent_boundary = apparent_solar_datetime(boundary.replace(tzinfo=zone), longitude)
   start = _grain_start(apparent_boundary, precision)
@@ -161,12 +156,12 @@ def test_hour_source_ignores_day_rollover(precision: str, birth: str, hour: Dizh
     assert charts[0].bazi.day_pillar != charts[1].bazi.day_pillar
 
 
-@pytest.mark.parametrize('backend,precision', BACKEND_PRECISIONS)
+@pytest.mark.parametrize('precision', ['day', 'hour', 'minute'])
 @pytest.mark.parametrize('birth,year,month', [
   ('1901-02-19 12:00', Tiangan.辛, 2), ('2099-12-31 12:00', Tiangan.己, 12),
 ])
-def test_auxiliary_at_real_window_endpoints(backend: str, precision: str, birth: str, year: Tiangan, month: int) -> None:
-  chart = BaziChart(Bazi.create(birth, 'male', BaziConfig.from_values(backend=backend, precision=precision)))
+def test_auxiliary_at_real_window_endpoints(precision: str, birth: str, year: Tiangan, month: int) -> None:
+  chart = BaziChart(Bazi.create(birth, 'male', BaziConfig.from_values(precision=precision)))
   # 1901 雨水 is 15:45; DAY owns it all day, HOUR/MINUTE do not at noon.
   effective_month = 1 if birth.startswith('1901') and precision != 'day' else month
   assert chart.minggong == _expected(year, effective_month, Dizhi.午)
@@ -188,12 +183,6 @@ def test_location_hour_ignores_rollover(precision: str) -> None:
     assert chart.bazi.solar_datetime.date() == datetime(2024, 4, 10).date()
     assert chart.minggong == _expected(Tiangan.甲, 3, Dizhi.子)
   assert charts[0].bazi.day_pillar != charts[1].bazi.day_pillar
-
-
-@pytest.mark.parametrize('precision', ['hour', 'minute'])
-def test_hko_still_rejects_subday_precision(precision: str) -> None:
-  with pytest.raises(ValueError, match='needs real jieqi moments'):
-    Bazi.create('2024-04-10 12:00', 'male', BaziConfig.from_values(backend='hko', precision=precision))
 
 
 @pytest.mark.parametrize('located', [False, True])

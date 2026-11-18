@@ -40,10 +40,12 @@ def test_entry_attribute_names_its_module(name: str, module: str) -> None:
     getattr(bazi, name)
 
 
-def test_unknown_attribute_has_no_hint() -> None:
+@pytest.mark.parametrize('module_name', ['bazi', 'bazi.calendar'])
+def test_unknown_attribute_has_no_hint(module_name: str) -> None:
+  module = importlib.import_module(module_name)
   with pytest.raises(AttributeError) as error:
-    bazi.not_a_name # noqa: B018
-  assert str(error.value) == "module 'bazi' has no attribute 'not_a_name'"
+    module.not_a_name # noqa: B018 - Check that attribute access raises.
+  assert str(error.value) == f"module '{module_name}' has no attribute 'not_a_name'"
 
 
 @pytest.mark.parametrize('name,entry', [('chart_text', 'chart_text'), ('cli', 'main')])

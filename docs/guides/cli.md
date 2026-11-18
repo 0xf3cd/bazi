@@ -30,7 +30,7 @@ bazi chart --birth-time "1990-05-17 10:30" --gender 女 --output chart.txt
 需要真太阳时，传带时区出生时刻，
 用 `--longitude` 给出经度，并选 `hour` 或 `minute` 精度；
 IANA 时区需要系统时区数据库，缺少时可安装 `tzdata`。合法输入与时间含义见 {doc}`configuration`。
-CLI 可选精度、经度和民用时区，其他历法后端、换日与流派字段使用 Python API 配置，不能作为 CLI 选项传入。
+CLI 可选精度、经度和民用时区，换日与流派字段使用 Python API 配置，不能作为 CLI 选项传入。
 
 命盘中的十神百分比只统计三个非日主明干与四支主气位置，不代表旺衰或力量。
 

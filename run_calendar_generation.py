@@ -1,23 +1,8 @@
-# Copyright (C) 2026 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
-# bazi/calendar/celestial_data/generator.py
-#
-# 按 SCHEMA.md 的冻结契约，用 celestial-calendar Python 包重建 celestial_data/data/ 中的表。
-#
-# 本模块仅供离线重建；运行时 loader.py 只用纯 Python 读取已提交表，不得导入 celestial_calendar。
-# 与 HKO 的离线 encoder.py 和运行时 decoder.py 采用相同分工。
-#
-# 在仓库根目录运行，不从安装包运行：
-#   python -m bazi.calendar.celestial_data.generator
-# 比较候选均时差表时，输出到仓外目录，不覆盖随库表：
-#   python -m bazi.calendar.celestial_data.generator \
-#     --eot-only \
-#     --output-dir ../bazi-calendar-check
-#   cmp ../bazi-calendar-check/equation_of_time.bin \
-#     bazi/calendar/celestial_data/data/equation_of_time.bin
-
 '''离线重建 celestial 历法数据。
 
-main 是源码维护入口，不属于安装包的使用流程；运行时由 loader 读取已提交数据。'''
+在仓库根目录运行 `python run_calendar_generation.py`，需要固定版本 celestial-calendar。
+用 `--eot-only --output-dir <目录>` 可只生成候选均时差表，不覆盖随库数据。
+数据契约见 `bazi/calendar/celestial_data/SCHEMA.md`；运行时由 loader 读取已提交数据。'''
 
 import argparse
 import hashlib
@@ -30,7 +15,7 @@ from typing import Final
 
 import celestial_calendar as celestial
 
-from ...defines import Ganzhi, Jieqi
+from bazi.defines import Ganzhi, Jieqi
 
 
 # ---------------------------------------------------------------------------
@@ -43,7 +28,7 @@ RELEASE_ASSET: Final[str] = 'celestial-calendar==0.6.1 / PyPI wheel'
 JIEQI_START_YEAR: Final[int] = 1901
 JIEQI_END_YEAR:   Final[int] = 2200
 LUNAR_START_YEAR: Final[int] = 1901
-LUNAR_END_YEAR:   Final[int] = 2099 # 两算法均限制在此窗口；algo2 原生支持 [410, 2500]。
+LUNAR_END_YEAR:   Final[int] = 2099
 
 EXPECTED_JIEQI_ROWS: Final[int] = (JIEQI_END_YEAR - JIEQI_START_YEAR + 1) * 24
 EXPECTED_LUNAR_ROWS: Final[int] = LUNAR_END_YEAR - LUNAR_START_YEAR + 1
@@ -145,23 +130,19 @@ def _encode_days_counts(days_counts: tuple[int, ...]) -> int:
   return bits
 
 
-def _gen_lunar_rows(algo: int) -> list[LunarRow]:
-  assert algo in (1, 2)
-
-  algorithm: celestial.LunarAlgorithm = (
-    celestial.LunarAlgorithm.ALGO1 if algo == 1 else celestial.LunarAlgorithm.ALGO2
-  )
+def _gen_lunar_rows() -> list[LunarRow]:
+  algorithm: celestial.LunarAlgorithm = celestial.LunarAlgorithm.ALGO1
   year_range: celestial.LunarYearRange = celestial.supported_lunar_year_range(algorithm)
   if year_range.start > LUNAR_START_YEAR or year_range.end < LUNAR_END_YEAR:
     raise RuntimeError(
-      f'algo{algo} natively covers [{year_range.start}, {year_range.end}], '
+      f'ALGO1 natively covers [{year_range.start}, {year_range.end}], '
       f'which does not contain the required window [{LUNAR_START_YEAR}, {LUNAR_END_YEAR}].'
     )
 
   sexagenary_cycle: Final[list[Ganzhi]] = Ganzhi.list_sexagenary_cycle()
 
   rows: list[LunarRow] = []
-  for lunar_year in range(LUNAR_START_YEAR, LUNAR_END_YEAR + 1): # 限制为公共窗口，见 LUNAR_END_YEAR。
+  for lunar_year in range(LUNAR_START_YEAR, LUNAR_END_YEAR + 1):
     info: celestial.LunarYearInfo = celestial.lunar_year_info(algorithm, lunar_year)
     leap_month: int = 0 if info.leap_month is None else info.leap_month
     days_counts: tuple[int, ...] = info.month_lengths
@@ -171,7 +152,7 @@ def _gen_lunar_rows(algo: int) -> list[LunarRow]:
     # 位图须可往返解码，且不能有多余高位。
     if len(days_counts) != month_count or _decode_month_len_bits(month_len_bits, month_count) != days_counts:
       raise RuntimeError(
-        f'Cross-check gate failed: algo{algo} {lunar_year} bitmask 0x{month_len_bits:04x} '
+        f'Cross-check gate failed: {lunar_year} bitmask 0x{month_len_bits:04x} '
         f'does not round-trip through {days_counts}.'
       )
 
@@ -186,7 +167,7 @@ def _gen_lunar_rows(algo: int) -> list[LunarRow]:
 
   # 生成记录后核对行数。
   if len(rows) != EXPECTED_LUNAR_ROWS:
-    raise RuntimeError(f'Row-count gate failed: {len(rows)} lunar rows for algo{algo}, expected {EXPECTED_LUNAR_ROWS}.')
+    raise RuntimeError(f'Row-count gate failed: {len(rows)} lunar rows, expected {EXPECTED_LUNAR_ROWS}.')
   return rows
 
 
@@ -235,7 +216,7 @@ def _common_header(generated_on: date, source_api: str) -> list[str]:
     '# schema_version: 2',
     f'# celestial_version: {CELESTIAL_VERSION}',
     f'# release_asset: {RELEASE_ASSET}',
-    '# generated_by: bazi/calendar/celestial_data/generator.py',
+    '# generated_by: run_calendar_generation.py',
     f'# generated_on: {generated_on.isoformat()}',
     f'# source_api: {source_api}',
   ]
@@ -269,27 +250,17 @@ def _render_jieqi_table(rows: list[JieqiRow], generated_on: date) -> str:
   return '\n'.join(header + lines) + '\n'
 
 
-def _render_lunar_table(rows: list[LunarRow], algo: int, generated_on: date) -> str:
+def _render_lunar_table(rows: list[LunarRow], generated_on: date) -> str:
   # 机器可读键行只放值，叙述放在井号加两个空格的续行，避免加载器将说明解析为值。
   # 各列说明挂在 columns 续行；若另写 `# leap_month: 1..12, or 0 when ...`，
   # 加载器会把整句作为来源键值，见 SCHEMA.md。
-  algo_note: Final[dict[int, str]] = {
-    1: 'HKO official almanac lineage -- the default.',
-    2: 'Leap-second aware UTC+8 via jde_to_utc8, celestial #84.',
-  }
-  timescale_note: Final[dict[int, str]] = {
-    1: 'HKO official civil dates (no astronomical timescale involved)',
-    2: 'leap-second aware UTC+08:00',
-  }
   header: list[str] = [
-    f'# celestial-calendar lunar year table (algo{algo})',
+    '# celestial-calendar lunar year table (algo1)',
     *_common_header(generated_on, 'celestial_calendar.lunar_year_info(algorithm, lunar_year)'),
-    f'# algo: {algo}',
-    f'#   {algo_note[algo]}',
-    f'# timescale: {timescale_note[algo]}',
-    f'# year_range: {LUNAR_START_YEAR}..{LUNAR_END_YEAR} inclusive -- BOTH algos clamped to this window.',
-    '#   algo2 natively reports [410, 2500].  Clamping keeps one',
-    '#   range contract for both algos.  Widening is a follow-up issue.',
+    '# algo: 1',
+    '#   HKO official almanac lineage.',
+    '# timescale: HKO official civil dates (no astronomical timescale involved)',
+    f'# year_range: {LUNAR_START_YEAR}..{LUNAR_END_YEAR} inclusive',
     '# columns: lunar_year first_solar_date leap_month month_len_bits days_counts ganzhi',
     '#   leap_month -- 1..12, or 0 when the year has no leap month.  hko_data spells the same',
     '#   thing as `None`; the loader normalizes.',
@@ -339,7 +310,7 @@ def main() -> None:
   parser.add_argument('--output-dir', type=Path, help='将表写入此目录')
   args = parser.parse_args()
 
-  data_dir: Path = args.output_dir or Path(__file__).parent / 'data'
+  data_dir: Path = args.output_dir or Path(__file__).parent / 'bazi/calendar/celestial_data/data'
   data_dir.mkdir(parents=True, exist_ok=True)
 
   eot_samples: tuple[int, ...] = _gen_eot_samples()
@@ -352,8 +323,7 @@ def main() -> None:
     return
 
   jieqi_rows: list[JieqiRow] = _gen_jieqi_rows()
-  algo1_rows: list[LunarRow] = _gen_lunar_rows(algo=1)
-  algo2_rows: list[LunarRow] = _gen_lunar_rows(algo=2)
+  lunar_rows: list[LunarRow] = _gen_lunar_rows()
 
   generated_on: date = date.today()
   _write_table(
@@ -362,13 +332,8 @@ def main() -> None:
     EXPECTED_JIEQI_ROWS,
   )
   _write_table(
-    data_dir / 'lunar_years_algo1.txt',
-    _render_lunar_table(algo1_rows, 1, generated_on),
-    EXPECTED_LUNAR_ROWS,
-  )
-  _write_table(
-    data_dir / 'lunar_years_algo2.txt',
-    _render_lunar_table(algo2_rows, 2, generated_on),
+    data_dir / 'lunar_years.txt',
+    _render_lunar_table(lunar_rows, generated_on),
     EXPECTED_LUNAR_ROWS,
   )
 

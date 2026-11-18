@@ -321,10 +321,6 @@ def run_coverage(test_f: Callable[[], int]) -> int:
 
   cov = coverage.Coverage(
     source=[str(Path(__file__).parent / 'bazi')],
-    omit=[
-      str(Path(__file__).parent / 'bazi/calendar/hko_data/encoder.py'), # 离线生成工具。
-      str(Path(__file__).parent / 'bazi/calendar/celestial_data/generator.py'), # 离线生成工具。
-    ]
   )
   cov.start()
   ret_code: int = test_f()

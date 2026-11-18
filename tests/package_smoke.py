@@ -9,7 +9,7 @@ import json
 import os
 import sys
 
-from datetime import datetime, UTC
+from datetime import date, datetime, UTC
 from pathlib import Path
 from typing import Any
 
@@ -89,14 +89,14 @@ def main() -> None:
 
   import bazi
   check(Path(bazi.__file__).resolve().parent == package_root, 'Root import source leakage')
-  check('bazi.bazi_chart' not in sys.modules and 'bazi.calendar.hko_data_utils' not in sys.modules, 'Root import eagerly loaded chart/data')
+  check('bazi.bazi_chart' not in sys.modules and 'bazi.calendar.utils' not in sys.modules, 'Root import eagerly loaded chart/data')
   check('bazi.knowledge' not in sys.modules, 'Root import eagerly loaded interpretation data')
   check('bazi.context_matching' not in sys.modules, 'Root import eagerly loaded context matcher')
 
   from bazi.bazi import Bazi
   from bazi.bazi_chart import BaziChart
   from bazi.school import BaziConfig
-  from bazi.calendar import CalendarBackend
+  from bazi.calendar.utils import to_lunar, to_date
   from bazi.calendar.solar_time import apparent_solar_datetime
   from bazi.transit_chart import TransitChart
   from bazi.transits import TransitKind
@@ -125,17 +125,16 @@ def main() -> None:
   check(len(EOT_READS) == 1, 'Repeated apparent-solar conversion reread the EOT table')
   print('PASS installed lazy EOT resource and location chart')
 
-  # Each backend must read its installed calendar resources during a real query.
-  for backend in CalendarBackend:
-    chart = BaziChart(Bazi.create(datetime(2000, 1, 1, 12), 'male', BaziConfig.from_values(backend=backend)))
-    check(chart.bazi.config.backend is backend and len(chart.bazi.pillars) == 4, 'Installed chart input mismatch')
-    transits = TransitChart(chart).at_year(2024)
-    if transits is None:
-      raise RuntimeError('Missing transits')
-    analysis = RelationshipAnalyzer(chart)
-    check(bool(analysis.at_birth.shensha), 'Missing natal analysis')
-    check(bool(analysis.transits.shensha(transits.select(TransitKind.LIUNIAN))), 'Missing transit analysis')
-    print(f'PASS backend={backend.value} chart/transits/analysis')
+  chart = BaziChart(Bazi.create(datetime(2000, 1, 1, 12), 'male'))
+  check(len(chart.bazi.pillars) == 4, 'Installed chart input mismatch')
+  transits = TransitChart(chart).at_year(2024)
+  if transits is None:
+    raise RuntimeError('Missing transits')
+  analysis = RelationshipAnalyzer(chart)
+  check(bool(analysis.at_birth.shensha), 'Missing natal analysis')
+  check(bool(analysis.transits.shensha(transits.select(TransitKind.LIUNIAN))), 'Missing transit analysis')
+  check(to_date(to_lunar(date(2023, 3, 22))) == date(2023, 3, 22), 'Installed lunar conversion failed')
+  print('PASS installed calendar/chart/transits/analysis')
 
   check(DEFAULT_SOURCE_PATH == package_root / 'knowledge_data.json', 'Installed default source path mismatch')
   knowledge = KnowledgeBase.load()
@@ -165,7 +164,7 @@ def main() -> None:
     if name == 'bazi' or name.startswith('bazi.'):
       origin = getattr(module, '__file__', None)
       check(origin is not None and Path(origin).resolve().is_relative_to(package_root), f'Submodule source leakage: {name}')
-  check(not {'celestial_calendar', 'requests', 'bazi.calendar.celestial_data.generator', 'bazi.calendar.hko_data.encoder'} & sys.modules.keys(), 'Optional offline module imported')
+  check(not {'celestial_calendar', 'requests'} & sys.modules.keys(), 'Optional offline dependency imported')
   check(WRITE_ATTEMPTS == ['open'], 'Runtime attempted a write after the positive control')
   print(f'PASS installed smoke: {len(roster)} files, optimized={not __debug__}, origin={package_root}')
 

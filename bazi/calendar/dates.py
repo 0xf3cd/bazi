@@ -7,21 +7,19 @@ CalendarType 区分历法，CalendarDate 承载日期，JieqiTime 与 GanzhiYear
 from dataclasses import dataclass
 from datetime import date, datetime
 from enum import Enum
-from typing import NamedTuple, TypedDict
+from typing import NamedTuple
 
 from ..common import check_declared_types
 from ..defines import Dizhi, Ganzhi, Jieqi
 
 
-class LunarYearInfo(TypedDict):
-  '''两个历法后端共用的农历年信息类型。
-
-  各月日数用可变列表保存，加载器负责在查询时返回副本。
-  '''
+@dataclass(frozen=True)
+class LunarYearInfo:
+  '''农历年表中的不可变记录。'''
   first_solar_day: date        # 农历年首日的公历日期。
   leap: bool                   # 是否有闰月。
   leap_month: int | None       # 无闰月为 None，否则为闰月月份。
-  days_counts: list[int]       # 各月日数，平年十二项，闰年十三项。
+  days_counts: tuple[int, ...] # 各月日数，平年十二项，闰年十三项。
   ganzhi: Ganzhi               # 此年的干支。
 
 
@@ -104,7 +102,7 @@ class CalendarDate:
 
 
 class JieqiTime(NamedTuple):
-  '''节气及其时刻；时刻精度随后端数据而定。'''
+  '''节气及其时刻。'''
   jieqi:  Jieqi
   moment: datetime
 

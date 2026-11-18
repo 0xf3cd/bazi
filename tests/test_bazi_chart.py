@@ -11,7 +11,7 @@ import pytest
 
 from bazi.defines import Tiangan, Dizhi, Ganzhi, Jieqi, Wuxing, Yinyang, Shishen, ShierZhangsheng
 from bazi.bazi import BaziGender, Bazi
-from bazi.calendar import CalendarBackend, calendar_utils_of
+from bazi.calendar import utils
 from bazi.school import (
   BaziPrecision, DayRollover, DayunYearRule, BaziConfig, BaziSchool, PeiouXingDef, DEFAULT_CONFIG,
 )
@@ -348,7 +348,7 @@ def test_dayun_order(rng: random.Random) -> None:
 
 def test_dayun_start_moment() -> None:
   # Golden values from 测测, kept as provenance: 2009-12-30 / 1985-03-05 / 1993-05-25.
-  # The expectations are the celestial backend's answers, pinned to the shipped tables:
+  # The expectations are pinned to the shipped tables:
   # the 3-days-to-1-year rule amplifies jieqi-moment drift ~122x (1s -> ~2min), so any
   # re-bake that moves a jieqi goes red here -- and trips the frozen table hash first.
   delta: timedelta = timedelta(seconds=1)
@@ -388,29 +388,17 @@ def test_dayun_start_before_true_jieqi_moment() -> None:
   assert len(reverse.xiaoyun) == 1
 
 
-def test_dayun_start_diverges_by_backend() -> None:
-  '''Celestial and HKO share 立春/惊蛰 ownership; HKO's midnight placeholder changes the start.'''
+def test_dayun_start_uses_real_jieqi_moment() -> None:
   delta: timedelta = timedelta(seconds=1)
 
-  cel: BaziChart = BaziChart(Bazi.create(datetime(2000, 2, 4, 10, 0), BaziGender.MALE,
-                                         BaziConfig.from_values(backend='celestial')))
-  hko: BaziChart = BaziChart(Bazi.create(datetime(2000, 2, 4, 10, 0), BaziGender.MALE,
-                                         BaziConfig.from_values(backend='hko')))
+  chart = BaziChart(Bazi.create(datetime(2000, 2, 4, 10, 0), BaziGender.MALE))
+  assert [str(p) for p in chart.bazi.pillars] == ['庚辰', '戊寅', '壬辰', '乙巳']
 
-  # Same pillars on both backends; only the dayun start (and everything it feeds) diverges.
-  assert [str(p) for p in cel.bazi.pillars] == ['庚辰', '戊寅', '壬辰', '乙巳']
-  assert list(hko.bazi.pillars) == list(cel.bazi.pillars)
-
-  assert cel.dayun_start_moment == pytest.approx(
+  assert chart.dayun_start_moment == pytest.approx(
     datetime(2010, 2, 25, 7, 9, 5),
     abs=delta,
   )
-  assert hko.dayun_start_moment == pytest.approx(
-    datetime(2009, 12, 12, 17, 20),
-    abs=delta,
-  )
-  assert next(cel.dayun).ganzhi_year == 2010
-  assert next(hko.dayun).ganzhi_year == 2009
+  assert next(chart.dayun).ganzhi_year == 2010
 
 
 def test_dayun_ganzhi() -> None:
@@ -470,7 +458,6 @@ def test_dayun_timeline_uses_each_boundary_moment() -> None:
 def test_dayun_boundary_before_lichun_old_year() -> None:
   chart = BaziChart(Bazi.create('2045-10-07 05:29', 'female'))
   third_dayun = next(itertools.islice(chart.dayun, 2, None))
-  utils = calendar_utils_of(chart.bazi.config.backend)
 
   assert third_dayun.start_moment == datetime(2066, 2, 3, 12, 1, 46, 666667)
   assert utils.jieqi_moment(2066, Jieqi.立春) == datetime(2066, 2, 3, 20, 49, 49)
@@ -500,7 +487,6 @@ def test_dayun_year_labels_match_lichun_oracle() -> None:
   rng = random.Random(132)
   for _ in range(500):
     chart = BaziChart(Bazi.random(rng=rng))
-    utils = calendar_utils_of(chart.bazi.config.backend)
 
     dayuns = list(itertools.islice(chart.dayun, 12))
     assert len(dayuns) == 12
@@ -541,21 +527,12 @@ def test_year_rules_share_physical_timeline() -> None:
 def test_dayun_generator_stops_at_jie_boundary() -> None:
   earliest = BaziChart(Bazi.create('1901-02-19 12:00', 'male'))
   latest = BaziChart(Bazi.create('2099-12-20 12:00', 'male'))
-  late_hko = BaziChart(Bazi.create(
-    '2099-12-20 12:00',
-    'male',
-    BaziConfig.from_values(backend='hko'),
-  ))
 
   assert len(tuple(earliest.dayun)) == 30
   latest_dayuns = tuple(latest.dayun)
-  latest_utils = calendar_utils_of(latest.bazi.config.backend)
-  _, latest_jie_end = latest_utils.supported_jie_boundaries()
+  _, latest_jie_end = utils.supported_jie_boundaries()
   assert len(latest_dayuns) == 10
   assert latest_dayuns[-1].end_moment > latest_jie_end
-  assert tuple(late_hko.dayun) == ()
-  with pytest.raises(ValueError, match='No Dayun starts within the supported Jie range'):
-    _ = late_hko.xiaoyun
 
 
 def test_xiaoyun() -> None:
@@ -577,8 +554,8 @@ def test_xiaoyun() -> None:
   __check(Bazi.create(datetime(2017, 4, 16, 2, 23), BaziGender.FEMALE),
             '甲寅 乙卯 丙辰 丁巳 戊午 己未 庚申')
 
-  # Directed: celestial moves this man's dayun start past 立春 1985, so xiaoyun gains a year
-  # (HKO gives '辛卯' alone); china95 lists exactly '辛卯 壬辰' for the same birth.
+  # The dayun starts past 立春 1985, so xiaoyun has two entries.
+  # china95 lists exactly '辛卯 壬辰' for this birth.
   __check(Bazi.create(datetime(1984, 4, 2, 4, 2), BaziGender.MALE),
             '辛卯 壬辰')
 
@@ -638,34 +615,32 @@ class _ChartSubclass(BaziChart):
   ('gender', 'MALE'),
   ('precision', 'DAY'),
   ('precision', '天'),
-  ('backend', 'CELESTIAL'),
   ('dayun_year_rule', 'JIE_PROJECTED'),
 ])
 def test_flexible_input_aliases(key: str, value: str) -> None:
-  inputs = {'birth_time': '1984-04-02T04:02:00', 'gender': 'male', 'precision': 'day', 'backend': 'celestial', 'dayun_year_rule': 'jie_projected'}
+  inputs = {'birth_time': '1984-04-02T04:02:00', 'gender': 'male', 'precision': 'day', 'dayun_year_rule': 'jie_projected'}
   inputs[key] = value
   flexible = Bazi.create(
     inputs['birth_time'],
     inputs['gender'],
     BaziConfig.from_values(
       precision=inputs['precision'],
-      backend=inputs['backend'],
       dayun_year_rule=inputs['dayun_year_rule'],
     ),
   )
   assert flexible == Bazi.create('1984-04-02T04:02:00', 'male')
 
 
+@pytest.mark.usefixtures('short_jie_window')
 def test_short_and_fractional_dayun_boundaries() -> None:
   short = BaziChart(Bazi.create(
     '2090-06-01T12:00:00',
     'male',
-    BaziConfig.from_values(backend='hko'),
   ))
   assert tuple(value.ganzhi_year for value in short.dayun) == (2091,)
   fractional = BaziChart(Bazi.create('1984-04-02T04:02:00', 'female'))
   assert next(fractional.dayun).start_moment.microsecond != 0
-  unsupported = BaziChart(Bazi.create('2099-12-20T12:00:00', 'male', BaziConfig.from_values(backend='hko')))
+  unsupported = BaziChart(Bazi.create('2099-12-20T12:00:00', 'male'))
   with pytest.raises(ValueError, match='No Dayun starts within the supported Jie range'):
     _ = unsupported.xiaoyun
 
@@ -683,10 +658,9 @@ def test_random_config(monkeypatch: pytest.MonkeyPatch, upper: bool, birth_time:
     assert isinstance(chart, cls)
     assert chart.bazi == Bazi.create(birth_time, gender, DEFAULT_CONFIG)
     for config in (
-      BaziConfig(backend=CalendarBackend.HKO),
+      BaziConfig(precision=BaziPrecision.HOUR),
       BaziConfig(
         precision=BaziPrecision.MINUTE,
-        backend=CalendarBackend.CELESTIAL_ALGO2,
         school=BaziSchool(day_rollover=DayRollover.ZIZHENG),
         dayun_year_rule=DayunYearRule.FIXED_DECADE,
       ),
@@ -703,13 +677,6 @@ def test_random_config(monkeypatch: pytest.MonkeyPatch, upper: bool, birth_time:
 def test_random_rejects_wrong_config(config: object, rng: random.Random) -> None:
   with pytest.raises(TypeError, match='BaziConfig'):
     BaziChart.random(config, rng=rng) # type: ignore
-
-
-@pytest.mark.input_contract('bazi.bazi_chart', 'BaziChart.random')
-@pytest.mark.parametrize('precision', [BaziPrecision.HOUR, BaziPrecision.MINUTE])
-def test_random_rejects_unsupported_config(precision: BaziPrecision, rng: random.Random) -> None:
-  with pytest.raises(ValueError, match='HKO'):
-    BaziChart.random(BaziConfig(precision=precision, backend=CalendarBackend.HKO), rng=rng)
 
 
 @pytest.mark.parametrize('cls', [BaziChart, _ChartSubclass])

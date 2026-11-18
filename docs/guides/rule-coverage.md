@@ -76,7 +76,7 @@
 | 通根与透干 | {py:func}`~bazi.analyzer.facts.tonggen`、{py:func}`~bazi.analyzer.facts.tougan` | 同五行通根例与徐注墓库透干例见两函数的说明。知识目录尚无对应的对象或条目；用法见 {doc}`relations-transits`。 |
 | 四柱节界与换日 | {py:class}`~bazi.bazi.Bazi`；{py:attr}`~bazi.school.BaziConfig.precision`、{py:attr}`~bazi.school.BaziSchool.day_rollover` | {py:class}`~bazi.school.BaziPrecision`、{py:class}`~bazi.school.DayRollover` 与 {doc}`configuration` 说明边界。知识目录不是历法精度或换日出处目录。 |
 | 胎元与命宫附加查询 | {py:attr}`~bazi.bazi_chart.BaziChart.taiyuan`、{py:attr}`~bazi.bazi_chart.BaziChart.minggong`；纯函数在 {py:mod}`~bazi.utils.bazi_utils` | `concept.taiyuan`、`concept.minggong` 区分月柱顺移、掌诀、中气按语、本库执行政策与待核候选。三百日胎元及其他命宫月界未编码；两项只作附加查询，不扩展四柱、配置或其他分析，计算不认证解释。用法见 {doc}`integration`。 |
-| 历法、民用钟与真太阳钟 | {py:attr}`~bazi.school.BaziConfig.backend`；{py:class}`~bazi.calendar.backend.CalendarBackend`、`bazi/calendar/solar_time.py` 与地点输入 | 数据来源、精度及钟的边界见 {doc}`configuration` 和 {py:class}`~bazi.calendar.backend.CalendarBackend` 的说明。逐行历书／天文数据的独立定标不属本页评估。 |
+| 历法、民用钟与真太阳钟 | {py:mod}`~bazi.calendar.utils`、{py:mod}`~bazi.calendar.solar_time` 与地点输入 | 数据来源与支持范围见 {doc}`calendar`，比较精度及钟的边界见 {doc}`configuration`。本页不评估历书和天文数据本身是否准确。 |
 | 配偶星与配偶宫 | {py:attr}`~bazi.school.BaziSchool.peiou_xing_def`；{py:class}`~bazi.school.PeiouXingDef` 与 {py:class}`~bazi.bazi_chart.BaziChart` | 已有 `concept.peiou_xing`、`concept.peiou_gong` 及带原文来源的条目；历史读法、软件默认与适用条件仍须分别读取。 |
 | 交运、小运、大运与流年 | {py:class}`~bazi.bazi_chart.BaziChart`；{py:attr}`~bazi.school.BaziConfig.dayun_year_rule` 与 {py:class}`~bazi.school.DayunYearRule` | 顺逆、间隔折算、物理时刻线与年份标签在源码说明中；当前没有相应专门知识对象。标签规则不能代替物理边界规则。 |
 | 流运查询与关系组合 | {py:mod}`~bazi.transits`、{py:mod}`~bazi.utils.tiangan_utils`、{py:mod}`~bazi.utils.dizhi_utils`、{py:mod}`~bazi.analyzer.relationship` | 查询坐标、候选组合及原局／流运消费者各有语义；复用一张规则表不证明每种使用范围都有同一出处。 |

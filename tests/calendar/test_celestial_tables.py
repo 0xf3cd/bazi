@@ -2,14 +2,14 @@
 # test_celestial_tables.py
 #
 # Parity layers a/b for the committed celestial_data tables (`bazi/calendar/celestial_data/data/`):
-# the tables are checked against hko_data DIRECTLY, not through any protocol implementation
-# -- so the tables are verified before any consumer exists, and a bad table cannot silently
+# the tables are checked against hko_data directly, without runtime date conversion,
+# so the tables are verified before any consumer exists, and a bad table cannot silently
 # poison the charts downstream. The table parser below is deliberately a minimal independent
-# reader (not `loader.py`): writer (`generator.py`), loader (`loader.py`), and this reader
+# reader (not `loader.py`): writer (`run_calendar_generation.py`), loader, and this reader
 # are three independent implementations of the same `SCHEMA.md`, so the schema itself is tested.
 #
 # NOTE: parity proves EQUIVALENCE, not truth (parity 证的是等价性,不是真值). hko_data and
-# celestial algo1 share the HKO official-almanac lineage (official dispositions such as the
+# the lunar table share the HKO official-almanac lineage (official dispositions such as the
 # 2033 issue agree by construction); the truth side is covered by celestial's own
 # HKO x DE441 dual-axis validation (0.525 min).
 
@@ -18,23 +18,21 @@ from pathlib import Path
 from typing import Final, NamedTuple
 
 from bazi.defines import Jieqi, Ganzhi
-from bazi.calendar import hko_data
+
+import hko_data
 
 # NOTE on the import form: the test suite has no `__init__.py`, so pytest (prepend mode)
 # puts this directory itself on sys.path -- the parity data module is imported as a bare
 # sibling module. (`from tests.calendar... import` would NOT work at runtime: a stray
 # regular `tests` package in site-packages shadows the repo's `tests/` directory.)
-from celestial_parity_data import (
-  JIEQI_DATE_DIVERGENCES, ALGO2_DIVERGENT_YEARS,
-)
+from celestial_parity_data import JIEQI_DATE_DIVERGENCES
 
 
 DATA_DIR: Final[Path] = Path(__file__).parents[2] / 'bazi' / 'calendar' / 'celestial_data' / 'data'
 
 
 JIEQI_TABLE_PATH: Final[Path] = DATA_DIR / 'jieqi_moments.txt'
-ALGO1_TABLE_PATH: Final[Path] = DATA_DIR / 'lunar_years_algo1.txt'
-ALGO2_TABLE_PATH: Final[Path] = DATA_DIR / 'lunar_years_algo2.txt'
+LUNAR_TABLE_PATH: Final[Path] = DATA_DIR / 'lunar_years.txt'
 
 
 FIXTURE_DIR: Final[Path] = Path(__file__).parent / 'celestial_fixtures'
@@ -142,8 +140,7 @@ def _load_lunar_table(path: Path) -> tuple[dict[str, str], list[_LunarRow]]:
 
 def test_shipped_tables() -> None:
   for path, expected in ((JIEQI_TABLE_PATH, JIEQI_HEADER_KEYS),
-                         (ALGO1_TABLE_PATH, LUNAR_HEADER_KEYS),
-                         (ALGO2_TABLE_PATH, LUNAR_HEADER_KEYS)):
+                         (LUNAR_TABLE_PATH, LUNAR_HEADER_KEYS)):
     header, _ = _read_table(path)
     assert frozenset(header) == expected, path.name
 
@@ -152,8 +149,7 @@ def test_fixtures() -> None:
   # The fixtures carry one key more and are otherwise the same format, which is the whole
   # point of them: a loader that passes on a fixture is reading the shipped layout.
   for name, expected in (('jieqi_moments.txt', JIEQI_HEADER_KEYS),
-                         ('lunar_years_algo1.txt', LUNAR_HEADER_KEYS),
-                         ('lunar_years_algo2.txt', LUNAR_HEADER_KEYS)):
+                         ('lunar_years.txt', LUNAR_HEADER_KEYS)):
     header, _ = _read_table(FIXTURE_DIR / name)
     assert frozenset(header) == expected | {'fixture'}, name
 
@@ -229,13 +225,13 @@ def test_dates_vs_hko() -> None:
 
 
 # ---------------------------------------------------------------------------
-# The lunar tables themselves: row count, bitmask <-> days_counts round-trip, ganzhi formula.
+# The lunar table: row count, bitmask <-> days_counts round-trip, ganzhi formula.
 
 
 def _check_shape(path: Path) -> list[_LunarRow]:
   header, rows = _load_lunar_table(path)
   assert header['columns'] == 'lunar_year first_solar_date leap_month month_len_bits days_counts ganzhi'
-  assert header['rows'] == '199' # 1901..2099, BOTH algos clamped to this window.
+  assert header['rows'] == '199' # Complete lunar years 1901..2099.
   assert header['year_range'].split(' ')[0] == '1901..2099'
   assert len(rows) == 199
 
@@ -261,18 +257,13 @@ def _check_shape(path: Path) -> list[_LunarRow]:
   return rows
 
 
-def test_algo1_shape() -> None:
-  _check_shape(ALGO1_TABLE_PATH)
+def test_lunar_table_shape() -> None:
+  _check_shape(LUNAR_TABLE_PATH)
 
 
-def test_algo2_shape() -> None:
-  _check_shape(ALGO2_TABLE_PATH)
-
-
-# Layer a: the lunar tables vs hko_data, field by field
+# Layer a: the lunar table vs hko_data, field by field
 # (`first_solar_date` / `leap_month` / `days_counts` / `ganzhi`).
-# algo1 is HKO-lineage and must match 199/199; algo2 diverges on exactly the six
-# whitelisted years (`ALGO2_DIVERGENT_YEARS`).
+# The table is HKO-lineage and must match 199/199.
 
 
 def _hko_differences(rows: list[_LunarRow]) -> dict[int, list[str]]:
@@ -282,63 +273,33 @@ def _hko_differences(rows: list[_LunarRow]) -> dict[int, list[str]]:
   for row in rows:
     hko: hko_data.LunarYearInfo = hko_lunar.get(row.lunar_year)
     diffs: list[str] = []
-    if row.first_solar_date != hko['first_solar_day']:
-      diffs.append(f'first_solar_date {row.first_solar_date} vs HKO {hko["first_solar_day"]}')
+    if row.first_solar_date != hko.first_solar_day:
+      diffs.append(f'first_solar_date {row.first_solar_date} vs HKO {hko.first_solar_day}')
     # hko_data spells "no leap month" as None; the table uses 0. Normalise when comparing.
-    if (row.leap_month if row.leap_month != 0 else None) != hko['leap_month']:
-      diffs.append(f'leap_month {row.leap_month} vs HKO {hko["leap_month"]}')
-    if list(row.days_counts) != hko['days_counts']:
-      diffs.append(f'days_counts {list(row.days_counts)} vs HKO {hko["days_counts"]}')
-    if row.ganzhi != str(hko['ganzhi']):
-      diffs.append(f'ganzhi {row.ganzhi} vs HKO {hko["ganzhi"]}')
+    if (row.leap_month if row.leap_month != 0 else None) != hko.leap_month:
+      diffs.append(f'leap_month {row.leap_month} vs HKO {hko.leap_month}')
+    if row.days_counts != hko.days_counts:
+      diffs.append(f'days_counts {row.days_counts} vs HKO {hko.days_counts}')
+    if row.ganzhi != str(hko.ganzhi):
+      diffs.append(f'ganzhi {row.ganzhi} vs HKO {hko.ganzhi}')
     if diffs:
       differences[row.lunar_year] = diffs
   return differences
 
 
-def test_algo1_matches_hko_strictly() -> None:
-  _, rows = _load_lunar_table(ALGO1_TABLE_PATH)
+def test_lunar_table_matches_hko_strictly() -> None:
+  _, rows = _load_lunar_table(LUNAR_TABLE_PATH)
   assert len(rows) == 199
   # 199/199: any field-level difference in any year fails the test, with details.
   assert _hko_differences(rows) == {}
 
 
-def test_algo2_diverges_on_whitelist_years() -> None:
-  _, rows = _load_lunar_table(ALGO2_TABLE_PATH)
-  assert len(rows) == 199
-  differences: dict[int, list[str]] = _hko_differences(rows)
-  assert sorted(differences) == list(ALGO2_DIVERGENT_YEARS)
-  assert len(differences) == 6
-
-
 def test_ganzhi_matches_hko() -> None:
   hko_lunar: hko_data.DecodedLunarYears = hko_data.DecodedLunarYears()
-  for path in (ALGO1_TABLE_PATH, ALGO2_TABLE_PATH):
-    _, rows = _load_lunar_table(path)
-    mismatches: list[str] = [
-      f'{row.lunar_year}: {row.ganzhi} vs HKO {hko_lunar.get(row.lunar_year)["ganzhi"]}'
-      for row in rows
-      if row.ganzhi != str(hko_lunar.get(row.lunar_year)['ganzhi'])
-    ]
-    assert mismatches == [] # 199/199 for both tables.
-
-
-# The documentary algo1 x algo2 diff: since algo1 matches HKO 199/199, algo2's
-# differences from HKO are exactly its differences from algo1 -- the same six years
-# as celestial `src/test/lunar/diff_test.cpp`.
-
-
-def test_divergent_years() -> None:
-  _, algo1_rows = _load_lunar_table(ALGO1_TABLE_PATH)
-  _, algo2_rows = _load_lunar_table(ALGO2_TABLE_PATH)
-  assert [r.lunar_year for r in algo1_rows] == [r.lunar_year for r in algo2_rows]
-
-  divergent_years: list[int] = []
-  for algo1_row, algo2_row in zip(algo1_rows, algo2_rows):
-    # The ganzhi column derives from the lunar year alone, so it never diverges.
-    assert algo1_row.ganzhi == algo2_row.ganzhi
-    if (algo1_row.first_solar_date, algo1_row.leap_month, algo1_row.month_len_bits, algo1_row.days_counts) != \
-       (algo2_row.first_solar_date, algo2_row.leap_month, algo2_row.month_len_bits, algo2_row.days_counts):
-      divergent_years.append(algo1_row.lunar_year)
-
-  assert divergent_years == list(ALGO2_DIVERGENT_YEARS)
+  _, rows = _load_lunar_table(LUNAR_TABLE_PATH)
+  mismatches: list[str] = [
+    f'{row.lunar_year}: {row.ganzhi} vs HKO {hko_lunar.get(row.lunar_year).ganzhi}'
+    for row in rows
+    if row.ganzhi != str(hko_lunar.get(row.lunar_year).ganzhi)
+  ]
+  assert mismatches == [] # 199/199.

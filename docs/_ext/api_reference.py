@@ -17,7 +17,7 @@ from api_contract import ALIASES, BASES, DECLARED_MEMBERS, PRIVATE_BASE_MEMBERS,
 
 '''外部基类不贡献契约成员；显式登记跳过项，不靠查不到时落空。'''
 EXTERNAL_BASES: Final[frozenset[str]] = frozenset({
-  'TypedDict', 'NamedTuple', 'Protocol', 'Enum', 'IntFlag', 'Generic', 'Mapping',
+  'NamedTuple', 'Enum', 'IntFlag', 'Generic', 'Mapping',
 })
 
 
@@ -93,7 +93,7 @@ def generate_api(source: Path) -> None:
 ----------------
 
 - :py:class:`bazi.bazi.Bazi` 创建八字，:py:class:`bazi.bazi_chart.BaziChart` 读取四柱与派生结果。
-- :py:class:`bazi.school.BaziConfig` 和 :py:class:`bazi.school.BaziSchool` 选择精度、历法与流派。
+- :py:class:`bazi.school.BaziConfig` 和 :py:class:`bazi.school.BaziSchool` 选择精度与流派。
 - :py:mod:`bazi.chart_text` 输出命盘文字；终端调用见 :doc:`../guides/cli`。
 
 关系、神煞与流运
@@ -114,20 +114,10 @@ def generate_api(source: Path) -> None:
 历法、领域值与结果结构
 ----------------------
 
-- :py:mod:`bazi.calendar` 选择历法后端，:py:mod:`bazi.calendar.utils_protocol` 说明两后端的共同接口。
+- :py:mod:`bazi.calendar.utils` 提供公历、农历和干支历换算，以及节气时刻查询。
 - :py:mod:`bazi.defines` 定义天干、地支等领域值；:py:mod:`bazi.data_types` 定义四柱数据容器。
 - :py:mod:`bazi.utils.bazi_utils` 提供十神、纳音、藏干等纯查询。
 - :doc:`../api-contract` 说明对象身份、输入校验与结果不可变性。
-
-离线数据工具
-------------
-
-以下入口用于在源码仓重建随库表，不是排盘或修复安装的步骤；安装版缺表应重新安装。
-构建文档只导入这些模块读取说明，不执行下载或生成入口。
-
-- :py:mod:`bazi.calendar.hko_data.encoder` 下载并编码 HKO 历书；下载时另需 requests。
-- :py:mod:`bazi.calendar.celestial_data.generator` 生成 celestial 数据；另需与
-  :py:data:`bazi.calendar.celestial_data.generator.CELESTIAL_VERSION` 一致的 celestial-calendar。
 
 完整模块索引
 ------------

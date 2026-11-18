@@ -127,10 +127,12 @@ python run_docs.py --output-dir output_data/docs-preview
 
 ### 历法数据维护
 
-离线重建工具为 [HKO 编码器](bazi/calendar/hko_data/encoder.py)和
-[天文表生成器](bazi/calendar/celestial_data/generator.py)，天文表的记录布局见
-[数据格式](bazi/calendar/celestial_data/SCHEMA.md)。它们供维护数据来源使用，不是安装后的修补步骤；
-安装包缺表时应重装包，不运行生成器修补。
+离线重建工具为 [HKO 编码器](tests/calendar/hko_data/encoder.py)和根目录的
+天文表生成器 `run_calendar_generation.py`，天文表的记录布局见
+[数据格式](bazi/calendar/celestial_data/SCHEMA.md)。
+源码与 sdist 保留生成器、`tests/calendar/hko_data/` 下的 HKO 原件、编码表及编解码工具，
+供重建数据与独立对拍；这些材料不进入 wheel，也不是公开 Python API。
+wheel 只带运行时需要的代码与数据，安装包缺表时应重装包，不运行生成器修补。
 
 ### 提交与 PR 正文
 

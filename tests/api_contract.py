@@ -9,7 +9,6 @@
 - PUBLIC_NAMES 是白名单，新增名字不自动成为 API。
 - DECLARED_MEMBERS 记录类中声明的公开成员，继承成员沿 BASES 追溯。
 - REEXPORTS 与 ALIASES 区分重导出与别名；普通模块的依赖导入不自动成为规范重导出。
-- STATIC_MODULES 标记离线工具与导入即读表的后端实现。
 - INTERNAL_NAMES 记录公开模块内尚用非下划线拼写的内部定义；整模块内部实现归
   INTERNAL_MODULES。这些名字不生成 API 页，也不构成兼容承诺。
 
@@ -28,20 +27,10 @@ PUBLIC_NAMES: Final[dict[str, str]] = {
   'bazi.bazi_chart': 'BaziChart 命盘',
   'bazi.chart_text': 'TextStyle basic_text transit_text chart_text',
   'bazi.cli': 'main',
-  'bazi.calendar': 'hko_data CalendarType CalendarDate JieqiTime CalendarUtilsProtocol hko_data_utils celestial_utils CalendarBackend calendar_utils_of solar_time',
-  'bazi.calendar.backend': 'CalendarBackend calendar_utils_of',
-  'bazi.calendar.celestial_data': '',
-  'bazi.calendar.celestial_data.generator': 'CELESTIAL_VERSION RELEASE_ASSET JIEQI_START_YEAR JIEQI_END_YEAR LUNAR_START_YEAR LUNAR_END_YEAR EXPECTED_JIEQI_ROWS EXPECTED_LUNAR_ROWS EOT_MAGIC EOT_START_DATE EOT_SENTINEL_DATE EOT_CADENCE_SECONDS EOT_SCALE EOT_HEADER JieqiRow LunarRow main',
-  'bazi.calendar.celestial_data.loader': 'SCHEMA_VERSION DATA_DIR JIEQI_COLUMNS LUNAR_COLUMNS EOT_MAGIC EOT_START_DATE EOT_SENTINEL_DATE EOT_SAMPLE_COUNT EOT_CADENCE_SECONDS EOT_SCALE EOT_HEADER JIEQI_BY_INDEX LunarYearInfo EquationOfTimeTable JieqiMomentTable LunarYearTable',
-  'bazi.calendar.celestial_utils': 'CelestialCalendarUtils ALGO1 ALGO2',
-  'bazi.calendar.dates': 'LunarYearInfo CalendarType CalendarDate JieqiTime GanzhiYearMonth',
-  'bazi.calendar.hko_data': 'START_YEAR END_YEAR get_data_base_path get_raw_txt_file_paths raw_data_ready get_jieqi_encoded_data_path get_lunardate_encoded_data_path encoded_data_ready jieqi_list_in_traditional_chinese twelve_months_in_traditional_chinese int_to_bytes bytes_to_int date_to_bytes bytes_to_date JieqiDates DecodedJieqiDates LunarYearInfo DecodedLunarYears encoder',
-  'bazi.calendar.hko_data.common': 'START_YEAR END_YEAR get_data_base_path get_raw_txt_file_paths raw_data_ready get_jieqi_encoded_data_path get_lunardate_encoded_data_path encoded_data_ready jieqi_list_in_traditional_chinese twelve_months_in_traditional_chinese int_to_bytes bytes_to_int date_to_bytes bytes_to_date',
-  'bazi.calendar.hko_data.decoder': 'JieqiDates DecodedJieqiDates LunarYearInfo DecodedLunarYears',
-  'bazi.calendar.hko_data.encoder': 'download_one_year_data do_download extract_from_raw_txts encode_jieqi parse_lines_in_lunar_years parse_ganzhis_in_lunar_years encode_one_lunar_year_lines encode_lunardate do_encode',
-  'bazi.calendar.hko_data_utils': 'jieqi_dates_db lunar_years_db get_min_supported_date get_max_supported_date is_valid_solar_date is_valid_lunar_date is_valid_ganzhi_date is_valid days_counts_in_ganzhi_year lunar_to_solar solar_to_lunar ganzhi_to_solar solar_to_ganzhi lunar_to_ganzhi ganzhi_to_lunar to_solar to_lunar to_ganzhi to_date jieqi_date jieqi_moment supported_jie_boundaries prev_jie next_jie',
+  'bazi.calendar': 'CalendarType CalendarDate JieqiTime utils solar_time',
+  'bazi.calendar.dates': 'CalendarType CalendarDate JieqiTime GanzhiYearMonth',
+  'bazi.calendar.utils': 'get_min_supported_date get_max_supported_date to_solar to_lunar to_ganzhi to_date jieqi_moment supported_jie_boundaries prev_jie next_jie',
   'bazi.calendar.solar_time': 'apparent_solar_datetime',
-  'bazi.calendar.utils_protocol': 'CalendarUtilsProtocol',
   'bazi.common': 'frozendict',
   'bazi.context_matching': 'MatchStatus CriterionReason ScopeName TransitEntry YearCoordinate MonthCoordinate DateCoordinate MomentCoordinate TransitCoordinate NatalObservation LiunianObservation TransitObservation Observation CriterionInfo criterion criteria LiunianPosition ChartOccurrence CriterionResult ContextResult evaluate_context',
   'bazi.data_types': 'TraitTuple DayunTuple XiaoyunTuple LiunianTuple HiddenTianganDict BaziData GanzhiData',
@@ -69,21 +58,17 @@ PUBLIC_NAMES: Final[dict[str, str]] = {
 }
 
 INTERNAL_MODULES: Final[dict[str, str]] = {
+  'bazi.calendar.celestial_data': '随库历法表；数据重建工具与格式不属于公开 API。',
+  'bazi.calendar.celestial_data.loader': '内部历法表加载与查询；调用方使用 calendar.utils。',
   'bazi._validation': '知识编辑源、领域值与文字输出的共享校验；不承诺包外调用。',
   'bazi.defines.enum_base': '领域枚举共用实现；调用方使用具体枚举上的转换与索引。',
   'bazi.utils.relation_discovery': '天干、地支发现结果共用实现；调用方使用具体发现类型的过滤、合并与双侧筛选。',
 }
 
 INTERNAL_NAMES: Final[dict[str, str]] = {
+  'bazi.calendar.dates': 'LunarYearInfo',
   'bazi.common': 'K V check_declared_types',
   'bazi.data_types': 'T U',
-}
-
-STATIC_MODULES: Final[dict[str, str]] = {
-  'bazi.calendar.hko_data.encoder': '离线下载与编码工具，不在公开面检查中导入或执行。',
-  'bazi.calendar.celestial_data.generator': '离线数据生成工具，不在公开面检查中导入或执行。',
-  'bazi.calendar.hko_data_utils': '导入会加载HKO表，清单检查只读取源码。',
-  'bazi.calendar.celestial_utils': '导入会加载celestial表，清单检查只读取源码。',
 }
 
 DECLARED_MEMBERS: Final[dict[str, str]] = {
@@ -105,21 +90,10 @@ DECLARED_MEMBERS: Final[dict[str, str]] = {
   'bazi.bazi.LocationTime': 'canonical_instant civil_time longitude apparent_time',
   'bazi.bazi_chart.BaziChart': 'random bazi taiyuan minggong wuxing_states house_of_relationship relationship_stars PillarTraits traits hidden_tiangan PillarShishens shishen nayin shier_zhangsheng dayun_order dayun_start_moment dayun xiaoyun liunian',
   'bazi.chart_text.TextStyle': 'glyph day_master_mark',
-  'bazi.calendar.backend.CalendarBackend': 'HKO CELESTIAL CELESTIAL_ALGO2 from_str',
-  'bazi.calendar.celestial_data.generator.JieqiRow': 'year jq_idx name moment',
-  'bazi.calendar.celestial_data.generator.LunarRow': 'lunar_year first_solar_date leap_month month_len_bits days_counts ganzhi',
-  'bazi.calendar.celestial_data.loader.EquationOfTimeTable': 'samples seconds_at',
-  'bazi.calendar.celestial_data.loader.JieqiMomentTable': 'provenance supported_year_range get',
-  'bazi.calendar.celestial_data.loader.LunarYearTable': 'provenance supported_year_range get',
-  'bazi.calendar.celestial_utils.CelestialCalendarUtils': 'get_min_supported_date get_max_supported_date is_valid_solar_date is_valid_lunar_date is_valid_ganzhi_date is_valid days_counts_in_ganzhi_year lunar_to_solar solar_to_lunar ganzhi_to_solar solar_to_ganzhi lunar_to_ganzhi ganzhi_to_lunar to_solar to_lunar to_ganzhi to_date jieqi_date jieqi_moment supported_jie_boundaries prev_jie next_jie',
   'bazi.calendar.dates.CalendarType': 'SOLAR 公历 LUNAR 农历 GANZHI 干支历',
-  'bazi.calendar.dates.LunarYearInfo': 'first_solar_day leap leap_month days_counts ganzhi',
   'bazi.calendar.dates.CalendarDate': 'year month day date_type',
   'bazi.calendar.dates.JieqiTime': 'jieqi moment',
   'bazi.calendar.dates.GanzhiYearMonth': 'year month dizhi opening_jie from_dizhi from_jie',
-  'bazi.calendar.hko_data.decoder.DecodedJieqiDates': 'date_bytes_len start_year end_year get supported_year_range',
-  'bazi.calendar.hko_data.decoder.DecodedLunarYears': 'sexagenary_cycle start_year end_year get supported_year_range',
-  'bazi.calendar.utils_protocol.CalendarUtilsProtocol': 'get_min_supported_date get_max_supported_date is_valid_solar_date is_valid_lunar_date is_valid_ganzhi_date is_valid days_counts_in_ganzhi_year lunar_to_solar solar_to_lunar ganzhi_to_solar solar_to_ganzhi lunar_to_ganzhi ganzhi_to_lunar to_solar to_lunar to_ganzhi to_date jieqi_date jieqi_moment supported_jie_boundaries prev_jie next_jie',
   'bazi.common.frozendict': '',
   'bazi.context_matching.YearCoordinate': 'ganzhi_year entry',
   'bazi.context_matching.MonthCoordinate': 'ganzhi_year ganzhi_month entry',
@@ -179,7 +153,7 @@ DECLARED_MEMBERS: Final[dict[str, str]] = {
   'bazi.school.Anchor': 'YEAR DAY YEAR_AND_DAY',
   'bazi.school.TuwangDef': 'WHOLE_MONTH AFTER_TWELVE_DAYS BEFORE_EIGHTEEN_DAYS',
   'bazi.school.BaziSchool': 'day_rollover anhe_def xing_def gong_def yangren_def feiren_def hongyan_anchor tianyi_anchor tianyi_def yima_anchor huagai_anchor jiangxing_anchor jiesha_anchor wangshen_anchor jinyu_anchor zaisha_anchor wenchang_anchor wenchang_def taiji_anchor taiji_def guoyin_anchor guoyin_def peiou_xing_def kongwang_anchor tuwang_def relation_definitions mingli_tanyuan',
-  'bazi.school.BaziConfig': 'precision backend school dayun_year_rule from_values',
+  'bazi.school.BaziConfig': 'precision school dayun_year_rule from_values',
   'bazi.transit_chart.TransitChart': 'bazi_chart at_year at_month at_date at_moment',
   'bazi.transits.TransitKind': 'XIAOYUN DAYUN LIUNIAN LIUYUE LIURI',
   'bazi.transits.TransitSet': 'xiaoyun dayun liunian liuyue liuri items ganzhis select',
@@ -204,11 +178,8 @@ BASES: Final[dict[str, tuple[str, ...]]] = {
   'bazi.analyzer.relationship.TransitAnalysis.Level': ('IntFlag',),
   'bazi.bazi.BaziGender': ('Enum',),
   'bazi.bazi.LocationTime': ('NamedTuple',),
-  'bazi.calendar.backend.CalendarBackend': ('Enum',),
-  'bazi.calendar.dates.LunarYearInfo': ('TypedDict',),
   'bazi.calendar.dates.CalendarType': ('Enum',),
   'bazi.calendar.dates.JieqiTime': ('NamedTuple',),
-  'bazi.calendar.utils_protocol.CalendarUtilsProtocol': ('Protocol',),
   'bazi.common.frozendict': ('Mapping[K, V]',),
   'bazi.data_types.TraitTuple': ('NamedTuple',),
   'bazi.data_types.DayunTuple': ('NamedTuple',),
@@ -281,12 +252,6 @@ REEXPORTS: Final[dict[str, str]] = {
   'bazi.calendar.CalendarType': 'bazi.calendar.dates.CalendarType',
   'bazi.calendar.CalendarDate': 'bazi.calendar.dates.CalendarDate',
   'bazi.calendar.JieqiTime': 'bazi.calendar.dates.JieqiTime',
-  'bazi.calendar.CalendarUtilsProtocol': 'bazi.calendar.utils_protocol.CalendarUtilsProtocol',
-  'bazi.calendar.CalendarBackend': 'bazi.calendar.backend.CalendarBackend',
-  'bazi.calendar.calendar_utils_of': 'bazi.calendar.backend.calendar_utils_of',
-  'bazi.calendar.hko_data.LunarYearInfo': 'bazi.calendar.dates.LunarYearInfo',
-  'bazi.calendar.hko_data.decoder.LunarYearInfo': 'bazi.calendar.dates.LunarYearInfo',
-  'bazi.calendar.celestial_data.loader.LunarYearInfo': 'bazi.calendar.dates.LunarYearInfo',
   'bazi.defines.Zhu': 'bazi.defines.zhu.Zhu',
   'bazi.defines.柱': 'bazi.defines.zhu.Zhu',
   'bazi.defines.Tiangan': 'bazi.defines.tiangan.Tiangan',
@@ -313,15 +278,6 @@ REEXPORTS: Final[dict[str, str]] = {
   'bazi.defines.天干关系': 'bazi.defines.relations.TianganRelation',
   'bazi.defines.DizhiRelation': 'bazi.defines.relations.DizhiRelation',
   'bazi.defines.地支关系': 'bazi.defines.relations.DizhiRelation',
-  **{f'bazi.calendar.hko_data.{name}': f'bazi.calendar.hko_data.common.{name}' for name in (
-    'START_YEAR', 'END_YEAR', 'get_data_base_path', 'get_raw_txt_file_paths', 'raw_data_ready',
-    'get_jieqi_encoded_data_path', 'get_lunardate_encoded_data_path', 'encoded_data_ready',
-    'jieqi_list_in_traditional_chinese', 'twelve_months_in_traditional_chinese',
-    'int_to_bytes', 'bytes_to_int', 'date_to_bytes', 'bytes_to_date',
-  )},
-  **{f'bazi.calendar.hko_data.{name}': f'bazi.calendar.hko_data.decoder.{name}' for name in (
-    'JieqiDates', 'DecodedJieqiDates', 'DecodedLunarYears',
-  )},
 }
 
 '''支持星号导入的包入口；对象取自同一公开白名单，模块的普通属性不自动加入。'''
@@ -330,14 +286,12 @@ EXPLICIT_EXPORTS: Final[dict[str, str]] = {
   'bazi.analyzer': PUBLIC_NAMES['bazi.analyzer'],
   'bazi.defines': PUBLIC_NAMES['bazi.defines'],
   'bazi.utils': PUBLIC_NAMES['bazi.utils'],
-  'bazi.calendar': 'hko_data CalendarType CalendarDate JieqiTime CalendarUtilsProtocol hko_data_utils celestial_utils CalendarBackend calendar_utils_of',
-  'bazi.calendar.hko_data': ' '.join(name for name in PUBLIC_NAMES['bazi.calendar.hko_data'].split() if name != 'encoder'),
+  'bazi.calendar': PUBLIC_NAMES['bazi.calendar'],
 }
 
 '''有显式拒绝语义的输入入口；pytest 的 input_contract 标记将它们关联到同源拒绝测试。
 
 结果记录不承诺手工构造校验，Python 参数绑定和容器协议也不另设 python -O 下的专门测试。
-历法三种后端共用 CalendarUtilsProtocol 的输入合同，测试仍逐后端执行。
 '''
 INPUT_CONTRACTS: Final[dict[str, str]] = {
   'bazi.bazi': 'Bazi Bazi.create Bazi.random',
@@ -365,10 +319,7 @@ INPUT_CONTRACTS: Final[dict[str, str]] = {
   'bazi.utils.dizhi_utils': 'sanhui liuhe anhe tonghe tongluhe sanhe banhe gonghe gonghui xing chong po hai sheng ke search discover search_ganzhis discover_ganzhis discover_mutual_ganzhis discover_mutual',
   'bazi.utils.tiangan_utils.TianganRelationDiscovery': 'filter merge mutual_only',
   'bazi.utils.dizhi_utils.DizhiRelationDiscovery': 'filter merge mutual_only',
-  'bazi.calendar.backend': 'calendar_utils_of CalendarBackend.from_str',
   'bazi.calendar.dates': 'CalendarDate GanzhiYearMonth GanzhiYearMonth.from_dizhi GanzhiYearMonth.from_jie',
-  'bazi.calendar.utils_protocol.CalendarUtilsProtocol': 'get_min_supported_date get_max_supported_date is_valid_solar_date is_valid_lunar_date is_valid_ganzhi_date is_valid lunar_to_solar solar_to_lunar ganzhi_to_solar solar_to_ganzhi lunar_to_ganzhi ganzhi_to_lunar to_solar to_lunar to_ganzhi to_date prev_jie next_jie days_counts_in_ganzhi_year jieqi_date jieqi_moment',
-  'bazi.calendar.hko_data.decoder': 'DecodedJieqiDates.get DecodedJieqiDates.__getitem__ DecodedLunarYears.get DecodedLunarYears.__getitem__',
+  'bazi.calendar.utils': 'get_min_supported_date get_max_supported_date to_solar to_lunar to_ganzhi to_date prev_jie next_jie jieqi_moment',
   'bazi.calendar.solar_time': 'apparent_solar_datetime',
-  'bazi.calendar.celestial_data.loader': 'EquationOfTimeTable.seconds_at',
 }

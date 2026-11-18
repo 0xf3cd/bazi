@@ -53,7 +53,6 @@ def test_solar_clock_meridian_and_zero_aliases(longitude: float, canonical: floa
 
 
 @pytest.mark.input_contract('bazi.calendar.solar_time', 'apparent_solar_datetime')
-@pytest.mark.input_contract('bazi.calendar.celestial_data.loader', 'EquationOfTimeTable.seconds_at')
 @pytest.mark.parametrize('moment', [
   datetime.min.replace(tzinfo=timezone(timedelta(hours=14))),
   datetime.max.replace(tzinfo=timezone(timedelta(hours=-12))),
