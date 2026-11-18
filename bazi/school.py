@@ -101,8 +101,6 @@ class DayRollover(Enum):
   Note:
   - 年/月柱独立按 `BaziPrecision` 比较节时刻，相等归新。WAN_ZISHI 的 23:30 出生取次日日柱，
     不使年/月归属随之改变。
-
-  不修改既有定义；新读法须另加定义。
   '''
   WAN_ZISHI = 0
   ZIZHENG   = 1
@@ -119,7 +117,6 @@ class PeiouXingDef(Enum):
   Note:
   - 两读在阳男、阴女十格上目标相同，在阴男、阳女十格上不同；每个（日主，性别）仍恰有一个目标天干。
   - 地支侧均取主气等于目标天干的地支。
-  - 不修改既有定义；新读法须另加定义。
   '''
   ZHENGCAI_ZHENGGUAN = 0
   YINYANGGAN         = 1
@@ -135,8 +132,6 @@ class Anchor(Enum):
 
   成员只指定锚柱；取该柱天干、地支还是完整干支由神煞自身的查法决定，记录在分析层注册表中。
   `_ANCHOR_CHOICES` 按字段列出支持的取值与知识入口，`BaziSchool` 拒绝表外取值。
-
-  不修改既有定义；新读法须另加定义。
   '''
   YEAR         = 0
   DAY          = 1

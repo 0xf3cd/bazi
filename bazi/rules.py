@@ -288,8 +288,6 @@ class DizhiRules:
     候选柱位由入口决定：`search_ganzhis` 只查相邻具体出现，`discover_mutual_ganzhis`
     查横跨两组输入的柱位对。
 
-    不修改既有定义；新读法须另加定义。
-
     出处：
     - 同干、广义：https://www.sohu.com/a/471337600_310486
     - 透化神：https://www.suanzhun.net/article/2395.html
@@ -346,8 +344,6 @@ class DizhiRules:
     不同的地支暗合关系看法。
 
     暗合无方向，每个直接或批量查法入口看到的表一致——无 `XingDef` 那种入口层分歧。
-
-    不修改既有定义；新读法须另加定义。
     '''
     NORMAL           = 0 # 卯申、巳酉、亥午、子巳、寅午 - 这也是所谓的“通禄合”/“通禄暗合”，与天干五合一一对应。
                          # 选 NORMAL 时 `DIZHI_ANHE[NORMAL]` 与 `DIZHI_TONGLUHE` 逐项相同——discovery 会在
@@ -452,8 +448,6 @@ class DizhiRules:
     - 定义层（各查法入口共有）：STRICT 要求丑未戌 / 寅巳申三支齐现；LOOSE 三取二即成立。
     - 入口层：方向（谁刑谁）只有按序查法（`dizhi_utils.xing`）可见；批量查法入口按多重集
       比对，看不出方向。
-
-    不修改既有定义；新读法须另加定义。
     '''
     STRICT = 0 # 丑未戌、寅巳申须三支齐现。
     LOOSE  = 1 # 丑未戌、寅巳申三取二；按序查法 dizhi_utils.xing 还要求符合循环方向：
@@ -607,7 +601,6 @@ class ShenshaRules:
 
   # 驿马按三合组取支；表值与现代查法见 shensha.yima.table、shensha.yima.lookup，
   # 日锚出处见 concept.mingli_tanyuan.readings。
-  # 原表值来源：https://zh.wikisource.org/w/index.php?oldid=2184219
   YIMA: Final[frozendict[Dizhi, Dizhi]] = _expand_dizhi_groups(
     {
       '申子辰' : '寅',

@@ -105,8 +105,8 @@ XIN_XU 星学大成
 天乙、桃花、驿马、华盖、羊刃也有参考对象；规则与条目入口见 {doc}`rule-coverage`。
 
 查完整来源说明时，用 `kb.entry('shensha.wenchang.readings')`。这类条目保留表值、
-锚点与查找位置各自的依据；所引 `repository.rule_readings` 指向迁移前的固定源码快照，
-来源状态为 `repository_attributed`，不因进入知识目录变成新的古籍核验记录。
+锚点与查找位置各自的依据，也在正文列出所据载体与限度。
+`sources` 列的是条目直接引用的来源记录；正文提及的载体不一定另有来源记录。
 
 用 `kb.filter_values('topic')` 等调用列出某个维度的全部合法值，或浏览 {doc}`../catalog/filters`。
 值合法但没有交集时返回空元组；未知值抛 `ValueError`，与无匹配不同。

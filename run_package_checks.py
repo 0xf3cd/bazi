@@ -312,12 +312,16 @@ def expected_typing_diagnostics(source: str) -> dict[str, str]:
     ('GanzhiData', '天干', '盘.十神.年.天干 = 十神.正官'),
     ('TransitSet', '大运', '  岁运.大运 = None'),
   ):
+    if trigger not in lines:
+      raise ValueError(f'Missing typing fixture line for {owner}.{member}: {trigger!r}')
     line_number = lines.index(trigger) + 1
     expected[f'{owner}.{member}'] = f'\nbad.py:{line_number}: error: Property "{member}" defined in "{owner}" is read-only  [misc]\n'
   for value_type, trigger in (
     ('CriterionInfo', 'catalog["changed"] = info'),
     ('KnowledgeSource', 'knowledge.sources["editorial"] = witness'),
   ):
+    if trigger not in lines:
+      raise ValueError(f'Missing typing fixture line for immutable {value_type} mapping: {trigger!r}')
     line_number = lines.index(trigger) + 1
     expected[f'immutable {value_type} mapping'] = f'\nbad.py:{line_number}: error: Unsupported target for indexed assignment ("frozendict[str, {value_type}]")  [index]\n'
   return expected
@@ -439,9 +443,14 @@ def check_packages(root: Path, work: Path, output_dir: Path | None,
   print('Installed typing negative EXIT=' + str(result.returncode), flush=True)
   if result.returncode != 1 or '[assignment]' not in result.stdout or '[arg-type]' not in result.stdout or 'import-untyped' in result.stdout or 'import-not-found' in result.stdout:
     raise ValueError('Installed typing negative control did not reach both type checks')
-  for label, message in expected_typing_diagnostics(bad).items():
+  expected_diagnostics = expected_typing_diagnostics(bad)
+  for label, message in expected_diagnostics.items():
     if message not in '\n' + result.stdout + '\n':
       raise ValueError(f'Installed typing negative control missed {label}')
+  unexpected = [line for line in result.stdout.splitlines()
+    if 'is read-only' in line and '\n' + line + '\n' not in expected_diagnostics.values()]
+  if unexpected:
+    raise ValueError(f'Unregistered installed read-only diagnostics: {unexpected}')
 
   if environments is not None and installers is not None:
     environments.append(collect_environment(str(python), 'consumer-typing', installers))

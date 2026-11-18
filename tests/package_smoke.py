@@ -143,6 +143,12 @@ def main() -> None:
   check(盘.八字 is 盘.bazi and 盘.十神 is 盘.shishen, 'Chinese chart properties copied state')
   check(tuple(map(str, 盘.八字.四柱)) == ('庚午', '辛巳', '壬午', '乙巳'), 'Chinese pillar reading failed')
   check(盘.八字.日主 is 天干.壬 and 盘.十神.年.天干 is 十神.偏印, 'Chinese chart reading failed')
+  try:
+    盘.八字 = chart.bazi # type: ignore[misc]
+  except AttributeError:
+    pass
+  else:
+    raise RuntimeError('Installed Chinese chart property is writable')
   岁运 = 流年大运(盘).at_year(2024)
   if 岁运 is None:
     raise RuntimeError('Chinese transit query returned no result')

@@ -5591,9 +5591,13 @@
     {
       "claim_id": "concept.shensha_sources.readings",
       "objects": [
-        "concept.shensha_sources"
+        "concept.shensha_sources",
+        "shensha.taohua",
+        "shensha.hongluan",
+        "shensha.tianxi",
+        "shensha.yima"
       ],
-      "text": "问真《神煞大全》与高人不作两个独立来源计数。两家引同一首口诀，按一份证据计；给出同一读法时，视为同一个现代读法的两次记录，而非两个独立读法的相互印证。\n\n来源对照：两家引用同一首口诀时，汉字序列相同而标点有别；公共口诀相同本身不足以说明共享文本，两家也并不总选同一首口诀。有几处断语长段逐字相同，因断语是各家自撰的评断文字，本无必须一致的理由，确实指向共享文本。多数断语则除三五个字外毫无共同处。两家天乙选用的歌诀不同，红艳乙格也不同，两家的红艳表均不完全等于四库本。\n\n问真：https://book.taiyi.me/命/神煞大全\n高人：https://github.com/gaorenyes/gaorenyes.github.io/blob/817ad1f8f463d489087ac6c44ec69165e1181454/README.md",
+      "text": "问真《神煞大全》与高人不作两个独立来源计数。两家引同一首口诀，按一份证据计；给出同一读法时，视为同一个现代读法的两次记录，而非两个独立读法的相互印证。\n\n来源对照：两家引用同一首口诀时，汉字序列相同而标点有别；公共口诀相同本身不足以说明共享文本，两家也并不总选同一首口诀。有几处断语长段逐字相同，因断语是各家自撰的评断文字，本无必须一致的理由，确实指向共享文本。多数断语则除三五个字外毫无共同处。两家天乙选用的歌诀不同，红艳乙格也不同，两家的红艳表均不完全等于四库本。\n\n问真：https://book.taiyi.me/命/神煞大全\n高人：https://github.com/gaorenyes/gaorenyes.github.io/blob/817ad1f8f463d489087ac6c44ec69165e1181454/README.md\n\n驿马表值的《三命通会》转录另有 https://zh.wikisource.org/w/index.php?oldid=2184219 ，页面题为「三命通會/卷三」。shensha.yima.table 所引 sanming_tonghui.yima.table 采用四库全书本转录 https://zh.wikisource.org/w/index.php?oldid=657369 。这两个页面是不同转录，不据此裁定底本关系。",
       "topics": [
         "来源关系"
       ],
@@ -5659,7 +5663,7 @@
         "repository.rule_readings"
       ],
       "limits": [
-        "另有庚申／癸戌异表流传，但既有考证仅见聚合站单一文本谱系，未采。现代载体不因网站不同就多算独立谱系；计数与未知关系见 concept.shensha_sources.readings。"
+        "另有庚申／癸戌异表流传，但本仓此前考证仅见聚合站单一文本谱系，未采。现代载体不因网站不同就多算独立谱系；计数与未知关系见 concept.shensha_sources.readings。"
       ]
     },
     {
@@ -5682,7 +5686,7 @@
       "objects": [
         "shensha.huagai"
       ],
-      "text": "华盖取三合墓库。袁树珊《命理探原》NLC 刊本卷上〈强弱〉印页六四（PDF95）的华盖说明转引《三命通會》，不称已校所引原书。《三命通会》四库本卷二〈論將星華葢〉措辞不同，不能混作同一逐字引文。\n\n袁氏直接载体：https://commons.wikimedia.org/w/index.php?curid=132876481\n四库本转录：https://zh.wikisource.org/w/index.php?oldid=761691\n\nYEAR_AND_DAY 依问真现代查法，既有锚点说明还列百度百科「神煞」与高人为补充出处；日锚与刊本定位见 concept.mingli_tanyuan.readings。",
+      "text": "华盖取三合墓库。袁树珊《命理探原》NLC 刊本卷上〈强弱〉的华盖说明转引《三命通會》，原句见该刊本印页六四（PDF95），不称已校所引原书。《三命通会》四库本卷二〈論將星華葢〉措辞不同，不能混作同一逐字引文。\n\n袁氏直接载体：https://commons.wikimedia.org/w/index.php?curid=132876481\n四库本转录：https://zh.wikisource.org/w/index.php?oldid=761691\n\nYEAR_AND_DAY 依问真现代查法，本仓此前的锚点说明还列百度百科「神煞」与高人为补充出处；日锚与刊本定位见 concept.mingli_tanyuan.readings。",
       "topics": [
         "查法口径"
       ],
@@ -5777,10 +5781,13 @@
       ],
       "attribution": "本仓整理",
       "sources": [
-        "repository.rule_readings"
+        "repository.rule_readings",
+        "wenzhen_shensha.yangren",
+        "sanming_tonghui.yangren.luming",
+        "sanming_tonghui.yangren.ziping"
       ],
       "limits": [
-        "这些表值与分类不单独证明查法锚。分析器固定按日干查羊刃；旧规则说明所记锚点出处缺口仍保留，问真的日干查法及其帝旺表另见 shensha.yangren.lookup，不把这一现代表的查法自动推广到其他表。"
+        "这些表值与分类不单独证明查法锚。分析器固定按日干查羊刃，锚的出处仍待核；问真的日干查法及其帝旺表另见 shensha.yangren.lookup，不把这一现代表的查法自动推广到其他表。"
       ]
     },
     {
@@ -5794,7 +5801,9 @@
       ],
       "attribution": "本仓整理",
       "sources": [
-        "repository.rule_readings"
+        "repository.rule_readings",
+        "wenzhen_shensha.tianyi",
+        "sanming_tonghui.tianyi.yinyang"
       ],
       "limits": [
         "规则表与锚点相互独立；本库不据表名自动选择使用时间或界线。"
@@ -5805,13 +5814,15 @@
       "objects": [
         "shensha.wenchang"
       ],
-      "text": "文昌两读只在辛一格分歧，其余九干在既有所查来源中相同。默认 XIN_ZI 取辛子，民国刊本与现代主流两条谱系都指向它；XIN_XU 取辛戌，出自《星学大成》。本表为子平法文昌（食神之临官、长生），与禄命法文昌贵分列；第三颗文星贵（「甲马乙蛇丙戊猴」）未纳入本库。\n\n《命理探原》NLC 刊本散文只逐条列甲乙丙丁戊己，末句「庚辛壬癸倣此。」。后四干依袁氏引作《紫微斗數》的口诀，辛取子依据口诀而非散文；该署名不单独判定本库规则的系统归属。卷上〈强弱〉印页六三至六四（PDF94–95）见 https://commons.wikimedia.org/w/index.php?curid=132876481 。\n《星学大成》口诀作辛戌，散文说明（「独辛不以生而以戌为文昌，戌在辛之方位」），因此 XIN_XU 是自成一说，不是抄讹。〈论文昌〉见 https://book.taiyi.me/命/星学大成 ；同书四库全书本转录见 https://zh.wikisource.org/zh-hans/星學大成_(四庫全書本)/全覽 ，两处文字相同，底本关系未见声明。已核夹注摘录另见 shensha.wenchang.xin_xu。\n\nDAY 依袁氏印页六三「以日爲主。如甲日見巳。乙日見午是也。」。旧引 ctext 对应“甲日見巳”的位置作“己”；该转录仍待复核，不据此判为刊本异文。YEAR_AND_DAY 依问真「以日/年干查四地支」与高人，为本库默认；年干部分仅有这些现代来源，所查古籍未见以年干查文昌的明文。问真：https://book.taiyi.me/命/神煞大全",
+      "text": "文昌两读只在辛一格分歧，其余九干在本仓所查来源中相同。默认 XIN_ZI 取辛子，民国刊本与现代主流两条谱系都指向它；XIN_XU 取辛戌，出自《星学大成》。本表为子平法文昌（食神之临官、长生），与禄命法文昌贵分列；第三颗文星贵（「甲马乙蛇丙戊猴」）未纳入本库。\n\n《命理探原》NLC 刊本散文只逐条列甲乙丙丁戊己，末句「庚辛壬癸倣此。」。后四干依袁氏引作《紫微斗數》的口诀，辛取子依据口诀而非散文；该署名不单独判定本库规则的系统归属。卷上〈强弱〉印页六三至六四（PDF94–95）见 https://commons.wikimedia.org/w/index.php?curid=132876481 。\n明·万民英《星学大成》口诀作辛戌，散文说明（「独辛不以生而以戌为文昌戌在辛之方位」），因此 XIN_XU 是自成一说，不是抄讹。〈论文昌〉见 https://book.taiyi.me/命/星学大成 ；同书四库全书本转录见 https://zh.wikisource.org/zh-hans/星學大成_(四庫全書本)/全覽 ，两处文字相同，底本关系未见声明。已核夹注摘录另见 shensha.wenchang.xin_xu。\n\nDAY 依袁氏印页六三「以日爲主。如甲日見巳。乙日見午是也。」。本仓此前所引 ctext 对应“甲日見巳”的位置作“己”；该转录仍待复核，不据此判为刊本异文。YEAR_AND_DAY 依问真「以日/年干查四地支」与高人，为本库默认；年干部分仅有这些现代来源，所查古籍未见以年干查文昌的明文。问真：https://book.taiyi.me/命/神煞大全",
       "topics": [
         "查法口径"
       ],
       "attribution": "本仓整理",
       "sources": [
-        "repository.rule_readings"
+        "repository.rule_readings",
+        "wenzhen_shensha.wenchang",
+        "xingxue_dacheng.wenchang_xin_xu"
       ],
       "limits": [
         "被查位置两家现代查法均作四柱地支；为本星查过的古籍未交代查哪几柱。两家不计作独立两份，见 concept.shensha_sources.readings。"
@@ -5836,7 +5847,7 @@
       "objects": [
         "shensha.taiji"
       ],
-      "text": "太极贵人两读只在壬癸分歧：REN_GUI_BOTH 为壬癸各兼巳申；REN_SI_GUI_SHEN 为壬取巳、癸取申。《五行精纪》卷十三一句并存两读：「壬巳癸申一作壬癸巳申偏喜美，封侯万户即三公」。此「一作」是同书异文，不是两家表之争。默认 REN_GUI_BOTH 取歌诀「一作」所指读法，也是现代问真、高人所取。\n\n《三命通会》两处数字转录（taiyi、算准网）作「壬癸水先得则生，后得巳而纳」，维基文库四库全书本作「壬癸水先得申而生後得巳而納」。高人引文与该节对应句式均有申。既有校核据此判该字为申，「则」是那两处转录的讹，不是这部书的异文。\n同节作「戊己，土也，喜生乎申，得辰戌丑未为正库」。按句式申应属戊己格，但问真、高人与《五行精纪》均只列四库；无来源可裁，表从三家，矛盾仍保留。\n\n《五行精纪》卷十三：https://book.taiyi.me/命/五行精纪/五行精纪(下)\n《五行精纪注释》卷十三作「太极贵人，从年干取，甲乙人见子午，丙丁人见卯酉，戊己人见辰戌丑未，庚辛人见寅亥，壬癸人见巳申」，亦记锚为年干：https://www.suanzhun.net/book/2728.html\n《三命通会》卷三〈论太极贵〉：https://book.taiyi.me/命/三命通会/三命通会(卷三)\n四库本转录：https://zh.wikisource.org/w/index.php?oldid=657369\n问真：https://book.taiyi.me/命/神煞大全\n\nYEAR 依上述《五行精纪注释》，YEAR_AND_DAY 依问真「以日/年干查四地支」与高人，为本库默认。与文昌的缺口方向不同：文昌的刊本锚为日干，现代来源加年干；太极的年干锚有上述注释本说明，现代来源加日干。",
+      "text": "太极贵人两读只在壬癸分歧：REN_GUI_BOTH 为壬癸各兼巳申；REN_SI_GUI_SHEN 为壬取巳、癸取申。宋·廖中《五行精纪》卷十三一句并存两读：「壬巳癸申一作壬癸巳申偏喜美，封侯万户即三公」。此「一作」是同书异文，不是两家表之争。默认 REN_GUI_BOTH 取歌诀「一作」所指读法，也是现代问真、高人所取。\n\n《三命通会》两处数字转录（taiyi、算准网）作「壬癸水先得则生，后得巳而纳」，维基文库四库全书本作「壬癸水先得申而生後得巳而納」。高人引文与该节对应句式均有申。本仓据此判该字为申，「则」是那两处转录的讹，不是这部书的异文。\n同节作「戊己，土也，喜生乎申，得辰戌丑未为正库」。按句式申应属戊己格，但问真、高人与《五行精纪》均只列四库；无来源可裁，表从三家，矛盾仍保留。\n\n《五行精纪》卷十三：https://book.taiyi.me/命/五行精纪/五行精纪(下)\n《五行精纪注释》卷十三作「太极贵人，从年干取，甲乙人见子午，丙丁人见卯酉，戊己人见辰戌丑未，庚辛人见寅亥，壬癸人见巳申」，亦记锚为年干：https://www.suanzhun.net/book/2728.html\n《三命通会》卷三〈论太极贵〉：https://book.taiyi.me/命/三命通会/三命通会(卷三)\n四库本转录：https://zh.wikisource.org/w/index.php?oldid=657369\n问真：https://book.taiyi.me/命/神煞大全\n\nYEAR 依上述《五行精纪注释》，YEAR_AND_DAY 依问真「以日/年干查四地支」与高人，为本库默认。与文昌的缺口方向不同：文昌的刊本锚为日干，现代来源加年干；太极的年干锚有上述注释本说明，现代来源加日干。",
       "topics": [
         "查法口径"
       ],
@@ -5853,7 +5864,7 @@
       "objects": [
         "shensha.guoyin"
       ],
-      "text": "国印两读都按含禄起算的固定偏移取支：WUXING_JINGJI 为禄 +7，MODERN 为禄 +8，两读无一格重合。默认 MODERN 与《张果星宗》及所引现代表一致。\n\n《张果星宗》的「禄勋、阳刃、唐符、国印」条载「禄前八位号唐符，第九名为国印宫」，逐干举例：「甲禄到寅、卯为阳刃、酉为飞刃唐符，戌为国印。乙禄到卯、辰为阴刃、戌为飞刃唐符、亥为国印……」。同书「天干吉凶星例」表载「国印：主掌印，戌亥丑寅丑寅辰巳未申」，十格相同。例解与表共同支持 MODERN；甲禄在寅、酉为第八、戌为第九，明确含禄起算。\nhttps://zh.wikisource.org/wiki/張果星宗\n\n《星学大成》「唐符禄前八位是 国印禄前九位是」为该对联的散文形；《神峰通考》将两星归于果老一脉（「惟张果老通玄先生命理 专用此二星取贵」）。按《张果星宗》例解，「禄前九位」即禄 +8，不据此裁定传承关系。\n《星学大成》：https://book.taiyi.me/命/星学大成\n《神峰通考》卷六「唐符国印之星 惟张果老通玄先生命理 专用此二星取贵」：https://book.taiyi.me/命/神峰通考/神峰通考(卷六).md\n\nWUXING_JINGJI 依《五行精纪注释》卷十三【原文】：「国印星禄前第八位是，如甲申生人，至癸酉是。并《三命纂局》」。同页今人【注释】作：「国印星，命局见年干禄前第八位的地支，如甲申生人，甲禄在寅，寅前八位是酉」。年干锚与含禄起算的明文出自今人【注释】，不混作【原文】的断言。\nhttps://www.suanzhun.net/book/2731.html\n目录著录为海虞瞿氏恬裕斋清抄本的第二册图像 81–82（卷十三）分列建節星与國印星，后者作「祿前第八位是如甲申生人至癸酉是」。此引文只及该见证，不证明宋代原貌或今人注释所据底本。\nhttps://commons.wikimedia.org/wiki/File:NLC892-411999013122-114407_五行精紀_第2冊.pdf\n两份白文转录的【建节星】则作「禄前第六位是也，如甲申生人，至癸酉是也」，与抄本及注释本有异，传抄关系未定。两份转录为 https://www.suanzhun.net/book/1003.html 与 https://zh.wikisource.org/wiki/五行精紀 （全文页内第十三卷）。WUXING_JINGJI 与 FEIREN[LUMING] 十格相同，同格不裁定传抄关系。\n\n查找位置与表值分开：《星学大成》明言「守照身命」，即命宫身宫而非四柱；《张果星宗》亦作「唐符、国印守命为奇」；上述《神峰通考》段落未言查找位置。本库四柱地支查法依所引现代来源，不出自这些段落。\n维基文库标为四库全书本的电子转录将「二星守照身命为奇」排作 HTML 小字，taiyi 连排；核到的是网页呈现，不是该版影像，不能据此裁定本文或注文：https://zh.wikisource.org/zh-hans/星學大成_(四庫全書本)/全覽\n\nYEAR 依上述今人注释的年干锚，抄本表值见证不能证明该锚；YEAR_AND_DAY 依问真、高人的现代读法，为本库默认。问真：https://book.taiyi.me/命/神煞大全 。两家关系与高人固定快照见 concept.shensha_sources.readings。",
+      "text": "国印两读都按含禄起算的固定偏移取支：WUXING_JINGJI 为禄 +7，MODERN 为禄 +8，两读无一格重合。默认 MODERN 与《张果星宗》及所引现代表一致。\n\n《张果星宗》的「禄勋、阳刃、唐符、国印」条载「禄前八位号唐符，第九名为国印宫」，逐干举例：「甲禄到寅、卯为阳刃、酉为飞刃唐符，戌为国印。乙禄到卯、辰为阴刃、戌为飞刃唐符、亥为国印……」。同书「天干吉凶星例」表载「国印：主掌印，戌亥丑寅丑寅辰巳未申」，十格相同。例解与表共同支持 MODERN；甲禄在寅、酉为第八、戌为第九，明确含禄起算。\nhttps://zh.wikisource.org/wiki/張果星宗\n\n明·万民英《星学大成》「唐符禄前八位是 国印禄前九位是」为该对联的散文形；张楠《神峰通考》将两星归于果老一脉（「惟张果老通玄先生命理 专用此二星取贵」）。按《张果星宗》例解，「禄前九位」即禄 +8，不据此裁定传承关系。\n《星学大成》：https://book.taiyi.me/命/星学大成\n《神峰通考》卷六「唐符国印之星 惟张果老通玄先生命理 专用此二星取贵」：https://book.taiyi.me/命/神峰通考/神峰通考(卷六).md\n\nWUXING_JINGJI 依《五行精纪注释》卷十三【原文】：「国印星禄前第八位是，如甲申生人，至癸酉是。并《三命纂局》」。同页今人【注释】作：「国印星，命局见年干禄前第八位的地支，如甲申生人，甲禄在寅，寅前八位是酉」。年干锚与含禄起算的明文出自今人【注释】，不混作【原文】的断言。\nhttps://www.suanzhun.net/book/2731.html\n国图抄本目录著录为海虞瞿氏恬裕斋清抄本，第二册图像 81–82（卷十三）分列建節星与國印星，后者作「祿前第八位是如甲申生人至癸酉是」。此引文只及该见证，不证明宋代原貌或今人注释所据底本。\nhttps://commons.wikimedia.org/wiki/File:NLC892-411999013122-114407_五行精紀_第2冊.pdf\n两份白文转录的【建节星】则作「禄前第六位是也，如甲申生人，至癸酉是也」，与抄本及注释本有异，传抄关系未定。两份转录为 https://www.suanzhun.net/book/1003.html 与 https://zh.wikisource.org/wiki/五行精紀 （全文页内第十三卷）。WUXING_JINGJI 与 FEIREN[LUMING] 十格相同，同格不裁定传抄关系。\n\n查找位置与表值分开：《星学大成》明言「守照身命」，即命宫身宫而非四柱；《张果星宗》亦作「唐符、国印守命为奇」；上述《神峰通考》段落未言查找位置。本库四柱地支查法依所引现代来源，不出自这些段落。\n维基文库标为四库全书本的电子转录将「二星守照身命为奇」排作 HTML 小字，taiyi 连排；核到的是网页呈现，不是该版影像，不能据此裁定本文或注文：https://zh.wikisource.org/zh-hans/星學大成_(四庫全書本)/全覽\n\nYEAR 依上述今人注释的年干锚，抄本表值见证不能证明该锚；YEAR_AND_DAY 依问真、高人的现代读法，为本库默认。问真：https://book.taiyi.me/命/神煞大全 。两家关系与高人固定快照见 concept.shensha_sources.readings。",
       "topics": [
         "查法口径",
         "来源关系"
@@ -5863,7 +5874,7 @@
         "repository.rule_readings"
       ],
       "limits": [
-        "本条迁自 08eb1f3 的完整说明；shensha.guoyin.modern 与 shensha.guoyin.wuxing_jingji 所引 repository_guoyin_variants 仍指向 e7caf8f 历史快照，不能把两份快照合算为新的古籍见证。"
+        "本条所引 repository.rule_readings 与 shensha.guoyin.modern、shensha.guoyin.wuxing_jingji 所引 repository_guoyin_variants 是两份本仓说明快照，不能合算为新的古籍见证。"
       ]
     },
     {

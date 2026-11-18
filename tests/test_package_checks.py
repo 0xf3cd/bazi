@@ -428,7 +428,7 @@ def test_outer_receipt_versions_and_bad_line(tmp_path: Path) -> None:
 @pytest.mark.parametrize('change', [
   'none', 'identity-changed', 'source-changed', 'report-race', 'role-missing',
   'typing-internal-error', 'typing-not-reached', 'typing-missing-cli', 'typing-missing-readonly',
-  'typing-missing-mapping', 'sdist-wrong-entrypoint',
+  'typing-missing-mapping', 'typing-unregistered-readonly', 'sdist-wrong-entrypoint',
 ])
 def test_export_flow_and_failure_boundaries(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, change: str) -> None:
   root, work, output = (tmp_path / name for name in ('checkout', 'work', 'dist'))
@@ -550,6 +550,11 @@ def test_export_flow_and_failure_boundaries(tmp_path: Path, monkeypatch: pytest.
     stdout = '' if change == 'typing-not-reached' else '\n'.join(('[assignment] [arg-type]', *messages.values()))
     return subprocess.CompletedProcess([], 2 if change == 'typing-internal-error' else 1, stdout, '')
   monkeypatch.setattr(subprocess, 'run', diagnostics)
+  if change == 'typing-unregistered-readonly':
+    def incomplete(source: str) -> dict[str, str]:
+      return {label: message for label, message in expected_typing_diagnostics(source).items()
+        if label != 'BaziChart.八字'}
+    monkeypatch.setattr(package_checks, 'expected_typing_diagnostics', incomplete)
   if change == 'none':
     check_packages(root, work, output, report, receipt)
   else:
@@ -561,6 +566,7 @@ def test_export_flow_and_failure_boundaries(tmp_path: Path, monkeypatch: pytest.
       'typing-missing-cli': 'Installed typing negative control missed main',
       'typing-missing-readonly': r'Installed typing negative control missed ContextResult\.bazi',
       'typing-missing-mapping': 'Installed typing negative control missed immutable KnowledgeSource mapping',
+      'typing-unregistered-readonly': 'Unregistered installed read-only diagnostics',
       'sdist-wrong-entrypoint': 'Sdist entrypoints mismatch'}[change]
     with pytest.raises(exception, match=message or None):
       check_packages(root, work, output, report, receipt)
@@ -594,3 +600,17 @@ def test_export_flow_and_failure_boundaries(tmp_path: Path, monkeypatch: pytest.
   assert str(tmp_path) not in report.read_text()
   with pytest.raises(ValueError, match='^Environment report must not exist$'):
     check_packages(root, work, None, report, receipt)
+
+
+@pytest.mark.parametrize('trigger,label', [
+  ('盘.八字 = chart.bazi', r'BaziChart\.八字'),
+  ('catalog["changed"] = info', 'immutable CriterionInfo mapping'),
+])
+def test_missing_typing_fixture_line(trigger: str, label: str) -> None:
+  source = ''.join((ROOT / 'tests/fixtures' / name).read_text(encoding='utf-8')
+    for name in ('type_consumer_good.txt', 'type_consumer_bad_extra.txt'))
+  expected = expected_typing_diagnostics(source)
+  line = source.splitlines().index('盘.八字 = chart.bazi') + 1
+  assert expected['BaziChart.八字'] == f'\nbad.py:{line}: error: Property "八字" defined in "BaziChart" is read-only  [misc]\n'
+  with pytest.raises(ValueError, match='Missing typing fixture line for ' + label):
+    expected_typing_diagnostics(source.replace(trigger, '# removed fixture'))

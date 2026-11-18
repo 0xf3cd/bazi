@@ -47,7 +47,7 @@ print('年干十神', 盘.十神.年.天干)
 “集成开发”和“查阅知识库”，知识目录与 API 参考供随时查阅。
 
 只需公历与农历换算时，从 `bazi.calendar.utils` 导入 `to_lunar`、`to_date`，无需创建命盘。
-v3.0.0 的往返示例及闰月编号见[公历、农历与节气](https://github.com/0xf3cd/bazi/blob/milestone/v3.0.0/docs/guides/calendar.md)。
+往返示例及闰月编号见所选版本的“公历、农历与节气”指南。
 
 不写 Python 时可使用安装后的 `bazi` 命令，先运行 `bazi chart --help` 查看排盘选项，更多用法见站点的“命令行”指南。
 

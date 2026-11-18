@@ -55,11 +55,11 @@ python show_chart.py
 下面是完整的独立例子：
 
 ```{testcode} quickstart-text
-from bazi.bazi import Bazi
-from bazi.bazi_chart import BaziChart
+from bazi.bazi import 八字
+from bazi.bazi_chart import 命盘
 from bazi.chart_text import basic_text
 
-chart = BaziChart(Bazi.create('1990-05-17 10:30', 'female'))
+chart = 命盘(八字.create('1990-05-17 10:30', '女'))
 print(basic_text(chart).strip())
 ```
 
@@ -105,11 +105,11 @@ os.chdir(_save_directory.name)
 ```{testcode} quickstart-save
 from pathlib import Path
 
-from bazi.bazi import Bazi
-from bazi.bazi_chart import BaziChart
+from bazi.bazi import 八字
+from bazi.bazi_chart import 命盘
 from bazi.chart_text import basic_text
 
-chart = BaziChart(Bazi.create('1990-05-17 10:30', 'female'))
+chart = 命盘(八字.create('1990-05-17 10:30', '女'))
 path = Path('chart.txt')
 path.write_text(basic_text(chart), encoding='utf-8')
 print('已保存', path)
