@@ -50,6 +50,7 @@ from bazi.calendar.utils import get_min_supported_date, get_max_supported_date, 
 
 print(to_date(get_min_supported_date(CalendarType.公历)))
 print(to_date(get_max_supported_date(CalendarType.公历)))
+# 将下面的 CalendarType.农历 换成 CalendarType.干支历，可查干支历端点。
 print(get_min_supported_date(CalendarType.农历))
 print(get_max_supported_date(CalendarType.农历))
 ```
@@ -62,8 +63,6 @@ print(get_max_supported_date(CalendarType.农历))
 ```
 
 日期换算的公历范围为 1901-02-19 至 2099-12-31，包含两端。
-前两行用 `to_date` 打印公历日期；任何历法的端点经它换算，都会得到这一对公历日期。
-后两行直接打印农历端点；在这两行把 `CalendarType.农历` 换成 `CalendarType.干支历`，可查看干支历端点。
 `CalendarDate` 构造时检查字段类型，换算时再检查日期是否合法、是否在支持范围内；
 错型抛 `TypeError`，非法或越界日期抛 `ValueError`。
 
@@ -84,11 +83,11 @@ print(prev_jie(moment).jieqi, next_jie(moment).jieqi)
 ```
 
 `jieqi_moment` 的年份是公历年，可查二十四节气；该年的小寒、大寒都在该年一月。
-结果为东八区无时区 `datetime` 标签，截断到秒。`prev_jie` 和 `next_jie` 只查开月的十二节，
+结果是北京时间的 `datetime`，不带 `tzinfo`，截断到秒。`prev_jie` 和 `next_jie` 只查开月的十二节，
 不含中气，返回 `JieqiTime`，可读 `.jieqi` 和 `.moment`。
 恰好交节时，`prev_jie` 返回当前节，`next_jie` 返回下一节。
 
-相邻节查询接收同一东八区无时区标签。用 `supported_jie_boundaries()` 取得首末节时刻：
+`prev_jie`、`next_jie` 也接收这种不带时区的北京时间。用 `supported_jie_boundaries()` 取得首末节时刻：
 
 ```{testcode} calendar-jie-range
 from bazi.calendar.utils import supported_jie_boundaries
@@ -105,7 +104,7 @@ print(last)
 
 `prev_jie`／`next_jie` 的输入须在 `[first, last)` 内，含首端、不含末端，越界抛 `ValueError`。
 `jieqi_moment` 可查公历 1901 至 2200 年，年份越界也抛 `ValueError`。
-节气表的范围不扩大上面的日期换算或出生输入范围。
+节气能查到 2200 年，日期换算和排盘仍只到 2099-12-31。
 
 ## 数据来源与精度
 
@@ -114,10 +113,8 @@ print(last)
 农历表在 1901 至 2099 年的月长与[香港天文台历书](https://www.hko.gov.hk/en/gts/time/conversion.htm)
 数据对拍；HKO 原件与解码保留为测试对照。
 
-节气标签由计算所得的 UT1 时刻加八小时得到，1929 年前也按东八区表达，不改为北京地方平时。
-表中截断到秒只是记录粒度，不表示天文计算误差小于一秒。
-1972 年起 UT1 与 UTC 的差不超过 0.9 秒；此前的标签同样用 UT1 加八小时表示，不适用这一差值上限。
-2101 至 2200 年使用 ΔT 外推，连续性不等于精度保证。
+节气时刻是 UT1 加 8 小时得到的北京时间，1929 年以前也这样算，不换成北京地方平时。
+时刻记到秒只是记录格式，不代表误差小于一秒；2101 至 2200 年依赖 ΔT 外推，精度没有保证。
 出生归属还受 `DAY`／`HOUR`／`MINUTE` 比较粒度影响，见 {doc}`configuration`。
 
 来源头、时标和编码约定见[历法数据维护](../contributing.md#历法数据维护)所列的数据格式说明。
