@@ -43,10 +43,9 @@ def _get_min_supported_date(date_type: CalendarType) -> CalendarDate:
     return CalendarDate(first.year, first.month, first.day, CalendarType.SOLAR)
   elif date_type == CalendarType.LUNAR:
     return _solar_to_lunar(get_min_supported_date(CalendarType.SOLAR))
-  elif date_type == CalendarType.GANZHI:
-    return _solar_to_ganzhi(get_min_supported_date(CalendarType.SOLAR))
   else:
-    raise ValueError(f'Unsupported date_type: {date_type}') # pragma: no cover # 上方已处理全部 CalendarType 成员。
+    assert date_type == CalendarType.GANZHI
+    return _solar_to_ganzhi(get_min_supported_date(CalendarType.SOLAR))
 
 
 def get_max_supported_date(date_type: CalendarType) -> CalendarDate:
@@ -64,10 +63,9 @@ def _get_max_supported_date(date_type: CalendarType) -> CalendarDate:
     return CalendarDate(last_year, 12, 31, CalendarType.SOLAR)
   elif date_type == CalendarType.LUNAR:
     return _solar_to_lunar(get_max_supported_date(CalendarType.SOLAR))
-  elif date_type == CalendarType.GANZHI:
-    return _solar_to_ganzhi(get_max_supported_date(CalendarType.SOLAR))
   else:
-    raise ValueError(f'Unsupported date_type: {date_type}') # pragma: no cover # 上方已处理全部 CalendarType 成员。
+    assert date_type == CalendarType.GANZHI
+    return _solar_to_ganzhi(get_max_supported_date(CalendarType.SOLAR))
 
 #endregion
 
