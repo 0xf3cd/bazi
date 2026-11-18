@@ -95,7 +95,7 @@ python -m pip install celestial-calendar==0.6.1
 
 `Requirements.txt` 是开发依赖，`docs/requirements.txt` 是文档工具依赖，两者都不是运行时依赖；`celestial-calendar==0.6.1` 是历法测试用的工具依赖。
 
-如果在 Python 3.11／3.12 上检查运行时，另建对应版本的环境，只安装 `Requirements.txt` 与 `celestial-calendar==0.6.1`，使用 `python run_tests.py -a -v --runtime-only`。它保留库测试、覆盖率、lint、运行时类型检查、安装工件与安装命令检查，不收集 `tests/docs/` 或检查、构建文档工具；文档完整检查仍在 3.13+ 环境中执行。不要尝试在 3.11／3.12 环境安装新版 Sphinx。
+如果在 Python 3.11／3.12 上检查运行时，另建对应版本的环境，只安装 `Requirements.txt` 与 `celestial-calendar==0.6.1`，使用 `python run_tests.py -a -v --runtime-only`。它保留库测试、覆盖率、lint、运行时类型检查、安装工件与安装命令检查；`tests/test_docs_site.py`、`tests/test_docs_workflows.py` 仍会收集。类型检查排除 `docs/`、`tests/docs/`、`run_docs.py` 和 `run_doc_checks.py`，测试不收集 `tests/docs/`，也不构建文档。文档完整检查仍在 3.13+ 环境中执行；不要尝试在 3.11／3.12 环境安装新版 Sphinx。
 
 生成后的 HTML 是静态文件，读者只需浏览器；阅读文档或在 Python 3.11 中运行其中的库调用示例，不需要安装文档工具。
 

@@ -47,7 +47,8 @@
 锚点选项见 {doc}`configuration`，原局与流运的查法见 {doc}`relations-transits`。
 表值、锚点和查找位置各自的出处，沿下表的知识条目读取。
 
-可以用 `知识库.load().query('红艳')` 等中文名称读取相关说明，或用 `entry(条目ID)` 精确读取。
+先用 `kb = 知识库.load()` 加载知识库，再用 `kb.query('红艳')` 按中文名称读取相关说明，
+或用 `kb.entry(条目ID)` 精确读取。
 迁自源码的说明引用 `repository.rule_readings`，原有已核来源各自保留。
 问真与高人的计数及未知关系见 `concept.shensha_sources.readings`；
 袁氏日锚档案见 `concept.mingli_tanyuan.readings`。查询用法见 {doc}`knowledge`。

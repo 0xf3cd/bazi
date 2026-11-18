@@ -24,7 +24,8 @@ print('日柱纳音', chart.nayin.day)
 日柱纳音 杨柳木
 ```
 
-这些属性以 {py:class}`~bazi.data_types.BaziData` 保存四柱数据，可用 `年`、`月`、`日`、`时`
+`chart.十神` 是 `chart.shishen` 的中文只读别名，读取同一份缓存结果。
+上例的十神、藏干和纳音以 {py:class}`~bazi.data_types.BaziData` 保存四柱数据，可用 `年`、`月`、`日`、`时`
 读取 `year`、`month`、`day`、`hour`，
 也可按年、月、日、时顺序遍历。十神和阴阳五行的每柱结果再以 {py:class}`~bazi.data_types.GanzhiData`
 区分 `tiangan` 与 `dizhi`，中文只读别名为 `天干`、`地支`；日主自身的天干十神位置为 `None`。
