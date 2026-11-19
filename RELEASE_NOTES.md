@@ -7,13 +7,13 @@
 库仍支持 Python 3.11+，无必需的第三方运行依赖。
 
 从 2.x 升级需调整知识文件、CLI 调用、历法导入及结果对象用法，具体见下方迁移对照。
-默认配置的计算规则与结果保持；原来选用 `hko` 或 `celestial-algo2` 时的差异见“历法入口与配置迁移”。
+原默认后端 `celestial` 的计算规则与结果保持；原来选用 `hko` 或 `celestial-algo2` 时的差异见“历法入口与配置迁移”。
 
 ### 中文读取入口
 
-`八字`、`命盘`、`流年大运`、`知识库` 分别从 `bazi.bazi`、`bazi.bazi_chart`、
-`bazi.transit_chart`、`bazi.knowledge` 导入，指向对应的原类型。
-可用 `盘.八字.四柱`、`盘.十神.年.天干` 读取命盘，用 `流年大运(盘).at_year(2024)` 查询岁运，
+`八字`（`Bazi`）、`命盘`（`BaziChart`）、`流年大运`（`TransitChart`）、`知识库`（`KnowledgeBase`）
+分别从 `bazi.bazi`、`bazi.bazi_chart`、`bazi.transit_chart`、`bazi.knowledge` 导入，均为原类型的别名。
+对于一个命盘实例 `盘`，可用 `盘.八字.四柱`、`盘.十神.年.天干` 读取结果，用 `流年大运(盘).at_year(2024)` 查询岁运，
 再从结果读取 `.大运`、`.流年`；用 `知识库.load().query(天干.丁)` 查知识，`天干` 从 `bazi.defines` 导入。
 早于出生干支年的岁运查询返回 `None`，须先检查再读取。
 
@@ -25,7 +25,8 @@
 
 知识库改为对象、条目、出处三份注册表。按中文名、对象 ID 或领域枚举直接查询，
 例如 `kb.query('丁')`、`kb.query(Tiangan.丁)`；默认返回全部相关材料。
-条目的前提、读法、署名、限度与简短出处随正文显示，来源定位和引文由 `show_sources=True` 展开。
+用 `kb.render(entry)` 显示正文及条目的前提、读法、署名、限度与简短出处；
+调用时传入 `show_sources=True`，另展开来源定位和引文。
 原有 326 条正文及条目 ID 保留，另从源码整理 21 条规则与查法说明，共 347 条。
 原有未核出处和条件未整理的含义仍在文字中说明，查到不表示适用于命盘。
 
@@ -44,14 +45,15 @@
 
 自定义知识文件须改为精确整数 `schema_version=4`，移除 `contexts` 注册表，并按上表调整字段。
 条目必填 `claim_id`、`objects`、`text`，来源必填 `source_id`、`work`；其余字段可省略。
-旧栏目前提与条件标记须先转为必要说明，不能直接丢弃。空前提不代表无条件，空来源状态不代表已核实。
+旧条目中的前提栏与条件标记须先转为必要说明，不能直接丢弃。
+空前提不代表无条件，来源记录的 `state` 为空不代表已核实。
 加载器仍拒绝重复键／ID、错误类型和断引用，不再检查独立来源数量。
 含孤立代理项的 JSON 可以加载，后续以 UTF-8 严格编码时会抛 `UnicodeEncodeError`；
 嵌套过深的 JSON 抛 `RecursionError`，不再将这些错误统一转换为 `ValueError`。
 对象 ID 与另一对象的名称相同时也会被拒绝；请修改冲突 ID 并更新条目的对象引用。名称仍可重名。
 没有运行时兼容层或自动迁移；最小 JSON 见[知识指南](docs/guides/knowledge.md)。
 
-计算与结果渲染均不加载知识文件，默认结果也可包含参考 ID。自定义库缺项时，
+计算与结果渲染均不加载知识文件，默认结果也可包含参考 ID。自定义库缺少参考 ID 对应的条目时，
 调用方可用 `kb.entries.get(id)` 检查；CLI 显示对应 ID 与“知识库未收录”，判据状态不受影响。
 原来的通用“编者”来源记录已撤回，其署名移入对应条目；其余 40 份来源保留，
 另加一份指向固定源码快照的来源，记录所整理规则说明的出处，共 41 份。
@@ -61,8 +63,9 @@
 命令收为 `chart`、`knowledge`、`match`：
 
 - `demo` 改用 `chart --transits`，`relationship` 改用 `chart --relationship`，两项可组合并接固定出生输入。
-- `chart` 默认只读盘面事实，`chart --knowledge` 按日主与三处非日主明干、全部藏干对应的十神分组读知识，同次输出按条目 ID 去重。
-  `match --knowledge` 追加参考正文；两任务的 `--knowledge-source`、`--show-sources` 都须与 `--knowledge` 同用。
+- `chart` 默认只读盘面事实。`chart --knowledge` 分组读取日主及十神的知识；
+  十神取自三处非日主明干与全部藏干，同次输出按条目 ID 去重。
+  `match --knowledge` 追加参考正文；`chart` 与 `match` 的 `--knowledge-source`、`--show-sources` 都须与 `--knowledge` 同用。
 - `--output-dir`、批量 `--count` 和知识 TXT 批量导出撤回。
   `chart --output chart.txt` 保存本次完整无色输出；覆盖保护按解析后的路径比较，识别符号链接，不再检查硬链接身份。
 - `--gz-month` 改为 `--ganzhi-month`，不保留旧拼写。性别和精度接受库已有的中文写法，如 `女`、`分`。
@@ -83,13 +86,9 @@
 | 年份坐标与 `LiunianObservation.ganzhi_year` 拒绝 `bool`、`int` 子类 | 与年份查询入口一致，接受 `int` 及其子类（含 `bool`） |
 | 时刻坐标只接受 `datetime` 本身 | 现在接受无时区 `datetime` 及其子类；日期坐标仍只接受 `date` 本身，两者构造时均不检查历法支持范围 |
 | `ShenshaAnalysis`、`AtBirthShenshaAnalysis` 为 `TypedDict` | 改为 `frozendict` 类型别名；查询键与顺序不变，不能增删改键。原局值为支集、日柱或 `None`，调用方取值后须收窄类型，不再按键提供静态类型保证 |
-| 导入非历法内部工具 | 这些工具不再属于兼容承诺；支持的调用入口见[公开接口契约](API_CONTRACT.md#支持范围与导入路径) |
+| 导入历法以外的内部工具 | 这些工具不再属于兼容承诺；支持的调用入口见[公开接口契约](API_CONTRACT.md#支持范围与导入路径) |
 
 输入坐标、配置与 `TransitSet` 仍做构造校验，`GanzhiYearMonth` 也保留公开转换与校验。
-`-osmoke` 继续可用，改为复用 pytest 中登记的输入拒绝测试及优化模式代表任务。
-
-文档归档工具撤回旧布局恢复、自动初始化分支及 `pending` 状态；`resume` 按归档原字节恢复，
-不重写入口文件。历史工具选择与手工重建步骤见[文档归档指南](docs/versioning.md#手工重建归档分支)。
 
 ### 历法入口与配置迁移
 
@@ -129,6 +128,13 @@
 日期换算的支持窗口仍由农历表限定，四柱仍按节气计算。
 wheel 只带运行时代码与数据，不含 HKO 材料或离线生成器。
 源码与 sdist 保留重建工具及 HKO 对照材料，维护入口见[历法数据维护](CONTRIBUTING.md#历法数据维护)。
+
+### 开发工具迁移
+
+`run_tests.py` 的 `-osmoke` 选项继续可用，改为复用 pytest 中登记的输入拒绝测试及优化模式代表任务。
+
+文档归档工具撤回旧布局恢复、自动初始化分支及 `pending` 状态；`resume` 按归档原字节恢复，
+不重写入口文件。历史工具选择与手工重建步骤见[文档归档指南](docs/versioning.md#手工重建归档分支)。
 
 ## bazi 2.6.0
 
