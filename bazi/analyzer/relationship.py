@@ -56,7 +56,7 @@ class _ShenshaSpec:
   神煞的规格：判断函数、查法锚、展示标签，以及可选的流派定义参数。
 
   kind 指定取锚柱天干、地支或完整干支；anchor 指定锚柱，无分歧时为固定 Anchor，
-  有分歧时为读取命盘选项的解析函数。两者均须依该神煞自身出处，不能沿用既有神煞作默认，见 #167。
+  有分歧时为读取命盘选项的解析函数。
 
   Note:
   - predicate 的首参数类型须与 kind 一致；给定 definition 时，须通过同名仅关键字参数接收解析结果。
@@ -72,7 +72,7 @@ class _ShenshaSpec:
 
 '''亲密关系分析支持的地支结果神煞注册表。'''
 _REGISTRY: Final[frozendict[str, _ShenshaSpec]] = frozendict({
-  # 桃花不设旋钮：《命理探源》的日支桃花另有纳音条件且只查月、时，只切锚会造出出处未言的规则。
+  # 桃花固定以年、日支各查其余三支；出处见 shensha.taohua.readings。
   'taohua'     : _ShenshaSpec(shensha_utils.taohua,      _AnchorKind.DIZHI,   Anchor.YEAR_AND_DAY, '桃花'),
   'hongluan'   : _ShenshaSpec(shensha_utils.hongluan,    _AnchorKind.DIZHI,   Anchor.YEAR, '红鸾'),
   'hongyan'    : _ShenshaSpec(shensha_utils.hongyan,     _AnchorKind.TIANGAN, lambda school: school.hongyan_anchor, '红艳'),

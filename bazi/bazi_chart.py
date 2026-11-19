@@ -108,6 +108,11 @@ class BaziChart:
     '''返回构造时传入的同一个 Bazi。'''
     return self._bazi
 
+  @property
+  def 八字(self) -> Bazi:
+    '''bazi 的中文只读别名。'''
+    return self.bazi
+
   @functools.cached_property
   def taiyuan(self) -> Ganzhi:
     '''月干顺移一、月支顺移三的胎元干支；不是实际受孕时刻，也不扩原盘四柱。'''
@@ -310,6 +315,11 @@ class BaziChart:
 
     assert len(shishen_list) == len(Zhu)
     return BaziData(*shishen_list)
+
+  @property
+  def 十神(self) -> BaziData[PillarShishens]:
+    '''shishen 的中文只读别名，读取同一份缓存结果。'''
+    return self.shishen
   
   @functools.cached_property
   def nayin(self) -> BaziData[str]:

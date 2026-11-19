@@ -15,7 +15,9 @@
 
 - 刑冲破害、合会、神煞、十神等规则承载领域知识。流派有分歧时保留各读法，建模为可选变体，
   不静默合成一个“正确”规则。流派及默认值应可在运行时配置。
-- 已知流派或来源写入 docstring、注释，保留出处。
+- 源码说明保留功能、计算口径和来源入口（条目 ID 或书名篇名）。
+  知识独有的前提、读法、引文与来源限度放进可查的知识条目；
+  搜索过程、开发约束与 PR 定位归研究／开发记录，移动时保留唯一的来源关系。
 - 改规则即改知识，编码前按人工确认要求核定命理依据。
 
 ## 工具链
@@ -29,14 +31,8 @@
   `# noqa: <RULE>`；整类与领域或风格冲突时才在 `ruff.toml` 忽略。只与某一子树冲突的规则，
   可用带理由的 `per-file-ignores`。
 - 安装包为 `bazi`，从定义模块导入，没有根类入口；唯一安装命令为 `bazi`，实现位于 `bazi/cli.py`。
-- 库运行时支持 Python 3.11+；文档构建、文档工具检查及完整开发门禁需要 Python 3.13+。
-  已生成的 HTML 是静态文件，阅读不需要 Python。3.11／3.12 环境不安装 `docs/requirements.txt`，使用
-  `run_tests.py -a -v --runtime-only`：保留全部库检查，排除 `docs/`、`tests/docs/`、
-  `run_docs.py`、`run_doc_checks.py` 的文档工具类型检查和测试／构建。
-  `tests/test_docs_site.py`、`tests/test_docs_workflows.py` 保留。
-- PR 前须在 Python 3.13+ 文档开发环境实跑与 CI 相同的 **`run_tests.py -a -v`**；
-  `--runtime-only` 不能代替该完整门禁。下列内层检查较快，但省略了安装工件与真实安装命令检查，
-  不能替代完整门禁：
+- Python 版本、依赖安装及运行时检查范围见[贡献指南 §准备环境](CONTRIBUTING.md#准备环境)；
+  PR 前执行[完整门禁](CONTRIBUTING.md#完整门禁)。下列内层检查较快，但省略了安装工件与真实安装命令检查：
   - `ruff check .`
   - `python -m mypy . --check-untyped-defs --warn-redundant-casts --warn-unused-ignores --warn-return-any --warn-unreachable`
     （裸 `mypy .` 缺少 `--warn-unreachable`。）

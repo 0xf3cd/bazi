@@ -159,6 +159,78 @@
     [
       "shensha.yangren",
       "f198d60420adf22392fca3bc0b52600040fdb882fe6f34e682d3ae7d2fa0df11"
+    ],
+    [
+      "concept.shensha_sources",
+      "bc5a6a630d10dda94c76d1431ce4abb2cf5e8f971a2d6664c9b00769978f9bfe"
+    ],
+    [
+      "concept.mingli_tanyuan",
+      "163d65c43e5ae6a3f116bac8251a3b2bb0eb0b04c1c98a5e6dfe9c64861b67df"
+    ],
+    [
+      "shensha.hongyan",
+      "33384dfba5c337259bcf08145af9b446d0c4af5fec831898b40db5b572f0f6af"
+    ],
+    [
+      "shensha.hongluan",
+      "2c099ea7641000841e2c536937aed8d2b9570aa8ec245891715c5d889d6b5da4"
+    ],
+    [
+      "shensha.tianxi",
+      "a3d9219f205355ab5db60a6dae1860b92599e28e9d27816efd695a224e09562e"
+    ],
+    [
+      "shensha.jiangxing",
+      "b404206753cf9060b02bbdb318f9b5e754c008abea3bab93d586893e80bdb4e2"
+    ],
+    [
+      "shensha.zaisha",
+      "5b085e9145836418387b7f6e10fb5eca8241f6eaad26b8eb9dfcf537e45964e8"
+    ],
+    [
+      "shensha.jiesha",
+      "404ebe2b55e4baeaa495eba0a16536de2f4afe29c5d39185d41da7125a8b4b6b"
+    ],
+    [
+      "shensha.wangshen",
+      "312f9e30e47e5787972bb3ee9da3eb47cacedaf8fd563b128206d5f1c34a3184"
+    ],
+    [
+      "shensha.guchen",
+      "7ae1ebaa9e73a04445a9785ba91f56a36870b8aa205567ae3bb95dd0786b15ea"
+    ],
+    [
+      "shensha.guasu",
+      "c82d50e977efd856e4ef10b3b01ec79a7c59776375faaddc802429ef5618ab65"
+    ],
+    [
+      "shensha.jinyu",
+      "96652b924db885c28c14408f1d1002d5efbac5bff4371c6edce373015ee02c62"
+    ],
+    [
+      "shensha.feiren",
+      "0ed6431e41ad3c348244f891b46e1dc601fcdf069f96f1955bdd7de10d1ab8e9"
+    ],
+    [
+      "shensha.wenchanggui",
+      "912e6c7e2d0eed5c9232979acb943c73c314526c065fef64c65aed129fb588a4"
+    ],
+    [
+      "shensha.taiji",
+      "08818d96de7620aa361ba9602d007fc9c9366fc1c7624eb6262b00ee21f9b4c2"
+    ],
+    [
+      "concept.tonggen",
+      "d7d9c4dbb09ff0e8d9f9bb072f4ed40592ccb43e439737f75066abc44d6ebd35"
+    ],
+    [
+      "concept.tougan",
+      "3969be75b7b11738d45799fbfabe568375d223f011df8e7f1066c18d7c9a3588"
+    ],
+    [
+      "concept.dizhi_po",
+      "855aaaf9bd350b8c0123efa7d30c77710daddfde15c229170f5650000d51ce7b"
     ]
   ],
   "sources": [
@@ -321,6 +393,10 @@
     [
       "laoshenpo.geng_regulated_transit",
       "0a625b4c65a9d2b398e8d40018144685d5ee5b32125cc5180302fdcef1a09d91"
+    ],
+    [
+      "repository.rule_readings",
+      "03ab7c24e47371e2c134ed1c55a6758bd958bd3c5a22bd6c891567390c0efb69"
     ]
   ],
   "entries": [
@@ -1627,6 +1703,90 @@
     [
       "shensha.tianyi.geng_with_xin",
       "e96b9e6841bdbb1fc7c492c6ea80414bb4ad2a0c6f8714597e75160340a7c6d2"
+    ],
+    [
+      "concept.shensha_sources.readings",
+      "1bbc19c985f4ceed5c50869e794f4f4137c9fc3d91e96291a335b861ef8a5cfa"
+    ],
+    [
+      "concept.mingli_tanyuan.readings",
+      "2d5df8f5cd64791efd35019fead489c78c51ac045279e6fb3c80f62fa263bbed"
+    ],
+    [
+      "shensha.taohua.readings",
+      "7c5818f4a34e89d5c3662d6acc510491a418ea181a73bdc9270ddc0d998ac5e2"
+    ],
+    [
+      "shensha.hongyan.readings",
+      "b3adcf2d8deb9d3d6d45a61178a15cc4e21aaf986772cabd9aa1df45f34752b7"
+    ],
+    [
+      "shensha.hongluan_tianxi.readings",
+      "4b6ec3ff874a4b9477efbf4effec35a4df8e950a8c2e787fe642f810388966e8"
+    ],
+    [
+      "shensha.huagai.readings",
+      "53d9ac4d96391f4f0e2d9bae915856c7e3b8bc1d3a50352876db7f5befb30d4a"
+    ],
+    [
+      "shensha.jiangxing.readings",
+      "17ac8aaa79b6d4c0386272439b314973fe2a8952ff1cc2a6fc220fb648fa0f76"
+    ],
+    [
+      "shensha.zaisha.readings",
+      "ba51c814260fa9792ba45a7faf0028abecb8219bccdf7d660bf26148c19b8829"
+    ],
+    [
+      "shensha.jiesha_wangshen.readings",
+      "f51ca476643c2c6d8450cc5d5f9657a0b8534db8b52ac9dfa0fa510a162836d3"
+    ],
+    [
+      "shensha.guchen_guasu.readings",
+      "5ad73fcfc4fcd22d4faf4a59f9b279c99427272ca282b0731f8ce7a2b2b59b14"
+    ],
+    [
+      "shensha.jinyu.readings",
+      "2b79ff424667bc1806760812803dfec62eb03d70917fb173e994c09d3fd27bea"
+    ],
+    [
+      "shensha.yangren_feiren.readings",
+      "75da736c095dc7d4016a6dc7a371168d90b84f5ecb57b24521708d7007f2a924"
+    ],
+    [
+      "shensha.tianyi.readings",
+      "c446e130277ea3322ee5389e051567ba8f334013f8df6cfe2133b44b7263260b"
+    ],
+    [
+      "shensha.wenchang.readings",
+      "65c3384b06169eedfe2777e7ab7ce8a79d6cabe93b0dd23a82d593e73c9eb966"
+    ],
+    [
+      "shensha.wenchanggui.readings",
+      "642e0fe65d43acafac566973d263c1f5737326ed582d734706b09e097184034e"
+    ],
+    [
+      "shensha.taiji.readings",
+      "1601951354a4a90e35e3d51665d46f7e5011bdd46cbe1474d275e0a9a969d2bd"
+    ],
+    [
+      "shensha.guoyin.readings",
+      "aa8157cb45ec065c7e76dd9b4990fc1cd4edfc01e8da0260be2e890eb7cc2bd7"
+    ],
+    [
+      "shensha.kongwang.modern",
+      "8b75ad5fb8f2d7770c90ef88bc3151e6b28df3d63d0d1c8e6391be1e70bea73f"
+    ],
+    [
+      "concept.tonggen.readings",
+      "7a768680cdad78a271706192bc7c6c64019f92afc530f9169d7452ad32ee5ea7"
+    ],
+    [
+      "concept.tougan.readings",
+      "f9d8683ee25c5a11c582a770e6edd4d14082a289ae53ac3df9637a930aaaec66"
+    ],
+    [
+      "concept.dizhi_po.readings",
+      "48936e3c5946b3261a4dda4cf2160696870ddc2571a5750a890a4972984c95a7"
     ]
   ]
 }

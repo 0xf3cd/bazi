@@ -61,10 +61,15 @@
 修改工作流不会自动启用这些设置。正式发布仍从 `main` 执行，见[发布说明](RELEASING.md)。
 
 知识编辑来源是 [bazi/knowledge_data.json](bazi/knowledge_data.json)，不是生成的目录页面。
+内容保护测试将每个对象、来源和条目分别与 `tests/data/knowledge_content.json` 的指纹比较。
+有意修改知识后，先核对文字及出处，再只更新受影响记录的指纹，不重建整份基准。
+计算式为 `sha256(json.dumps(asdict(record), ensure_ascii=False, sort_keys=True).encode('utf-8')).hexdigest()`；
+`record` 是 `KnowledgeBase.load()` 中对应的记录，三个函数分别来自 `hashlib`、`json` 和 `dataclasses`。
 
 维护规则与知识关联时：
 
 - 计算表归 `rules.py`，默认及合法配置归 `school.py`，知识文字、来源和状态归知识注册表；共表和派生关系继续从计算定义取值。
+- 新读法另加定义，保留既有定义；新增神煞的表值、锚点与查找位置分别核定其自身出处，不沿用其他神煞的设置作默认。
 - 变更时核对条目 ID、定义成员、表值、锚点和实际查找位置；知识条目与计算表分别维护，
   同一读法的内容应相符。
 - 原文、解释、锚点依据及来源限度分别保留；不把转载网站当成独立来源，也不因建立关联而升级来源状态。
@@ -90,7 +95,7 @@ python -m pip install celestial-calendar==0.6.1
 
 `Requirements.txt` 是开发依赖，`docs/requirements.txt` 是文档工具依赖，两者都不是运行时依赖；`celestial-calendar==0.6.1` 是历法测试用的工具依赖。
 
-如果在 Python 3.11／3.12 上检查运行时，另建对应版本的环境，只安装 `Requirements.txt` 与 `celestial-calendar==0.6.1`，使用 `python run_tests.py -a -v --runtime-only`。它保留库测试、覆盖率、lint、运行时类型检查、安装工件与安装命令检查，不收集 `tests/docs/` 或检查、构建文档工具；文档完整检查仍在 3.13+ 环境中执行。不要尝试在 3.11／3.12 环境安装新版 Sphinx。
+如果在 Python 3.11／3.12 上检查运行时，另建对应版本的环境，只安装 `Requirements.txt` 与 `celestial-calendar==0.6.1`，使用 `python run_tests.py -a -v --runtime-only`。它保留库测试、覆盖率、lint、运行时类型检查、安装工件与安装命令检查；`tests/test_docs_site.py`、`tests/test_docs_workflows.py` 仍会收集。类型检查排除 `docs/`、`tests/docs/`、`run_docs.py` 和 `run_doc_checks.py`，测试不收集 `tests/docs/`，也不构建文档。文档完整检查仍在 3.13+ 环境中执行；不要尝试在 3.11／3.12 环境安装新版 Sphinx。
 
 生成后的 HTML 是静态文件，读者只需浏览器；阅读文档或在 Python 3.11 中运行其中的库调用示例，不需要安装文档工具。
 

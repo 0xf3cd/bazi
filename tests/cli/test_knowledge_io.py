@@ -34,7 +34,7 @@ def test_open_premises_survive_default_reading(tmp_path: Path) -> None:
 
 def test_validation_and_empty_query(tmp_path: Path) -> None:
   result = run_cli(tmp_path, 'knowledge', '--validate-knowledge')
-  assert result.returncode == 0 and result.stdout == '校验通过：326 条目，40 来源。\n'
+  assert result.returncode == 0 and result.stdout == '校验通过：347 条目，41 来源。\n'
   empty = run_cli(tmp_path, 'knowledge', 'wuxing.tu')
   assert empty.returncode == 0 and empty.stdout == '无匹配条目。\n'
   assert list(tmp_path.iterdir()) == []
@@ -48,7 +48,7 @@ def test_edit_validate_reload_cycle(tmp_path: Path) -> None:
   result = run_cli(tmp_path, 'knowledge', '丁', '--knowledge-source', str(source), '--validate-knowledge')
   assert result.returncode == 0, result.stderr
   restored = KnowledgeBase.load(source)
-  assert result.stdout == '校验通过：326 条目，40 来源。\n' + ''.join(
+  assert result.stdout == '校验通过：347 条目，41 来源。\n' + ''.join(
     restored.render(entry) + '\n\n' for entry in restored.query('丁')
   )
   assert '本次编辑的限度。' in result.stdout

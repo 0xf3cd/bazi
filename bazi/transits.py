@@ -72,6 +72,16 @@ class TransitSet:
       raise ValueError('A TransitSet cannot be empty')
 
   @property
+  def 大运(self) -> Ganzhi | None:
+    '''dayun 的中文只读别名，缺项时为 None。'''
+    return self.dayun
+
+  @property
+  def 流年(self) -> Ganzhi | None:
+    '''liunian 的中文只读别名，缺项时为 None。'''
+    return self.liunian
+
+  @property
   def items(self) -> tuple[tuple[TransitKind, Ganzhi], ...]:
     '''按固定顺序返回现有流运。'''
     pairs = (

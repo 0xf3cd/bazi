@@ -22,12 +22,6 @@ from house_docstrings import source_attribute_docs
 '''出生精度的 Examples 是三个粒度的文字对照，不是待执行程序。'''
 PROSE_EXAMPLES: Final[frozenset[str]] = frozenset({'bazi.school.BaziPrecision'})
 
-'''缩进原文块按引文核对，不能当作 Python 执行或从页面对账中滤掉。'''
-QUOTED_BLOCKS: Final[dict[str, tuple[str, str]]] = {
-  'bazi.rules.ShenshaRules.TaijiDef': ('bazi.rules', '壬巳癸申一作壬癸巳申偏喜美，封侯万户即三公\n'),
-}
-
-
 @dataclass(frozen=True)
 class ApiExample:
   module: str
@@ -58,16 +52,10 @@ def collect_examples(package: Path) -> tuple[ApiExample, ...]:
   parser = MarkdownIt('commonmark')
   examples = []
   prose: set[str] = set()
-  quoted: set[str] = set()
   for name, (module, text) in documents.items():
     fences = [token for token in parser.parse(text) if token.type in ('fence', 'code_block')]
     has_heading = re.search(r'^(?:Examples|Usage)[:：]', text, re.MULTILINE) is not None
     if not fences and not has_heading:
-      continue
-    if name in QUOTED_BLOCKS:
-      assert len(fences) == 1 and fences[0].type == 'code_block', ('Quoted block shape', name)
-      assert (module, fences[0].content) == QUOTED_BLOCKS[name], ('Quoted block content', name)
-      quoted.add(name)
       continue
     if name in PROSE_EXAMPLES:
       assert has_heading and not fences, ('Prose example gained code', name)
@@ -80,7 +68,6 @@ def collect_examples(package: Path) -> tuple[ApiExample, ...]:
     assert output is not None or any(isinstance(node, ast.Assert) for node in ast.walk(tree)), ('Missing expected result', name)
     examples.append(ApiExample(module, name, code, output))
   assert prose == PROSE_EXAMPLES, ('Prose example coverage', sorted(PROSE_EXAMPLES - prose))
-  assert quoted == QUOTED_BLOCKS.keys(), ('Quoted block coverage', sorted(QUOTED_BLOCKS.keys() - quoted))
   return tuple(examples)
 
 
@@ -92,8 +79,6 @@ def check_example_blocks(examples: tuple[ApiExample, ...], pages: Mapping[str, S
     expected[page][example.code] += 1
     if example.output is not None:
       expected[page][example.output] += 1
-  for module, text in QUOTED_BLOCKS.values():
-    expected['api/' + module.replace('.', '-') + '.html'][text] += 1
   assert expected.keys() <= pages.keys(), ('Missing API example pages', expected.keys() - pages.keys())
   for filename, blocks in pages.items():
     if filename.startswith('api/'):

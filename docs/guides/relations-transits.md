@@ -4,6 +4,31 @@
 结果是结构事实，描述“哪些干支落在哪些位置、在所选流派或匹配条件下满足哪种关系”，不是旺衰、格局或对事件的预测。
 要检查某条知识条目的前提在一张盘上是否成立，见 {doc}`integration`。
 
+## 查某年的大运和流年
+
+`流年大运` 是 `TransitChart` 的中文类型名。年份填写干支年标签：
+
+```{testcode} transits-chinese-year
+from bazi.bazi import 八字
+from bazi.bazi_chart import 命盘
+from bazi.transit_chart import 流年大运
+
+盘 = 命盘(八字.create('1990-05-17 10:30', '女'))
+岁运 = 流年大运(盘).at_year(2024)
+if 岁运 is not None:
+  print('大运', 岁运.大运)
+  print('流年', 岁运.流年)
+```
+
+```{testoutput} transits-chinese-year
+大运 丁丑
+流年 甲辰
+```
+
+`.大运`、`.流年` 分别是 `.dayun`、`.liunian` 的只读别名，值为 `Ganzhi` 或 `None`。
+早于出生干支年时整次查询返回 `None`；能返回流年但没有对应大运时，仅 `.大运` 为 `None`。
+大运按命盘选择的年份标签规则读取；查具体日期或时刻的交运边界，用下节入口。
+
 ## 查年、月、日或时刻的流运
 
 `TransitChart` 接收 `BaziChart`，返回指定坐标下的 `TransitSet`。下面显式使用 `minute` 精度，

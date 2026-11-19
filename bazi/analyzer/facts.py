@@ -82,10 +82,7 @@ def tonggen(
   Return: (tuple[TianganOccurrence, ...]) 按位置、藏干表顺序返回匹配的实际藏干。
 
   Note:
-  - 同五行通根例见《子平真诠》六、论十干得时不旺失时不弱的甲逢未、丙逢戌：
-    https://www.donglishuzhai.net/chapter/3719.html
-  - 《滴天髓阐微》才德篇任注亦有庚在酉丑通根的例子：
-    https://www.zhyw.net/a/ditiansui/2020/11/09/23706.html
+  - 同五行通根的来源例解见知识条目 concept.tonggen.readings。
   '''
   positions = _positions(chart, target, transits, condition)
   return tuple(
@@ -114,8 +111,7 @@ def tougan(
   无该藏干或无匹配明干时返回空元组。
 
   Note:
-  - 辰藏癸而透壬的墓库例见徐乐吾《子平真诠评注》三、论阴阳生死的注文：
-    https://tianjihq.com/zh-CN/learn/books/ziping-zhenquan-pingzhu/14
+  - 同五行透干的来源例解见知识条目 concept.tougan.readings。
   '''
   positions = _positions(chart, target, transits, condition)
   hidden = tuple(

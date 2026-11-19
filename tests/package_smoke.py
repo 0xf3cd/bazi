@@ -93,15 +93,16 @@ def main() -> None:
   check('bazi.knowledge' not in sys.modules, 'Root import eagerly loaded interpretation data')
   check('bazi.context_matching' not in sys.modules, 'Root import eagerly loaded context matcher')
 
-  from bazi.bazi import Bazi
-  from bazi.bazi_chart import BaziChart
+  from bazi.bazi import Bazi, 八字
+  from bazi.bazi_chart import BaziChart, 命盘
+  from bazi.defines import 天干, 十神
   from bazi.school import BaziConfig
   from bazi.calendar.utils import to_lunar, to_date
   from bazi.calendar.solar_time import apparent_solar_datetime
-  from bazi.transit_chart import TransitChart
+  from bazi.transit_chart import TransitChart, 流年大运
   from bazi.transits import TransitKind
   from bazi.analyzer.relationship import RelationshipAnalyzer
-  from bazi.knowledge import DEFAULT_SOURCE_PATH, KnowledgeBase
+  from bazi.knowledge import DEFAULT_SOURCE_PATH, KnowledgeBase, 知识库
   from bazi.context_matching import NatalObservation, evaluate_context
 
   check(not EOT_READS, 'Imports eagerly read the EOT table')
@@ -135,6 +136,26 @@ def main() -> None:
   check(bool(analysis.transits.shensha(transits.select(TransitKind.LIUNIAN))), 'Missing transit analysis')
   check(to_date(to_lunar(date(2023, 3, 22))) == date(2023, 3, 22), 'Installed lunar conversion failed')
   print('PASS installed calendar/chart/transits/analysis')
+
+  check(八字 is Bazi and 命盘 is BaziChart and 流年大运 is TransitChart and 知识库 is KnowledgeBase,
+    'Installed Chinese names do not refer to the original types')
+  盘 = 命盘(八字.create('1990-05-17 10:30', '女'))
+  check(盘.八字 is 盘.bazi and 盘.十神 is 盘.shishen, 'Chinese chart properties copied state')
+  check(tuple(map(str, 盘.八字.四柱)) == ('庚午', '辛巳', '壬午', '乙巳'), 'Chinese pillar reading failed')
+  check(盘.八字.日主 is 天干.壬 and 盘.十神.年.天干 is 十神.偏印, 'Chinese chart reading failed')
+  try:
+    盘.八字 = chart.bazi # type: ignore[misc]
+  except AttributeError:
+    pass
+  else:
+    raise RuntimeError('Installed Chinese chart property is writable')
+  岁运 = 流年大运(盘).at_year(2024)
+  if 岁运 is None:
+    raise RuntimeError('Chinese transit query returned no result')
+  check(str(岁运.大运) == '丁丑' and str(岁运.流年) == '甲辰', 'Chinese transit reading failed')
+  定义, = 知识库.load().query(天干.丁, topic='定义')
+  check(定义.text == '丁为阴火。', 'Chinese knowledge query failed')
+  print('PASS installed Chinese chart/transits/knowledge reading')
 
   check(DEFAULT_SOURCE_PATH == package_root / 'knowledge_data.json', 'Installed default source path mismatch')
   knowledge = KnowledgeBase.load()

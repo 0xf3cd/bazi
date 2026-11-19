@@ -3,17 +3,23 @@ from pathlib import Path
 from dataclasses import replace
 from typing import assert_type
 from bazi.bazi import Bazi, LocationTime
+from bazi.bazi import 八字
 from bazi.bazi_chart import BaziChart
+from bazi.bazi_chart import 命盘
+from bazi.data_types import BaziData, GanzhiData
+from bazi.defines import 天干, 十神, 五行, Shishen
 from bazi.calendar.dates import CalendarDate, GanzhiYearMonth, JieqiTime
 from bazi.calendar.utils import to_lunar, to_date
 from bazi.defines import Zhu, TianganLayer, Dizhi, Jieqi, Tiangan, Ganzhi
 from bazi.transits import TransitKind, TransitSet
 from bazi.transit_chart import TransitChart
+from bazi.transit_chart import 流年大运
 from bazi.analyzer.relationship import KongwangHit, KongwangResult, StarAppearance
 from bazi.school import BaziConfig
 from bazi.cli import main as cli_main
 from bazi.common import frozendict
 from bazi.knowledge import DEFAULT_SOURCE_PATH, KnowledgeBase, KnowledgeObject, KnowledgeEntry, KnowledgeSource
+from bazi.knowledge import 知识库
 from bazi.context_matching import NatalObservation, LiunianObservation, TransitObservation, Observation, YearCoordinate, MonthCoordinate, DateCoordinate, MomentCoordinate, LiunianPosition, ChartOccurrence, CriterionResult, CriterionReason, ContextResult, CriterionInfo, criterion, criteria, evaluate_context
 chart: BaziChart = BaziChart(Bazi.create(datetime(2000, 1, 1, 12), "male"))
 cli_exit: int = cli_main(["--help"])
@@ -71,3 +77,21 @@ if facts is not None:
   instant: datetime = facts.canonical_instant
   civil: datetime = facts.civil_time
   apparent: datetime = facts.apparent_time
+
+盘: BaziChart = 命盘(八字.create("1990-05-17 10:30", "女"))
+assert_type(盘.八字, Bazi)
+assert_type(盘.八字.四柱, tuple[Ganzhi, Ganzhi, Ganzhi, Ganzhi])
+assert_type(盘.八字.日主, Tiangan)
+assert_type(盘.十神, BaziData[GanzhiData[Shishen | None, Shishen]])
+assert_type(盘.十神.年.天干, Shishen | None)
+assert_type(盘.十神.月.地支, Shishen)
+assert_type(盘.十神.日.天干, Shishen | None)
+assert_type(盘.十神.时.地支, Shishen)
+岁运 = 流年大运(盘).at_year(2024)
+assert_type(岁运, TransitSet | None)
+if 岁运 is not None:
+  assert_type(岁运.大运, Ganzhi | None)
+  assert_type(岁运.流年, Ganzhi | None)
+知识: KnowledgeBase = 知识库.load()
+for 对象 in (天干.丁, 十神.正官, 五行.木):
+  assert_type(知识.query(对象), tuple[KnowledgeEntry, ...])

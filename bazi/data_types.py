@@ -78,6 +78,26 @@ class BaziData(Generic[T]):
   def __iter__(self) -> Iterator[T]:
     return iter((self.year, self.month, self.day, self.hour))
 
+  @property
+  def 年(self) -> T:
+    '''年柱的数据，即 year。'''
+    return self.year
+
+  @property
+  def 月(self) -> T:
+    '''月柱的数据，即 month。'''
+    return self.month
+
+  @property
+  def 日(self) -> T:
+    '''日柱的数据，即 day。'''
+    return self.day
+
+  @property
+  def 时(self) -> T:
+    '''时柱的数据，即 hour。'''
+    return self.hour
+
 
 @dataclass(frozen=True)
 class GanzhiData(Generic[T, U]):
@@ -87,3 +107,13 @@ class GanzhiData(Generic[T, U]):
   '''
   tiangan: T
   dizhi:   U
+
+  @property
+  def 天干(self) -> T:
+    '''天干的数据，即 tiangan。'''
+    return self.tiangan
+
+  @property
+  def 地支(self) -> U:
+    '''地支的数据，即 dizhi。'''
+    return self.dizhi

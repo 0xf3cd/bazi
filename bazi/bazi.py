@@ -472,6 +472,11 @@ class Bazi:
     return self._day_pillar.tiangan
 
   @property
+  def 日主(self) -> Tiangan:
+    '''day_master 的中文只读别名。'''
+    return self.day_master
+
+  @property
   def month_commander(self) -> Dizhi:
     '''
     月令，即月柱地支。
@@ -521,6 +526,11 @@ class Bazi:
       Ganzhi(tgs[2], dzs[2]),
       Ganzhi(tgs[3], dzs[3]),
     )
+
+  @property
+  def 四柱(self) -> tuple[Ganzhi, Ganzhi, Ganzhi, Ganzhi]:
+    '''pillars 的中文只读别名，依次为年、月、日、时柱。'''
+    return self.pillars
   
   @property
   def _identity(self) -> tuple[datetime | _Location, BaziGender, BaziConfig]:

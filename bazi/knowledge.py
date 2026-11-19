@@ -370,3 +370,6 @@ class KnowledgeBase:
     if not isinstance(show_sources, bool):
       raise TypeError(f'Expected bool, got {type(show_sources)}')
     return '\n\n'.join(self.render(entry, show_sources=show_sources) for entry in self.query(subject))
+
+
+知识库 = KnowledgeBase

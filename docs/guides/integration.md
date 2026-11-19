@@ -13,7 +13,7 @@ from bazi.bazi import Bazi
 from bazi.bazi_chart import BaziChart
 
 chart = BaziChart(Bazi.create('1990-05-17 10:30', 'female'))
-print('年干十神', chart.shishen.year.tiangan)
+print('年干十神', chart.十神.年.天干)
 print('月支藏干', ' '.join(map(str, chart.hidden_tiangan.month)))
 print('日柱纳音', chart.nayin.day)
 ```
@@ -24,9 +24,11 @@ print('日柱纳音', chart.nayin.day)
 日柱纳音 杨柳木
 ```
 
-这些属性以 {py:class}`~bazi.data_types.BaziData` 保存四柱数据，字段为 `year`、`month`、`day`、`hour`，
+`chart.十神` 是 `chart.shishen` 的中文只读别名，读取同一份缓存结果。
+上例的十神、藏干和纳音以 {py:class}`~bazi.data_types.BaziData` 保存四柱数据，可用 `年`、`月`、`日`、`时`
+读取 `year`、`month`、`day`、`hour`，
 也可按年、月、日、时顺序遍历。十神和阴阳五行的每柱结果再以 {py:class}`~bazi.data_types.GanzhiData`
-区分 `tiangan` 与 `dizhi`；日主自身的天干十神位置为 `None`。
+区分 `tiangan` 与 `dizhi`，中文只读别名为 `天干`、`地支`；日主自身的天干十神位置为 `None`。
 
 把四柱干支、纳音与天干十神放在一起遍历：
 
