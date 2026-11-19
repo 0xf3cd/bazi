@@ -35,11 +35,11 @@ CONDITION_CLAIMS = {
 
 
 def chart(day: int = 3, gender: str = 'female', hour: int = 12) -> BaziChart:
-  return BaziChart(Bazi.create(datetime(2000, 1, day, hour), gender, BaziConfig.from_values(backend='celestial', precision='day')))
+  return BaziChart(Bazi.create(datetime(2000, 1, day, hour), gender, BaziConfig.from_values(precision='day')))
 
 
 def match(day: int = 3, gender: str = 'female', **kwargs: Any) -> ContextResult:
-  options = {'criterion_id': GUANSHA, 'observation': NatalObservation(), 'include_reference_only': True, **kwargs}
+  options = {'criterion_id': GUANSHA, 'observation': NatalObservation(), **kwargs}
   return evaluate_context(chart(day, gender), **options)
 
 

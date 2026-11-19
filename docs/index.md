@@ -10,6 +10,7 @@
 guides/quickstart
 guides/cli
 guides/configuration
+guides/calendar
 guides/relations-transits
 guides/knowledge
 guides/integration

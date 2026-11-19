@@ -23,7 +23,7 @@ def test_incomplete_scope_beats_partial_natal(day: int, year: int | None, reason
   assert all(isinstance(o.position, Zhu) for o in occurrences(result))
   assert result.criterion.observations['observed_coexistence'] is (day == 3)
   assert result.reference_ids == LEGAL
-  assert result.render().count('前提判别：UNKNOWN') == 2
+  assert result.render().count('结构前提：UNKNOWN') == 1
 
 
 def test_render_distinguishes_unused_missing_year() -> None:
@@ -66,10 +66,11 @@ def test_incomplete_scope_reason_precedence(criterion_id: str, gender: str, year
   assert result.criterion.status == 'UNKNOWN'
   assert result.criterion.reason == reason and result.criterion.scope_complete is False
   assert result.reference_ids == RELATIONSHIP
-  assert result.render().count('前提判别：UNKNOWN') == 2
+  assert result.render().count('结构前提：UNKNOWN') == 1
   assert all(isinstance(o.position, Zhu) for o in occurrences(result))
 
 
+@pytest.mark.optimized
 def test_scope_matrix_covers_legal_reasons() -> None:
   results = [
     (observation, record(criterion_id, observation, day, gender))

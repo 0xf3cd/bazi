@@ -30,19 +30,21 @@
 模板收集的是线索，不是可直接导入的 JSON。填写与整理时：
 
 - 没有在线链接，也可先提交纸本作品、版本、位置和摘录，在表单指定的位置列出缺项。
-- 维护者核对并补齐正式来源记录的 `url` 等必填信息。信息未齐不承诺入库，不编造链接或占位值。
-- 维护者核对 `text_layer` 的描述，再映射为记录接受的 `baiwen`、`zhushi` 或 `editorial`。
+- 正式来源记录只必填 `source_id` 和 `work`，其余信息按材料填写。能加载不等于通过知识审核，
+  不为填满字段而编造链接或占位值。
+- 摘录属于白文正文、夹注还是原创说明，写入 `limitations`，保留它对读法的限制。
 - 表单中的 `attribution` 是来源署名，条目署名由维护者另行填写。
 
 ## 来源状态的含义
 
-来源记录用 `state`，条目用 `source_state` 表示出处整理状态。与出处核对直接相关的两种状态是：
+来源记录可用 `state` 表示核验状态。与出处核对直接相关的两种状态是：
 
 - `witnessed`：原文出处已经核定，有可核对的作品、版本、位置和摘录。
-- `unverified`：来源尚未核实，条目不绑定来源见证。
+- `unverified`：来源尚未核实。
 
-两个来源不自动构成独立见证，作品与版本是否同源须由维护者核对。来源核定、前提整理与默认展示分别记录，
-各字段含义及默认展示条件见[知识库指南](docs/guides/knowledge.md#来源前提与默认展示)，字段定义与校验见 [knowledge.py](bazi/knowledge.py)。
+未填状态不表示已核实。两个来源不自动构成独立见证，作品与版本是否同源须由维护者核对；
+加载器不检查来源数量或收录政策。条目保留自己的前提、读法、署名和限度，
+各字段含义见[知识库指南](docs/guides/knowledge.md#来源与前提)，字段定义与校验见 [knowledge.py](bazi/knowledge.py)。
 
 ## 提 PR 之前
 
@@ -59,12 +61,18 @@
 修改工作流不会自动启用这些设置。正式发布仍从 `main` 执行，见[发布说明](RELEASING.md)。
 
 知识编辑来源是 [bazi/knowledge_data.json](bazi/knowledge_data.json)，不是生成的目录页面。
+内容保护测试将每个对象、来源和条目分别与 `tests/data/knowledge_content.json` 的指纹比较。
+有意修改知识后，先核对文字及出处，再只更新受影响记录的指纹，不重建整份基准。
+计算式为 `sha256(json.dumps(asdict(record), ensure_ascii=False, sort_keys=True).encode('utf-8')).hexdigest()`；
+`record` 是 `KnowledgeBase.load()` 中对应的记录，三个函数分别来自 `hashlib`、`json` 和 `dataclasses`。
 
 维护规则与知识关联时：
 
 - 计算表归 `rules.py`，默认及合法配置归 `school.py`，知识文字、来源和状态归知识注册表；共表和派生关系继续从计算定义取值。
-- 变更时核对条目 ID、定义成员、表值、锚点和实际查找位置。国印的定义成员与条目 ID 由 `knowledge.py` 统一维护，新增成员须同步正反查询测试。
-- 原文、解释、锚点依据及来源限度分别保留；单源不默认展示，不把转载网站当成独立谱系，也不因建立关联而升级来源状态。
+- 新读法另加定义，保留既有定义；新增神煞的表值、锚点与查找位置分别核定其自身出处，不沿用其他神煞的设置作默认。
+- 变更时核对条目 ID、定义成员、表值、锚点和实际查找位置；知识条目与计算表分别维护，
+  同一读法的内容应相符。
+- 原文、解释、锚点依据及来源限度分别保留；不把转载网站当成独立来源，也不因建立关联而升级来源状态。
 - 覆盖表的属性／字段集合与示例由文档检查核对；这些检查不裁定命理依据，也不证明表外规则穷尽。
 
 ### 准备环境
@@ -87,7 +95,7 @@ python -m pip install celestial-calendar==0.6.1
 
 `Requirements.txt` 是开发依赖，`docs/requirements.txt` 是文档工具依赖，两者都不是运行时依赖；`celestial-calendar==0.6.1` 是历法测试用的工具依赖。
 
-如果在 Python 3.11／3.12 上检查运行时，另建对应版本的环境，只安装 `Requirements.txt` 与 `celestial-calendar==0.6.1`，使用 `python run_tests.py -a -v --runtime-only`。它保留库测试、覆盖率、lint、运行时类型检查、安装工件与安装命令检查，不收集 `tests/docs/` 或检查、构建文档工具；文档完整检查仍在 3.13+ 环境中执行。不要尝试在 3.11／3.12 环境安装新版 Sphinx。
+如果在 Python 3.11／3.12 上检查运行时，另建对应版本的环境，只安装 `Requirements.txt` 与 `celestial-calendar==0.6.1`，使用 `python run_tests.py -a -v --runtime-only`。它保留库测试、覆盖率、lint、运行时类型检查、安装工件与安装命令检查；`tests/test_docs_site.py`、`tests/test_docs_workflows.py` 仍会收集。类型检查排除 `docs/`、`tests/docs/`、`run_docs.py` 和 `run_doc_checks.py`，测试不收集 `tests/docs/`，也不构建文档。文档完整检查仍在 3.13+ 环境中执行；不要尝试在 3.11／3.12 环境安装新版 Sphinx。
 
 生成后的 HTML 是静态文件，读者只需浏览器；阅读文档或在 Python 3.11 中运行其中的库调用示例，不需要安装文档工具。
 
@@ -124,10 +132,12 @@ python run_docs.py --output-dir output_data/docs-preview
 
 ### 历法数据维护
 
-离线重建工具为 [HKO 编码器](bazi/calendar/hko_data/encoder.py)和
-[天文表生成器](bazi/calendar/celestial_data/generator.py)，天文表的记录布局见
-[数据格式](bazi/calendar/celestial_data/SCHEMA.md)。它们供维护数据来源使用，不是安装后的修补步骤；
-安装包缺表时应重装包，不运行生成器修补。
+离线重建工具为 [HKO 编码器](tests/calendar/hko_data/encoder.py)和根目录的
+天文表生成器 `run_calendar_generation.py`，天文表的记录布局见
+[数据格式](bazi/calendar/celestial_data/SCHEMA.md)。
+源码与 sdist 保留生成器、`tests/calendar/hko_data/` 下的 HKO 原件、编码表及编解码工具，
+供重建数据与独立对拍；这些材料不进入 wheel，也不是公开 Python API。
+wheel 只带运行时需要的代码与数据，安装包缺表时应重装包，不运行生成器修补。
 
 ### 提交与 PR 正文
 

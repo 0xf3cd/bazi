@@ -321,13 +321,14 @@ def test_star(rng: random.Random) -> None:
       assert expected_dz == actual.dizhi
 
 
+@pytest.mark.input_contract('bazi.analyzer.relationship', 'TransitAnalysis.shensha TransitAnalysis.day_master_relations TransitAnalysis.house_relations TransitAnalysis.star_relations TransitAnalysis.zhengyin TransitAnalysis.star TransitAnalysis.kongwang')
 def test_transit_analysis_negative(rng: random.Random) -> None:
   chart = BaziChart.random(rng=rng)
   transits_analysis = RelationshipAnalyzer(chart).transits
 
   for analysis in (transits_analysis.shensha, transits_analysis.day_master_relations,
                    transits_analysis.house_relations, transits_analysis.star_relations,
-                   transits_analysis.zhengyin, transits_analysis.star):
+                    transits_analysis.zhengyin, transits_analysis.star, transits_analysis.kongwang):
     with pytest.raises(TypeError):
       analysis(object()) # type: ignore
 

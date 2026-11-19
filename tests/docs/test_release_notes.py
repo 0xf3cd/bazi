@@ -9,7 +9,7 @@ pytest.importorskip('sphinx', reason='Documentation dependencies are checked by 
 from run_doc_checks import Page, check_release_notes
 
 
-TITLES = ('发布说明', 'Unreleased', '知识结构迁移', '安装版命令与脚本迁移', '存取接口移除', '结构接口迁移', '源码脚本的平铺参数')
+TITLES = ('发布说明', 'Unreleased', '配置变更')
 
 
 def release_page(
@@ -56,12 +56,4 @@ def test_missing_release_content_is_rejected(release_source: Path, fault: str) -
   else:
     pages['release-notes.html'] = release_page(field='references')
   with pytest.raises((AssertionError, KeyError)):
-    check_release_notes(pages)
-
-
-@pytest.mark.parametrize('title', TITLES[2:])
-def test_source_and_html_cannot_omit_migration(release_source: Path, title: str) -> None:
-  release_source.write_text(release_source.read_text(encoding='utf-8').replace('## ' + title, ''), encoding='utf-8')
-  pages = page_set(release_page(tuple(value for value in TITLES if value != title)))
-  with pytest.raises(AssertionError, match='Missing release migration sections'):
     check_release_notes(pages)

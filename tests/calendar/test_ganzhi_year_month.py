@@ -40,6 +40,7 @@ def test_month_order_rejects_other_types() -> None:
     _ = value < (2024, 1) # type: ignore[operator]
 
 
+@pytest.mark.input_contract('bazi.calendar.dates', 'GanzhiYearMonth')
 @pytest.mark.parametrize('year,month,error', [
   ('2024', 1, TypeError), (2024, '1', TypeError), (2024, None, TypeError),
   (2024, 0, ValueError), (2024, 13, ValueError), (2024, -1, ValueError),
@@ -49,19 +50,21 @@ def test_invalid_coordinate(year: object, month: object, error: type[Exception])
     GanzhiYearMonth(year, month) # type: ignore[arg-type]
 
 
-@pytest.mark.parametrize('jie,error', [
-  (None, TypeError),
-  (JieqiTime('立春', datetime(2024, 2, 4)), TypeError), # type: ignore[arg-type]
-  (JieqiTime(Jieqi.立春, '2024-02-04'), TypeError), # type: ignore[arg-type]
-  (JieqiTime(Jieqi.雨水, datetime(2024, 2, 19)), ValueError),
+@pytest.mark.input_contract('bazi.calendar.dates', 'GanzhiYearMonth.from_jie')
+@pytest.mark.parametrize('jie,error,message', [
+  (None, TypeError, 'Expected JieqiTime, got'),
+  (JieqiTime('立春', datetime(2024, 2, 4)), TypeError, 'Expected Jieqi, got'), # type: ignore[arg-type]
+  (JieqiTime(Jieqi.立春, '2024-02-04'), TypeError, 'Expected datetime, got'), # type: ignore[arg-type]
+  (JieqiTime(Jieqi.雨水, datetime(2024, 2, 19)), ValueError, 'Unsupported opening Jie:'),
 ])
-def test_invalid_opening_jie(jie: object, error: type[Exception]) -> None:
-  with pytest.raises(error):
+def test_invalid_opening_jie(jie: object, error: type[Exception], message: str) -> None:
+  with pytest.raises(error, match=f'^{message}'):
     GanzhiYearMonth.from_jie(jie) # type: ignore[arg-type]
 
 
+@pytest.mark.input_contract('bazi.calendar.dates', 'GanzhiYearMonth.from_dizhi')
 def test_invalid_month_branch() -> None:
-  with pytest.raises(TypeError):
+  with pytest.raises(TypeError, match='^Expected Dizhi, got'):
     GanzhiYearMonth.from_dizhi(2024, '寅') # type: ignore[arg-type]
   with pytest.raises(TypeError):
     GanzhiYearMonth.from_dizhi('2024', Dizhi.寅) # type: ignore[arg-type]

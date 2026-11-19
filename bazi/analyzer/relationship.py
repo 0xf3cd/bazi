@@ -9,10 +9,10 @@ import functools
 from dataclasses import dataclass
 from enum import Enum, IntFlag, auto, unique
 from itertools import combinations, product
-from typing import Final, Literal, TypedDict, assert_never, cast
+from typing import Final, Literal, assert_never
 from collections.abc import Callable, Iterable, Sequence
 
-from ..common import frozendict, check_declared_types
+from ..common import frozendict
 from ..data_types import GanzhiData
 from ..defines import Zhu, Tiangan, TianganLayer, Dizhi, Ganzhi, Shishen, DizhiRelation, TianganRelation
 from ..rules import DizhiRules
@@ -56,7 +56,7 @@ class _ShenshaSpec:
   神煞的规格：判断函数、查法锚、展示标签，以及可选的流派定义参数。
 
   kind 指定取锚柱天干、地支或完整干支；anchor 指定锚柱，无分歧时为固定 Anchor，
-  有分歧时为读取命盘选项的解析函数。两者均须依该神煞自身出处，不能沿用既有神煞作默认，见 #167。
+  有分歧时为读取命盘选项的解析函数。
 
   Note:
   - predicate 的首参数类型须与 kind 一致；给定 definition 时，须通过同名仅关键字参数接收解析结果。
@@ -72,7 +72,7 @@ class _ShenshaSpec:
 
 '''亲密关系分析支持的地支结果神煞注册表。'''
 _REGISTRY: Final[frozendict[str, _ShenshaSpec]] = frozendict({
-  # 桃花不设旋钮：《命理探源》的日支桃花另有纳音条件且只查月、时，只切锚会造出出处未言的规则。
+  # 桃花固定以年、日支各查其余三支；出处见 shensha.taohua.readings。
   'taohua'     : _ShenshaSpec(shensha_utils.taohua,      _AnchorKind.DIZHI,   Anchor.YEAR_AND_DAY, '桃花'),
   'hongluan'   : _ShenshaSpec(shensha_utils.hongluan,    _AnchorKind.DIZHI,   Anchor.YEAR, '红鸾'),
   'hongyan'    : _ShenshaSpec(shensha_utils.hongyan,     _AnchorKind.TIANGAN, lambda school: school.hongyan_anchor, '红艳'),
@@ -229,64 +229,14 @@ def _with_gong(
   return dizhi_utils.DizhiRelationDiscovery({**existing, **gong})
 
 
-class ShenshaAnalysis(TypedDict):
-  # 桃花星所在地支。
-  taohua:      frozenset[Dizhi]
-  # 红艳星所在地支。
-  hongyan:     frozenset[Dizhi]
-  # 红鸾星所在地支。
-  hongluan:    frozenset[Dizhi]
-  # 天喜星所在地支。
-  tianxi:      frozenset[Dizhi]
-  # 驿马星所在地支。
-  yima:        frozenset[Dizhi]
-  # 华盖星所在地支。
-  huagai:      frozenset[Dizhi]
-  # 羊刃所在地支。
-  yangren:     frozenset[Dizhi]
-  # 飞刃所在地支。
-  feiren:      frozenset[Dizhi]
-  # 天乙贵人所在地支。
-  tianyi:      frozenset[Dizhi]
-  # 将星所在地支。
-  jiangxing:   frozenset[Dizhi]
-  # 灾煞所在地支。
-  zaisha:      frozenset[Dizhi]
-  # 劫煞所在地支。
-  jiesha:      frozenset[Dizhi]
-  # 亡神所在地支。
-  wangshen:    frozenset[Dizhi]
-  # 孤辰所在地支。
-  guchen:      frozenset[Dizhi]
-  # 寡宿所在地支。
-  guasu:       frozenset[Dizhi]
-  # 禄神所在地支。
-  lushen:      frozenset[Dizhi]
-  # 金舆所在地支。
-  jinyu:       frozenset[Dizhi]
-  # 文昌所在地支。
-  wenchang:    frozenset[Dizhi]
-  # 文昌贵所在地支。
-  wenchanggui: frozenset[Dizhi]
-  # 太极贵人所在地支。
-  taiji:       frozenset[Dizhi]
-  # 国印贵人所在地支。
-  guoyin:      frozenset[Dizhi]
-  # 六甲旬空命中的地支；逐锚二支与具体位置见 kongwang 详情。
-  kongwang:    frozenset[Dizhi]
+'''流运神煞到命中地支集合的不可变映射；键及顺序见 SHENSHA_LABELS，
+旬空详情见 TransitAnalysis.kongwang。'''
+ShenshaAnalysis = frozendict[str, frozenset[Dizhi]]
 
-
-class AtBirthShenshaAnalysis(ShenshaAnalysis):
-  # 魁罡日柱。
-  kuigang: Ganzhi | None
-  # 天赦日柱。
-  tianshe: Ganzhi | None
-
-
-def _check_position(position: Zhu | TransitKind) -> None:
-  '''原局柱位与流运种类是命中位置的两个互斥分支。'''
-  if not isinstance(position, (Zhu, TransitKind)):
-    raise TypeError(f'Expected Zhu | TransitKind, got {type(position)}')
+'''原局神煞的不可变映射；支集键同 SHENSHA_LABELS，随后为 WHOLE_PILLAR_SHENSHA_LABELS
+中的整柱神煞。整柱值为命中的日柱或 None，调用方取值后用 isinstance 区分支集与整柱值。
+旬空详情见 AtBirthAnalysis.kongwang。'''
+AtBirthShenshaAnalysis = frozendict[str, frozenset[Dizhi] | Ganzhi | None]
 
 
 @dataclass(frozen=True)
@@ -295,15 +245,12 @@ class RelationParticipant:
   position: Zhu | TransitKind
   ganzhi:   Ganzhi
 
-  def __post_init__(self) -> None:
-    check_declared_types(self)
-    for value, expected in ((self.ganzhi.tiangan, Tiangan), (self.ganzhi.dizhi, Dizhi)):
-      if not isinstance(value, expected):
-        raise TypeError(f'Expected {expected.__name__}, got {type(value)}')
-
 
 class RelationPositionDiscovery(frozendict[DizhiRelation, tuple[frozenset[RelationParticipant], ...]]):
-  '''地支关系到具体位置组合的冻结映射。'''
+  '''地支关系到具体位置组合的冻结映射。
+
+  继承的构造签名中，K 为 DizhiRelation，V 为 tuple[frozenset[RelationParticipant], ...]。
+  '''
 
 
 @dataclass(frozen=True)
@@ -316,39 +263,17 @@ class KongwangHit:
   position: Zhu | TransitKind
   ganzhi:   Ganzhi
 
-  def __post_init__(self) -> None:
-    _check_position(self.position)
-    if not isinstance(self.ganzhi, Ganzhi):
-      raise TypeError(f'Expected Ganzhi, got {type(self.ganzhi)}')
-    for value, expected in ((self.ganzhi.tiangan, Tiangan), (self.ganzhi.dizhi, Dizhi)):
-      if not isinstance(value, expected):
-        raise TypeError(f'Expected {expected.__name__}, got {type(value)}')
-
 
 @dataclass(frozen=True)
 class KongwangResult:
   '''一个本命锚的旬空二支与原始命中。anchor 记录年／日来源，ganzhi 记录完整锚。
 
-  无命中仍返回该锚及空 hits；xunkong 由已校验的完整锚计算，不另存一份可矛盾的二支。
+  无命中仍返回该锚及空 hits；xunkong 由完整锚计算，不另存一份可矛盾的二支。
   不判断填实、冲合解空或吉凶，也不修改目标地支及其他关系结果。
   '''
   anchor: _AnchorZhu
   ganzhi: Ganzhi
   hits:   tuple[KongwangHit, ...]
-
-  def __post_init__(self) -> None:
-    absent = shensha_utils.xunkong(self.ganzhi)
-    if not isinstance(self.anchor, Zhu):
-      raise TypeError(f'Expected Zhu, got {type(self.anchor)}')
-    if self.anchor not in (Zhu.年, Zhu.日):
-      raise ValueError(f'Unsupported anchor: {self.anchor}')
-    if not isinstance(self.hits, tuple) or not all(isinstance(hit, KongwangHit) for hit in self.hits):
-      raise TypeError(f'Expected tuple of KongwangHit, got {type(self.hits)}')
-    for hit in self.hits:
-      if hit.ganzhi.dizhi not in absent:
-        raise ValueError('Kongwang hit is outside the anchor xunkong')
-      if hit.position == self.anchor:
-        raise ValueError('Kongwang anchor cannot inspect its own natal pillar')
 
   @property
   def xunkong(self) -> frozenset[Dizhi]:
@@ -383,10 +308,11 @@ class AtBirthAnalysis:
 
   @property
   def shensha(self) -> AtBirthShenshaAnalysis:
+    '''原局神煞映射；支集键按 SHENSHA_LABELS 排列，随后是 WHOLE_PILLAR_SHENSHA_LABELS
+    的整柱键。支集值为 frozenset[Dizhi]，整柱值为命中的日柱或 None；取值后须区分这两类。
+    '''
     bazi = self._chart.bazi
-    # 注册条目各存于自身键下，再加入两个整柱神煞，它们返回干支而非地支集合。
-    # 推导式无法按 TypedDict 检查，由 test_analyses_are_built_from_the_registry 核对键集。
-    return cast(AtBirthShenshaAnalysis, {
+    return frozendict({
       **{name: _eval_at_birth(spec, bazi) for name, spec in _REGISTRY.items()},
       'kuigang'  : bazi.day_pillar if shensha_utils.kuigang(bazi.day_pillar) else None,
       'tianshe'  : bazi.day_pillar if shensha_utils.tianshe(bazi.month_commander, bazi.day_pillar) else None,
@@ -490,8 +416,7 @@ class TransitAnalysis:
     transit_dizhis = tuple(gz.dizhi for gz in transit_ganzhis)
 
     bazi = self._chart.bazi
-    # 与原局同一份名册，只是查在流运地支上；说明见原局那处。
-    return cast(ShenshaAnalysis, {
+    return frozendict({
       name: _eval_transits(spec, bazi, transit_dizhis) for name, spec in _REGISTRY.items()
     })
 
@@ -773,19 +698,6 @@ class StarAppearance:
   layer:    TianganLayer
   stem:     Tiangan                  # 恒为目标干
 
-  def __post_init__(self) -> None:
-    _check_position(self.position)
-    for value, expected in ((self.ganzhi, Ganzhi), (self.stem, Tiangan)):
-      if not isinstance(value, expected):
-        raise TypeError(f'Expected {expected.__name__}, got {type(value)}')
-    if not isinstance(self.layer, TianganLayer):
-      raise TypeError(f'Expected TianganLayer, got {type(self.layer)}')
-    # 目标干恒不是日主，日柱明干位不会出现目标干，无需官杀路径的「日主明干排除」特例。
-    if self.layer is TianganLayer.明干 and self.stem is not self.ganzhi.tiangan:
-      raise ValueError('Visible stem differs from its Ganzhi')
-    if self.layer is TianganLayer.藏干 and self.stem not in hidden_tiangans(self.ganzhi.dizhi):
-      raise ValueError('Hidden stem is absent from its Ganzhi')
-
 
 @dataclass(frozen=True)
 class RelationshipEvidence:
@@ -793,8 +705,7 @@ class RelationshipEvidence:
 
   序号契约：`house_relations`／`star_relations`／`stem_relations` 的组合成员共享一个序列——
   原局四柱为 0–3，所选岁运按 `TransitSet.items` 的固定顺序自 4 起；组合的范围由序号直接分出
-  （全部 `< 4` 为原局内部，全部 `≥ 4` 为岁运内部，其余为原局×岁运）。本类没有 scope 字段，
-  不声称它能单独检查范围；跨字段约束归拥有 observation 与 evidence 的 `ContextResult`。
+  （全部 `< 4` 为原局内部，全部 `≥ 4` 为岁运内部，其余为原局×岁运）。
 
   `transits` 是实际取得的所选岁运；原局、无坐标或全部缺失时为 `None`。
   '''
@@ -805,21 +716,6 @@ class RelationshipEvidence:
   star_relations:  dizhi_utils.GanzhiRelationDiscovery   # 含配偶星地支参与者的组合，未投影
   stem_relations:  StemRelationDiscovery                 # 含目标干的明干组合
   transits:        TransitSet | None
-
-  def __post_init__(self) -> None:
-    if not isinstance(self.star_target, GanzhiData):
-      raise TypeError(f'Expected GanzhiData, got {type(self.star_target)}')
-    if not isinstance(self.appearances, tuple) or not all(
-      isinstance(member, StarAppearance) for member in self.appearances
-    ):
-      raise TypeError(f'Expected tuple of StarAppearance, got {type(self.appearances)}')
-    for value in (self.house_relations, self.star_relations):
-      if not isinstance(value, dizhi_utils.GanzhiRelationDiscovery):
-        raise TypeError(f'Expected GanzhiRelationDiscovery, got {type(value)}')
-    if not isinstance(self.stem_relations, frozendict):
-      raise TypeError(f'Expected StemRelationDiscovery, got {type(self.stem_relations)}')
-    if self.transits is not None and not isinstance(self.transits, TransitSet):
-      raise TypeError(f'Expected TransitSet | None, got {type(self.transits)}')
 
 
 def _merge_discoveries(*discoveries: dizhi_utils.GanzhiRelationDiscovery) -> dizhi_utils.GanzhiRelationDiscovery:

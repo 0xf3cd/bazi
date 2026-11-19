@@ -29,11 +29,8 @@ from functools import cache
 ROOT: Final[Path] = Path(__file__).resolve().parent
 # 独立资源清单，用于核对 pyproject.toml 与 MANIFEST.in 的声明。
 RUNTIME_DATA: Final[tuple[str, ...]] = (
-  'bazi/calendar/hko_data/data/jieqi_encoded.bin',
-  'bazi/calendar/hko_data/data/lunardate_encoded.bin',
   'bazi/calendar/celestial_data/data/jieqi_moments.txt',
-  'bazi/calendar/celestial_data/data/lunar_years_algo1.txt',
-  'bazi/calendar/celestial_data/data/lunar_years_algo2.txt',
+  'bazi/calendar/celestial_data/data/lunar_years.txt',
   'bazi/calendar/celestial_data/data/equation_of_time.bin',
   'bazi/knowledge_data.json',
 )
@@ -41,22 +38,25 @@ SOURCE_FILES: Final[tuple[str, ...]] = (
   'pyproject.toml', 'MANIFEST.in', 'LICENSE', 'THIRD_PARTY_NOTICES.md',
   'README.md', 'API_CONTRACT.md', 'RELEASE_NOTES.md', 'RELEASING.md', 'Requirements.txt', 'ruff.toml',
   'run_tests.py', 'run_package_checks.py', 'run_release.py',
-  'run_docs.py', 'run_doc_checks.py', 'run_docs_site.py',
+  'run_docs.py', 'run_doc_checks.py', 'run_docs_site.py', 'run_calendar_generation.py',
   'CONTRIBUTING.md',
   '.github/workflows/release.yml', '.github/workflows/on_pull_request.yml',
   '.github/workflows/on_push.yml', '.github/workflows/pypy_compatibility.yml', '.github/workflows/docs-publish.yml',
   '.github/ISSUE_TEMPLATE/knowledge-correction.yml', '.github/ISSUE_TEMPLATE/school-reading.yml',
   'docs/requirements.txt', 'docs/conf.py', 'docs/index.md', 'docs/versioning.md',
-  'docs/_ext/api_reference.py', 'docs/_ext/api_examples.py', 'docs/_ext/house_docstrings.py', 'docs/_ext/typeddict_fields.py',
+  'docs/_ext/api_reference.py', 'docs/_ext/api_examples.py', 'docs/_ext/house_docstrings.py',
   'docs/_ext/knowledge_catalog.py', 'docs/_ext/source_links.py',
   'docs/_static/documentation.css',
   'docs/guides/quickstart.md', 'docs/guides/cli.md', 'docs/guides/configuration.md',
+  'docs/guides/calendar.md',
   'docs/guides/relations-transits.md', 'docs/guides/integration.md', 'docs/guides/knowledge.md',
   'docs/guides/rule-coverage.md',
-  'docs/catalog/index.rst', 'docs/catalog/objects.rst', 'docs/catalog/contexts.rst',
+  'docs/catalog/index.rst', 'docs/catalog/objects.rst',
   'docs/catalog/sources.rst', 'docs/catalog/entries.rst', 'docs/catalog/criteria.rst',
   'docs/catalog/topics.rst', 'docs/catalog/viewpoints.rst', 'docs/catalog/filters.rst',
   'bazi/py.typed', 'bazi/calendar/celestial_data/SCHEMA.md',
+  'tests/calendar/hko_data/data/jieqi_encoded.bin',
+  'tests/calendar/hko_data/data/lunardate_encoded.bin',
 )
 
 ENVIRONMENT_ROLES: Final[tuple[str, ...]] = (
@@ -244,7 +244,6 @@ def sha256(path: Path) -> str:
 def source_files(root: Path) -> tuple[str, ...]:
   files = set(SOURCE_FILES) | set(RUNTIME_DATA)
   files.update(path.relative_to(root).as_posix() for path in (root / 'bazi').rglob('*.py'))
-  files.update(f'bazi/calendar/hko_data/data/{year}.txt' for year in range(1901, 2101))
   for path in (root / 'tests').rglob('*'):
     if path.suffix in ('.py', '.ini', '.txt', '.json') and '__pycache__' not in path.parts:
       files.add(path.relative_to(root).as_posix())
@@ -286,6 +285,46 @@ def check_wheel(wheel: Path, expected: dict[str, str], licenses: dict[str, str],
       if hashlib.sha256(archive.read(metadata_dir + 'licenses/' + name)).hexdigest() != digest:
         raise ValueError(f'License bytes differ: {name}')
     check_description(archive.read(metadata_dir + 'METADATA'), readme, wheel.name)
+
+
+def expected_typing_diagnostics(source: str) -> dict[str, str]:
+  '''安装版负例须出现的诊断片段；首尾换行限定完整诊断行。'''
+  expected = {interface: f'to "{interface}"' for interface in (
+    'main', 'create', 'query', 'find_objects', 'search', 'filter_values', 'criterion',
+    'LiunianObservation', 'TransitObservation', 'YearCoordinate', 'MonthCoordinate',
+    'DateCoordinate', 'MomentCoordinate', 'LiunianPosition', 'ChartOccurrence', 'KongwangHit',
+    'KongwangResult', 'StarAppearance', 'CriterionResult', 'KnowledgeEntry', 'KnowledgeSource',
+    'evaluate_context', 'ContextResult', 'GanzhiYearMonth', 'from_dizhi', 'from_jie',
+    'entry', 'render', 'render_subject',
+  )}
+  expected['None'] = '"None"'
+  lines = source.splitlines()
+  for owner, member, trigger in (
+    ('Bazi', 'reference_datetime', 'local.reference_datetime = datetime.now()'),
+    ('Bazi', 'month_jies', 'local.month_jies = ()'),
+    ('GanzhiYearMonth', 'month', 'coordinate.month = 0'),
+    ('KnowledgeSource', 'work', 'witness.work = "changed"'),
+    ('CriterionInfo', 'definition', 'info.definition = "changed"'),
+    ('ContextResult', 'bazi', 'matched.bazi = chart.bazi'),
+    ('BaziChart', '八字', '盘.八字 = chart.bazi'),
+    ('Bazi', '日主', '盘.八字.日主 = 天干.甲'),
+    ('BaziData', '年', '盘.十神.年 = 盘.十神.月'),
+    ('GanzhiData', '天干', '盘.十神.年.天干 = 十神.正官'),
+    ('TransitSet', '大运', '  岁运.大运 = None'),
+  ):
+    if trigger not in lines:
+      raise ValueError(f'Missing typing fixture line for {owner}.{member}: {trigger!r}')
+    line_number = lines.index(trigger) + 1
+    expected[f'{owner}.{member}'] = f'\nbad.py:{line_number}: error: Property "{member}" defined in "{owner}" is read-only  [misc]\n'
+  for value_type, trigger in (
+    ('CriterionInfo', 'catalog["changed"] = info'),
+    ('KnowledgeSource', 'knowledge.sources["editorial"] = witness'),
+  ):
+    if trigger not in lines:
+      raise ValueError(f'Missing typing fixture line for immutable {value_type} mapping: {trigger!r}')
+    line_number = lines.index(trigger) + 1
+    expected[f'immutable {value_type} mapping'] = f'\nbad.py:{line_number}: error: Unsupported target for indexed assignment ("frozendict[str, {value_type}]")  [index]\n'
+  return expected
 
 
 def run(command: list[str], cwd: Path) -> None:
@@ -404,44 +443,14 @@ def check_packages(root: Path, work: Path, output_dir: Path | None,
   print('Installed typing negative EXIT=' + str(result.returncode), flush=True)
   if result.returncode != 1 or '[assignment]' not in result.stdout or '[arg-type]' not in result.stdout or 'import-untyped' in result.stdout or 'import-not-found' in result.stdout:
     raise ValueError('Installed typing negative control did not reach both type checks')
-  for interface in ('main', 'create', 'query', 'find_objects', 'search', 'filter_values', 'criterion', 'LiunianObservation', 'TransitObservation', 'YearCoordinate', 'MonthCoordinate', 'DateCoordinate', 'MomentCoordinate', 'LiunianPosition', 'ChartOccurrence', 'KongwangHit', 'KongwangResult', 'StarAppearance', 'CriterionResult', 'KnowledgeEntry', 'evaluate_context', 'ContextResult', 'GanzhiYearMonth', 'from_dizhi', 'from_jie', 'object_id', 'guoyin_entry', 'guoyin_def', 'render', 'render_subject'):
-    if f'to "{interface}"' not in result.stdout:
-      raise ValueError(f'Installed typing negative control missed {interface}')
-  for message in ('"None"',):
-    if message not in result.stdout:
-      raise ValueError(f'Installed time typing negative control missed {message}')
-  for owner_name, attribute_name, trigger in (
-    ('Bazi', 'reference_datetime', 'local.reference_datetime = datetime.now()'),
-    ('Bazi', 'month_jies', 'local.month_jies = ()'),
-    ('GanzhiYearMonth', 'month', 'coordinate.month = 0'),
-    ('KnowledgeSource', 'work', 'witness.work = "changed"'),
-    ('CriterionInfo', 'definition', 'info.definition = "changed"'),
-    ('ContextResult', 'bazi', 'matched.bazi = chart.bazi'),
-  ):
-    line_number = bad.splitlines().index(trigger) + 1
-    message = f'bad.py:{line_number}: error: Property "{attribute_name}" defined in "{owner_name}" is read-only  [misc]'
-    if message not in result.stdout.splitlines():
-      raise ValueError(f'Installed typing negative control missed {owner_name}.{attribute_name}')
-  for value_type, trigger in (
-    ('CriterionInfo', 'catalog["changed"] = info'),
-    ('KnowledgeSource', 'knowledge.sources["editorial"] = witness'),
-  ):
-    line_number = bad.splitlines().index(trigger) + 1
-    message = f'bad.py:{line_number}: error: Unsupported target for indexed assignment ("frozendict[str, {value_type}]")  [index]'
-    if message not in result.stdout.splitlines():
-      raise ValueError(f'Installed typing negative control missed immutable {value_type} mapping')
-  for owner, removed_member in (('BaziChart', 'json'), ('ContextResult', 'input_json'), ('ContextResult', 'export_json'), ('KnowledgeBase', 'export_json')):
-    if f'"{owner}" has no attribute "{removed_member}"' not in result.stdout:
-      raise ValueError(f'Installed typing negative control missed removed {owner}.{removed_member}')
-  for module, name in (
-    ('bazi.transits', 'DayunDatabase'),
-    ('bazi.transits', 'TransitDatabase'),
-    ('bazi.transit_chart', 'TransitDatabase'),
-  ):
-    line_number = bad.splitlines().index(f'from {module} import {name}') + 1
-    prefix = f'bad.py:{line_number}: error: Module "{module}" has no attribute "{name}"'
-    if not any(line.startswith(prefix) and line.endswith('  [attr-defined]') for line in result.stdout.splitlines()):
-      raise ValueError(f'Installed typing negative control missed removed {module}.{name}')
+  expected_diagnostics = expected_typing_diagnostics(bad)
+  for label, message in expected_diagnostics.items():
+    if message not in '\n' + result.stdout + '\n':
+      raise ValueError(f'Installed typing negative control missed {label}')
+  unexpected = [line for line in result.stdout.splitlines()
+    if 'is read-only' in line and '\n' + line + '\n' not in expected_diagnostics.values()]
+  if unexpected:
+    raise ValueError(f'Unregistered installed read-only diagnostics: {unexpected}')
 
   if environments is not None and installers is not None:
     environments.append(collect_environment(str(python), 'consumer-typing', installers))

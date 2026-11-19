@@ -16,19 +16,19 @@ if TYPE_CHECKING:
 ######################################################
 #region Immutable data structures
 
-FrozenDictKeyType = TypeVar('FrozenDictKeyType')
-FrozenDictValueType = TypeVar('FrozenDictValueType')
-class frozendict(Mapping[FrozenDictKeyType, FrozenDictValueType]):
+K = TypeVar('K')
+V = TypeVar('V')
+class frozendict(Mapping[K, V]):
   '''
   浅冻结的不可变映射：映射本身不可变，取值原样返回，不做防御性拷贝。
-  持有可变值的一方须在自己的边界防止外部修改。
+  持有可变值的一方须在自己的边界防止外部修改。`K`、`V` 分别为键和值的类型。
   '''
-  def __init__(self, data: Mapping[FrozenDictKeyType, FrozenDictValueType]) -> None:
-    self._data: Final[Mapping[FrozenDictKeyType, FrozenDictValueType]] = dict(data)
+  def __init__(self, data: Mapping[K, V]) -> None:
+    self._data: Final[Mapping[K, V]] = dict(data)
     self._hash: int | None = None
-  def __getitem__(self, key: FrozenDictKeyType) -> FrozenDictValueType:
+  def __getitem__(self, key: K) -> V:
     return self._data[key]
-  def __iter__(self) -> Iterator[FrozenDictKeyType]:
+  def __iter__(self) -> Iterator[K]:
     return iter(self._data)
   def __len__(self) -> int:
     return len(self._data)

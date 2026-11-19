@@ -25,7 +25,10 @@ TianganCombo = frozenset[Tiangan]
 TianganRelationCombos = tuple[TianganCombo, ...]
 
 class TianganRelationDiscovery(RelationDiscovery[TianganRelation, Tiangan]):
-  '''天干关系到满足它的天干组合的冻结映射。'''
+  '''天干关系到满足它的天干组合的冻结映射。
+
+  继承签名中的 K 为 TianganRelation，T 为 Tiangan，V 为 tuple[frozenset[Tiangan], ...]。
+  '''
 
 
 def _validate_pair(tg1: Tiangan, tg2: Tiangan) -> None:

@@ -61,54 +61,51 @@ def main() -> None:
   try:
     help_text = run('--help')
     check(run() == help_text, 'Bare CLI differs from help')
-    for task in ('demo', 'relationship', 'chart', 'knowledge', 'match'):
+    for task in ('chart', 'knowledge', 'match'):
       check(f'bazi {task}' in help_text and f'bazi {task}' in run(task, '--help'), 'CLI help lost a task')
-    for task in ('demo', 'relationship', 'chart'):
-      output = run(task, '--seed', '236')
-      check(output == run(task, '--seed', '236') and output.startswith('random seed: 236\n'), 'Seed replay differs')
+    check('--output' in run('chart', '--help'), 'Chart help lost output option')
+    check('--ganzhi-month' in run('match', '--help'), 'Match help lost month coordinate')
+    for flags in ((), ('--transits',), ('--relationship',)):
+      output = run('chart', '--seed', '236', *flags)
+      check(output == run('chart', '--seed', '236', *flags) and output.startswith('random seed: 236\n'), 'Seed replay differs')
       check('日主' in output or '日元' in output, 'Seeded chart display missing')
-      if task == 'demo':
+      if flags == ('--transits',):
         check('大运' in output and '流年' in output and '\x1b[' in output, 'Demo lost full transit/color display')
-      elif task == 'relationship':
+      elif flags == ('--relationship',):
         check('夫妻宫：' in output and '六甲旬空依据：' in output and '起十年' in output, 'Relationship report incomplete')
     check(not tuple(cwd.iterdir()), 'Read-only CLI tasks wrote files')
-    fixed = ('--birth-time', '2000-01-03 12:00', '--gender', 'female')
-    chart = run('chart', *fixed, '--output-dir', 'output_data')
-    chart_file, = (cwd / 'output_data/interpretation_examples').glob('*.txt')
+    fixed = ('--birth-time', '2000-01-03 12:00', '--gender', '女', '--precision', '分')
+    chart = run('chart', *fixed, '--knowledge', '--transits', '--relationship', '--output', 'chart.txt')
+    chart_file = cwd / 'chart.txt'
     chart_bytes = chart_file.read_bytes()
-    check(chart_file.read_text(encoding='utf-8') == re.sub(r'\x1b\[[0-9;]*m', '', chart.removesuffix('\n')) and b'\x1b[' not in chart_bytes,
+    check(chart_file.read_text(encoding='utf-8') == re.sub(r'\x1b\[[0-9;]*m', '', chart) and b'\x1b[' not in chart_bytes,
       'Chart export differs from display')
-    check('丁为阴火。' in run('knowledge', '--object', 'tiangan.ding'), 'Installed knowledge query missing')
+    check('丁为阴火。' in run('knowledge', '丁'), 'Installed knowledge query missing')
     check('topic' in run('knowledge') or '知识' in run('knowledge'), 'Knowledge overview missing')
     run('knowledge', '--validate-knowledge')
-    run('knowledge', '--export-knowledge-base')
-    check(len(tuple((cwd / 'output_data').rglob('*.txt'))) == 21, 'Chart and knowledge exports do not coexist')
-    check(chart_file.read_bytes() == chart_bytes, 'Knowledge export overwrote chart')
+    check(chart_file.read_bytes() == chart_bytes, 'Knowledge query overwrote chart')
     criterion = 'editorial.guansha_coexistence.v1'
     check(criterion in run('match'), 'Criterion listing missing')
     check('SATISFIED' in run('match', criterion, *fixed, '--observation-scope', 'natal'), 'Installed matching failed')
+    check('也许' in run('match', criterion, *fixed, '--observation-scope', 'natal', '--knowledge'), 'Installed explicit reading missing')
+    month = run('match', 'editorial.spouse_palace_xingchong.v1', *fixed,
+      '--observation-scope', 'natal_and_transits', '--transit-entry', 'at_month',
+      '--ganzhi-year', '2024', '--ganzhi-month', '午', '--transit-kinds', 'liunian,liuyue')
+    check('UNKNOWN' not in month and '2024' in month and '午' in month, 'Installed Chinese month query failed')
     local = run('chart', '--birth-time', '2024-01-01T12:00:00+14:00', '--gender', 'female',
       '--precision', 'minute', '--longitude', '-157.4')
     check('2024-01-01T12:00:00+14:00' in local, 'Installed location input lost civil time')
     source = cwd / 'source.json'
     source.write_bytes((package / 'knowledge_data.json').read_bytes())
     run('knowledge', '--knowledge-source', str(source), '--validate-knowledge')
-    protected = cwd / 'blocked/knowledge_base/tiangan'
-    protected.mkdir(parents=True)
-    protected_source = protected / '丁.txt'
-    protected_source.write_bytes(source.read_bytes())
-    run('knowledge', '--knowledge-source', str(protected_source), '--export-knowledge-base',
-      '--output-dir', 'blocked', error='overwrite')
-    check(protected_source.read_bytes() == source.read_bytes(), 'Source overwrite guard truncated source')
+    run('chart', '--knowledge', '--knowledge-source', str(source), '--output', str(source), error='overwrite')
+    check(source.read_bytes() == (package / 'knowledge_data.json').read_bytes(), 'Source overwrite guard truncated source')
     files = {path.relative_to(cwd): path.read_bytes() for path in cwd.rglob('*') if path.is_file()}
     for tokens, reason in (
       (('unknown-task',), 'invalid choice'),
       (('chart', '--unknown'), 'unrecognized arguments'),
       (('chart', '--birth-time', '2000-01-01 12:00'), '--gender'),
-      (('knowledge', '--object', 'typo'), 'Unknown object_id'),
-      (('chart', '--export-chart-json', 'removed.json'), 'unrecognized arguments'),
-      (('knowledge', '--export-knowledge-json', 'removed.json'), 'unrecognized arguments'),
-      (('match', '--export-context-json', 'removed.json'), 'unrecognized arguments'),
+      (('knowledge', '--object', 'typo'), 'Unknown object'),
     ):
       run(*tokens, error=reason)
     check(files == {path.relative_to(cwd): path.read_bytes() for path in cwd.rglob('*') if path.is_file()},
@@ -117,7 +114,7 @@ def main() -> None:
     witness.unlink()
   check(before == {path.relative_to(package): hashlib.sha256(path.read_bytes()).hexdigest()
     for path in package.rglob('*') if path.is_file()}, 'CLI wrote into installed package')
-  print(f'PASS real installed launcher: five tasks, seed/export/guard/negative controls, optimized={not __debug__}')
+  print(f'PASS real installed launcher: three tasks, seed/output/guard/negative controls, optimized={not __debug__}')
 
 
 if __name__ == '__main__':

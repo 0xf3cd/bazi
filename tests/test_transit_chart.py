@@ -11,7 +11,7 @@ import pytest
 from bazi.bazi import Bazi
 from bazi.bazi_chart import BaziChart
 from bazi.defines import Ganzhi, Dizhi
-from bazi.calendar import calendar_utils_of
+from bazi.calendar import utils
 from bazi.calendar.dates import GanzhiYearMonth
 from bazi.school import BaziConfig, BaziSchool, DayRollover
 from bazi.transit_chart import TransitChart, 流年大运
@@ -73,17 +73,18 @@ def test_queries_use_attributed_boundary() -> None:
   assert chart.at_month(2009, Dizhi.寅) is not None
 
 
+@pytest.mark.input_contract('bazi.transit_chart', 'TransitChart.at_year TransitChart.at_month TransitChart.at_date TransitChart.at_moment')
 def test_query_types(rng: random.Random) -> None:
   chart = TransitChart(BaziChart.random(rng=rng))
-  with pytest.raises(TypeError):
+  with pytest.raises(TypeError, match='^Expected int, got'):
     chart.at_year('2024') # type: ignore
   with pytest.raises(TypeError):
     chart.at_month('2024', Dizhi.寅) # type: ignore
   with pytest.raises(TypeError):
     chart.at_month(2024, '寅') # type: ignore
-  with pytest.raises(TypeError):
+  with pytest.raises(TypeError, match='^Expected date \\(not datetime\\), got'):
     chart.at_date('2024-01-01') # type: ignore
-  with pytest.raises(TypeError):
+  with pytest.raises(TypeError, match='^Expected date \\(not datetime\\), got'):
     chart.at_date(datetime(2024, 1, 1))
   with pytest.raises(TypeError):
     chart.at_moment(date(2024, 1, 1)) # type: ignore
@@ -132,9 +133,8 @@ def test_month_transits() -> None:
   assert tuple(transits) == (TransitKind.DAYUN, TransitKind.LIUNIAN, TransitKind.LIUYUE)
 
 
-@pytest.mark.parametrize('backend', ['hko', 'celestial', 'celestial-algo2'])
-def test_date_transits(backend: str) -> None:
-  config = BaziConfig.from_values(backend=backend)
+def test_date_transits() -> None:
+  config = BaziConfig()
   chart = TransitChart(BaziChart(Bazi.create('1984-04-01 11:08', 'male', config)))
   solar_date = date(2024, 2, 4)
   transits = chart.at_date(solar_date)
@@ -156,7 +156,7 @@ def test_date_transits(backend: str) -> None:
 
 
 def test_date_uses_day_level_calendar_coordinates() -> None:
-  config = BaziConfig.from_values(precision='hour', backend='celestial')
+  config = BaziConfig.from_values(precision='hour')
   chart = TransitChart(BaziChart(Bazi.create('2009-02-03 23:30', 'female', config)))
 
   # The date query has no time-of-day. On the birth date it therefore uses the old,
@@ -387,27 +387,17 @@ def test_moment_day_rollover(
   assert tuple(actual) == expected
 
 
-@pytest.mark.parametrize(('backend', 'precision'), [
-  ('celestial', 'hour'),
-  ('celestial', 'minute'),
-  ('celestial-algo2', 'minute'),
-])
-def test_moment_supported_variants(backend: str, precision: str) -> None:
-  config = BaziConfig.from_values(backend=backend, precision=precision)
+@pytest.mark.parametrize('precision', ['hour', 'minute'])
+def test_moment_supported_variants(precision: str) -> None:
+  config = BaziConfig.from_values(precision=precision)
   chart = TransitChart(BaziChart(Bazi.create('1984-04-01 11:08', 'male', config)))
   assert chart.at_moment(datetime(2024, 6, 1, 12, 0)) is not None
 
 
 def test_moment_requires_a_precise_chart() -> None:
   day_chart = TransitChart(BaziChart(Bazi.create('1984-04-01 11:08', 'male')))
-  hko_chart = TransitChart(BaziChart(Bazi.create(
-    '1984-04-01 11:08',
-    'male',
-    BaziConfig.from_values(backend='hko'),
-  )))
 
   assert day_chart.at_moment(datetime(2024, 6, 1, 12, 0)) is None
-  assert hko_chart.at_moment(datetime(2024, 6, 1, 12, 0)) is None
 
 
 @pytest.mark.parametrize(('day_rollover', 'expected_liuri'), [
@@ -465,28 +455,21 @@ def test_calendar_query_windows() -> None:
     'male',
     BaziConfig.from_values(precision='minute'),
   )))
-  hko = TransitChart(BaziChart(Bazi.create(
-    '1984-04-01 11:08',
-    'male',
-    BaziConfig.from_values(backend='hko'),
-  )))
 
   assert chart.at_date(date(2099, 12, 31)) is not None
   assert chart.at_date(date(2100, 1, 1)) is None
-  _, last = calendar_utils_of('celestial').supported_jie_boundaries()
+  _, last = utils.supported_jie_boundaries()
   assert precise.at_moment(last - timedelta(seconds=1)) is not None
   assert precise.at_moment(last) is None
   assert chart.at_month(2200, Dizhi.亥) is not None
   assert chart.at_month(2200, Dizhi.子) is None
-  assert hko.at_month(2100, Dizhi.亥) is not None
-  assert hko.at_month(2100, Dizhi.子) is None
 
 
+@pytest.mark.usefixtures('short_jie_window')
 def test_empty_timeline_keeps_calendar_transits() -> None:
   chart = TransitChart(BaziChart(Bazi.create(
     '2099-12-20 12:00',
     'male',
-    BaziConfig.from_values(backend='hko'),
   )))
   bazi = chart.bazi_chart.bazi
   year_transits = chart.at_year(bazi.ganzhi_year)
@@ -511,6 +494,7 @@ def test_repr_wraps_the_chart_summary() -> None:
   assert repr(TransitChart(chart)) == f'TransitChart({chart!r})'
 
 
+@pytest.mark.input_contract('bazi.transit_chart', 'TransitChart')
 @pytest.mark.parametrize('bad, hint', [
   (Bazi.create('2000-01-01 12:00', 'male'), r'wrap it with BaziChart\(bazi\)'),
   (datetime(2000, 1, 1, 12), r'build one with BaziChart\(Bazi.create\(birth_time, gender\)\)'),

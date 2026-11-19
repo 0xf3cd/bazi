@@ -9,6 +9,7 @@ from bazi.calendar.solar_time import apparent_solar_datetime
 from bazi.calendar.celestial_data.loader import EquationOfTimeTable
 
 
+@pytest.mark.input_contract('bazi.calendar.solar_time', 'apparent_solar_datetime')
 @pytest.mark.parametrize('civil,longitude,error', [
   (42, 0.0, TypeError),
   (datetime(2000, 1, 1), 0.0, ValueError),
@@ -25,6 +26,7 @@ def test_solar_time_public_boundary(civil: Any, longitude: Any, error: type[Exce
     apparent_solar_datetime(civil, longitude)
 
 
+@pytest.mark.input_contract('bazi.calendar.solar_time', 'apparent_solar_datetime')
 def test_solar_clock_rejects_missing_utc_offset() -> None:
   class MissingOffset(tzinfo):
     def utcoffset(self, dt: datetime | None) -> None:
@@ -50,6 +52,7 @@ def test_solar_clock_meridian_and_zero_aliases(longitude: float, canonical: floa
   assert apparent_solar_datetime(instant, longitude) == apparent_solar_datetime(instant, canonical)
 
 
+@pytest.mark.input_contract('bazi.calendar.solar_time', 'apparent_solar_datetime')
 @pytest.mark.parametrize('moment', [
   datetime.min.replace(tzinfo=timezone(timedelta(hours=14))),
   datetime.max.replace(tzinfo=timezone(timedelta(hours=-12))),

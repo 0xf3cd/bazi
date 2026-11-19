@@ -1,5 +1,5 @@
 # Copyright (C) 2024 Ningqi Wang (0xf3cd) <https://github.com/0xf3cd>
-# bazi/calendar/hko_data/common.py
+# tests/calendar/hko_data/common.py
 #
 # HKO 数据模块共用的常量与函数。
 

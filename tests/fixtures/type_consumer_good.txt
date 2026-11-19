@@ -1,22 +1,25 @@
-from datetime import UTC, datetime, timedelta, timezone
+from datetime import UTC, date, datetime, timedelta, timezone
 from pathlib import Path
 from dataclasses import replace
 from typing import assert_type
 from bazi.bazi import Bazi, LocationTime
+from bazi.bazi import 八字
 from bazi.bazi_chart import BaziChart
-from bazi.calendar.dates import GanzhiYearMonth, JieqiTime, LunarYearInfo
-from bazi.calendar.hko_data import LunarYearInfo as HkoInfo
-from bazi.calendar.hko_data.decoder import LunarYearInfo as DecoderInfo
-from bazi.calendar.celestial_data.loader import LunarYearInfo as CelestialInfo
+from bazi.bazi_chart import 命盘
+from bazi.data_types import BaziData, GanzhiData
+from bazi.defines import 天干, 十神, 五行, Shishen
+from bazi.calendar.dates import CalendarDate, GanzhiYearMonth, JieqiTime
+from bazi.calendar.utils import to_lunar, to_date
 from bazi.defines import Zhu, TianganLayer, Dizhi, Jieqi, Tiangan, Ganzhi
 from bazi.transits import TransitKind, TransitSet
 from bazi.transit_chart import TransitChart
+from bazi.transit_chart import 流年大运
 from bazi.analyzer.relationship import KongwangHit, KongwangResult, StarAppearance
 from bazi.school import BaziConfig
 from bazi.cli import main as cli_main
 from bazi.common import frozendict
-from bazi.knowledge import DEFAULT_SOURCE_PATH, KnowledgeBase, KnowledgeObject, KnowledgeEntry, KnowledgeSource, object_id, guoyin_entry, guoyin_def
-from bazi.rules import ShenshaRules
+from bazi.knowledge import DEFAULT_SOURCE_PATH, KnowledgeBase, KnowledgeObject, KnowledgeEntry, KnowledgeSource
+from bazi.knowledge import 知识库
 from bazi.context_matching import NatalObservation, LiunianObservation, TransitObservation, Observation, YearCoordinate, MonthCoordinate, DateCoordinate, MomentCoordinate, LiunianPosition, ChartOccurrence, CriterionResult, CriterionReason, ContextResult, CriterionInfo, criterion, criteria, evaluate_context
 chart: BaziChart = BaziChart(Bazi.create(datetime(2000, 1, 1, 12), "male"))
 cli_exit: int = cli_main(["--help"])
@@ -26,27 +29,26 @@ month_transits: TransitSet | None = transits.at_month(2024, Dizhi.辰)
 date_transits: TransitSet | None = transits.at_date(datetime(2024, 4, 10).date())
 moment_transits: TransitSet | None = transits.at_moment(datetime(2024, 4, 10, 12))
 knowledge = KnowledgeBase.load()
-entries: tuple[KnowledgeEntry, ...] = knowledge.query(object_id="tiangan.ding")
+entries: tuple[KnowledgeEntry, ...] = knowledge.query(Tiangan.丁)
 entry = entries[0]
-display_flag: bool = entry.show_by_default
+discussion: tuple[str, ...] = entry.objects
 objects: tuple[KnowledgeObject, ...] = knowledge.find_objects("丁")
-found: tuple[KnowledgeEntry, ...] = knowledge.search("丁", include_reference_only=True)
+found: tuple[KnowledgeEntry, ...] = knowledge.search("丁")
 topics: tuple[str, ...] = knowledge.filter_values("topic")
 catalog: frozendict[str, CriterionInfo] = criteria()
 info: CriterionInfo = criterion("editorial.guansha_coexistence.v1")
 observation_types: tuple[type[NatalObservation] | type[LiunianObservation] | type[TransitObservation], ...] = info.observation_types
 source_path: Path = DEFAULT_SOURCE_PATH
-identifier: str = object_id(Tiangan.丁)
-guoyin = assert_type(guoyin_entry(knowledge, ShenshaRules.GuoyinDef.MODERN), KnowledgeEntry)
-guoyin_definition = assert_type(guoyin_def(knowledge, guoyin.claim_id), ShenshaRules.GuoyinDef | None)
+identifier: str = "tiangan.ding"
+guoyin = assert_type(knowledge.entry("shensha.guoyin.modern"), KnowledgeEntry)
 witness: KnowledgeSource = knowledge.sources["repository_guoyin_variants"]
-display: str = knowledge.render(entries[0], show_sources=True, manual_context=True, premise_verdict="UNKNOWN")
-subject_text: str = knowledge.render_subject(identifier, include_reference_only=True, show_sources=True)
+display: str = knowledge.render(entries[0], show_sources=True)
+subject_text: str = knowledge.render_subject(identifier, show_sources=True)
 matched: ContextResult = evaluate_context(chart, criterion_id="editorial.guansha_coexistence.v1", observation=NatalObservation())
 result_input: Bazi = matched.bazi
-copied: ContextResult = replace(matched, _bazi=result_input)
+copied: ContextResult = replace(matched, bazi=result_input)
 ids: tuple[str, ...] = matched.reference_ids
-constructed: ContextResult = ContextResult(observation=matched.observation, criterion=matched.criterion, evidence=matched.evidence, reference_ids=ids, _bazi=result_input, knowledge=knowledge)
+constructed: ContextResult = ContextResult(observation=matched.observation, criterion=matched.criterion, evidence=matched.evidence, reference_ids=ids, bazi=result_input)
 year_request = YearCoordinate(ganzhi_year=2024)
 month_request = MonthCoordinate(ganzhi_year=2024, ganzhi_month=Dizhi.辰)
 date_request = DateCoordinate(datetime(2024, 4, 10).date())
@@ -60,10 +62,8 @@ target = Ganzhi.from_str("甲子")
 hit = KongwangHit(Zhu.月, target)
 anchor = KongwangResult(Zhu.日, target, ())
 appearance = StarAppearance(Zhu.月, target, TianganLayer.明干, Tiangan.甲)
-lunar: LunarYearInfo = {"first_solar_day": datetime(2000, 2, 5).date(), "leap": False, "leap_month": None, "days_counts": [30] * 12, "ganzhi": target}
-hko: HkoInfo = lunar
-decoder: DecoderInfo = hko
-celestial: CelestialInfo = decoder
+lunar: CalendarDate = to_lunar(date(2023, 3, 22))
+solar: date = to_date(lunar)
 local: Bazi = Bazi.create(datetime(2023, 12, 31, 22, tzinfo=UTC), "female", BaziConfig.from_values(precision="minute"), longitude=-157.4, civil_timezone=timezone(timedelta(hours=14)))
 local_chart: BaziChart = BaziChart(local)
 local_record: ContextResult = evaluate_context(local_chart, criterion_id="editorial.guansha_coexistence.v1", observation=NatalObservation())
@@ -77,3 +77,21 @@ if facts is not None:
   instant: datetime = facts.canonical_instant
   civil: datetime = facts.civil_time
   apparent: datetime = facts.apparent_time
+
+盘: BaziChart = 命盘(八字.create("1990-05-17 10:30", "女"))
+assert_type(盘.八字, Bazi)
+assert_type(盘.八字.四柱, tuple[Ganzhi, Ganzhi, Ganzhi, Ganzhi])
+assert_type(盘.八字.日主, Tiangan)
+assert_type(盘.十神, BaziData[GanzhiData[Shishen | None, Shishen]])
+assert_type(盘.十神.年.天干, Shishen | None)
+assert_type(盘.十神.月.地支, Shishen)
+assert_type(盘.十神.日.天干, Shishen | None)
+assert_type(盘.十神.时.地支, Shishen)
+岁运 = 流年大运(盘).at_year(2024)
+assert_type(岁运, TransitSet | None)
+if 岁运 is not None:
+  assert_type(岁运.大运, Ganzhi | None)
+  assert_type(岁运.流年, Ganzhi | None)
+知识: KnowledgeBase = 知识库.load()
+for 对象 in (天干.丁, 十神.正官, 五行.木):
+  assert_type(知识.query(对象), tuple[KnowledgeEntry, ...])

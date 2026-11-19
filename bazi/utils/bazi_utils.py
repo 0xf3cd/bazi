@@ -92,17 +92,13 @@ def taiyuan(month_pillar: Ganzhi) -> Ganzhi:
   不倒推实际受孕日期。《三命通会》的三百日说另存知识候选，未编码。
 
   Args:
-  - month_pillar: (Ganzhi) 合法六十甲子月柱；错型抛 TypeError，阴阳不配抛 ValueError。
+  - month_pillar: (Ganzhi) 六十甲子月柱；错型抛 TypeError。
 
   Return: (Ganzhi) 胎元干支，不加入原盘四柱。
   '''
 
   if not isinstance(month_pillar, Ganzhi):
     raise TypeError(f'Expected Ganzhi, got {type(month_pillar)}')
-  if not isinstance(month_pillar.tiangan, Tiangan):
-    raise TypeError(f'Expected Tiangan, got {type(month_pillar.tiangan)}')
-  if not isinstance(month_pillar.dizhi, Dizhi):
-    raise TypeError(f'Expected Dizhi, got {type(month_pillar.dizhi)}')
   # 六十甲子退九步，等价于天干顺移一位、地支顺移三位。
   return month_pillar.prev(9)
 
@@ -295,8 +291,7 @@ def shishen(day_master: Tiangan, other: Tiangan | Dizhi) -> Shishen:
 
 def nayin_str(gz: Ganzhi) -> str:
   '''
-  返回六十甲子干支对应的纳音；不属于六十甲子的组合抛出 `ValueError`。
-  `Ganzhi` 本身允许全部 120 种天干、地支组合，本入口单独检查纳音的适用性。
+  返回六十甲子干支对应的纳音；输入错型抛 TypeError。
 
   Args:
   - gz: (Ganzhi) 待查纳音的干支。
@@ -315,11 +310,6 @@ def nayin_str(gz: Ganzhi) -> str:
   if not isinstance(gz, Ganzhi):
     raise TypeError(f'Expected Ganzhi, got {type(gz)}')
   
-  tg, dz = gz
-  tg_traits, dz_traits = traits(tg), traits(dz)
-  if tg_traits.yinyang != dz_traits.yinyang:
-    raise ValueError(f'Unsupported Ganzhi for Nayin: {gz}')
-
   return BaziRules.NAYIN[gz]
 
 

@@ -7,7 +7,6 @@ from enum import Enum
 from dataclasses import dataclass
 from typing import Final
 
-from .calendar import CalendarBackend
 from .common import check_declared_types, frozendict, _compact_dataclass_repr
 from .rules import DizhiRules, ShenshaRules, DizhiRelationDefinitions, DEFAULT_DIZHI_RELATION_DEFINITIONS
 
@@ -25,7 +24,7 @@ class BaziPrecision(Enum):
   - MINUTE：知道到分，比到日期、小时与分钟。
 
   Examples:
-  celestial 后端的 2000 年立春为 2000-02-04 20:40:23，HKO 只提供日期。
+  2000 年立春为 2000-02-04 20:40:23。
   - DAY：02-04 全天取年柱庚辰、月支寅，包括 20:40:23 之前；02-03 取己卯、丑。
   - HOUR：戌时 [19:00, 21:00) 与节同一时辰，取庚辰、寅；酉时 [17:00, 19:00) 及当日更早时辰取己卯、丑。
   - MINUTE：20:40 起取庚辰、寅，之前取己卯、丑。
@@ -36,9 +35,6 @@ class BaziPrecision(Enum):
   子时跨午夜，相等时辰窗口可始于前一公历日：2009 年立春为 2009-02-04 00:49:48，
   所属子时始于 02-03 23:00，因此 HOUR 的 02-03 23:30 归新，DAY 的同日却归旧。
   三档不构成嵌套细化。
-
-  HOUR 与 MINUTE 需要真实节时刻；`Bazi.__init__` 拒绝这两档使用 HKO，
-  因为它的 `jieqi_moment` 只有午夜占位，见 `CalendarUtilsProtocol`。
   '''
   DAY    = 0
   HOUR   = 1
@@ -105,8 +101,6 @@ class DayRollover(Enum):
   Note:
   - 年/月柱独立按 `BaziPrecision` 比较节时刻，相等归新。WAN_ZISHI 的 23:30 出生取次日日柱，
     不使年/月归属随之改变。
-
-  不修改既有定义；新读法须另加定义。
   '''
   WAN_ZISHI = 0
   ZIZHENG   = 1
@@ -118,12 +112,11 @@ class PeiouXingDef(Enum):
 
   - ZHENGCAI_ZHENGGUAN：男命取正财干、女命取正官干。默认。
   - YINYANGGAN：《三命通会·卷七·论六亲》读法：男命取我所克五行中的阴干，女命取克我五行中的阳干。
-    书证直例仅甲、乙两干的男女四格；其余十六格按「其餘八干俱以類推」与「陽男陰女」原则类推重建，单源，未获第二独立来源。
+    读法与出处见知识条目 `editorial.liuqin.spouse_star_yinyanggan.v1`。
 
   Note:
   - 两读在阳男、阴女十格上目标相同，在阴男、阳女十格上不同；每个（日主，性别）仍恰有一个目标天干。
   - 地支侧均取主气等于目标天干的地支。
-  - 不修改既有定义；新读法须另加定义。
   '''
   ZHENGCAI_ZHENGGUAN = 0
   YINYANGGAN         = 1
@@ -138,9 +131,7 @@ class Anchor(Enum):
   - YEAR_AND_DAY：年、日两柱分别为锚，各查一遍。
 
   成员只指定锚柱；取该柱天干、地支还是完整干支由神煞自身的查法决定，记录在分析层注册表中。
-  `_ANCHOR_CHOICES` 按字段列出支持的取值及出处或已知出处缺口，`BaziSchool` 拒绝表外取值。
-
-  不修改既有定义；新读法须另加定义。
+  `_ANCHOR_CHOICES` 按字段列出支持的取值与知识入口，`BaziSchool` 拒绝表外取值。
   '''
   YEAR         = 0
   DAY          = 1
@@ -165,66 +156,29 @@ class TuwangDef(Enum):
   BEFORE_EIGHTEEN_DAYS = 'before_eighteen_days'
 
 
-'''各锚选项支持的取值，连同出处或已知出处缺口逐行记录。表外取值只表示本库不支持，不表示没有
-流派如此读（见驿马）；新增取值属于知识变更，须有出处。
-出处计数规则见 `ShenshaRules` 的 docstring。'''
+'''各锚选项支持的取值。表外取值只表示本库不支持；查法与出处沿各行条目 ID 查阅。'''
 _ANCHOR_CHOICES: Final[frozendict[str, frozenset[Anchor]]] = frozendict({
-  # 红艳：DAY 依问真（https://book.taiyi.me/命/神煞大全，「以日干查四地支」）及高人，
-  # 高人将红艳列于「日干查地支」节。《三命通会》四库本卷三〈總論諸神煞〉
-  # “桃花紅艶煞”条只给干支表，未定锚柱；三格表值分歧见 ShenshaRules.HONGYAN。
-  # YEAR 的查法讨论见 #69，出处仍缺；所查材料亦未见 YEAR_AND_DAY 读法。
+  # 红艳：shensha.hongyan.readings。
   'hongyan_anchor':   frozenset({Anchor.DAY, Anchor.YEAR}),
-  # 天乙贵人：DAY 为子平法，袁树珊《命理探原》NLC 刊本印页六三（PDF94）
-  # 「以日爲主。如甲日見丑見未」。YEAR 为以年柱取贵神的禄命法；
-  # 《三命通会》四库本转录卷三所载陈希烈说作：
-  # 「假如丑未生人月日時得甲戊庚是遇正天乙甲子人十二月生是遇貴神」
-  # https://zh.wikisource.org/w/index.php?oldid=657369
-  # 《五行精纪》卷十四〈论天乙贵神（二）〉网页转录所引为同一段，不多算独立来源：
-  # https://www.suanzhun.net/book/2742.html ；两法的现代注释另见 https://www.suanzhun.net/book/2728.html 。
-  # YEAR_AND_DAY 为问真、高人的现代主流读法，也是本库默认值。
+  # 天乙贵人：shensha.tianyi.readings。
   'tianyi_anchor':    frozenset({Anchor.DAY, Anchor.YEAR, Anchor.YEAR_AND_DAY}),
-  # 金舆：DAY 依袁树珊《命理探源》
-  # （https://ctext.org/wiki.pl?if=gb&chapter=827425&remap=gb），该转录的原字与日锚明文仍待复核；YEAR_AND_DAY 依问真
-  # （https://book.taiyi.me/命/神煞大全）。
+  # 金舆：shensha.jinyu.readings。
   'jinyu_anchor':     frozenset({Anchor.DAY, Anchor.YEAR_AND_DAY}),
-  # 灾煞：YEAR 依问真（https://book.taiyi.me/命/神煞大全#灾煞）；YEAR_AND_DAY 依高人
-  # （https://github.com/gaorenyes/gaorenyes.github.io/blob/817ad1f8f463d489087ac6c44ec69165e1181454/README.md#L367-L439）。
+  # 灾煞：shensha.zaisha.readings。
   'zaisha_anchor':    frozenset({Anchor.YEAR, Anchor.YEAR_AND_DAY}),
-  # 驿马、华盖、将星、劫煞、亡神共用两种锚读法：YEAR_AND_DAY 依问真现代查法
-  # （https://book.taiyi.me/命/神煞大全），为本库默认。驿马、华盖、将星的 DAY 依袁树珊《命理探原》NLC 刊本；
-  # 劫煞、亡神的 DAY 沿用既有档案，原刊出处仍待核。完整日锚档案见 BaziSchool.mingli_tanyuan。
-  # 《命理探原·卷上强弱》印页六五（PDF96）引《子平約言》另载驿马 YEAR 读法：「申子辰年馬在寅。
-  # 以年爲主。亦是一法」。#181 不添加新读法，因此尚不支持。
+  # 驿马、华盖、将星、劫煞、亡神：concept.mingli_tanyuan.readings。
   'yima_anchor':      frozenset({Anchor.DAY, Anchor.YEAR_AND_DAY}),
   'huagai_anchor':    frozenset({Anchor.DAY, Anchor.YEAR_AND_DAY}),
   'jiangxing_anchor': frozenset({Anchor.DAY, Anchor.YEAR_AND_DAY}),
   'jiesha_anchor':    frozenset({Anchor.DAY, Anchor.YEAR_AND_DAY}),
   'wangshen_anchor':  frozenset({Anchor.DAY, Anchor.YEAR_AND_DAY}),
-  # 文昌：DAY 依袁树珊《命理探原》NLC 刊本印页六三（PDF94）
-  # 「以日爲主。如甲日見巳。乙日見午是也。」；直接载体见 BaziSchool.mingli_tanyuan。
-  # 旧引 ctext 对应“甲日見巳”的位置作“己”；该转录仍待复核，不据此判为刊本异文。YEAR_AND_DAY 依问真
-  # （https://book.taiyi.me/命/神煞大全，「以日/年干查四地支」）与高人，为本库默认。
-  # 年干部分仅有这些现代来源，所查古籍未见以年干查文昌的明文。
+  # 文昌：shensha.wenchang.readings。
   'wenchang_anchor':  frozenset({Anchor.DAY, Anchor.YEAR_AND_DAY}),
-  # 太极贵人：YEAR 依《五行精纪注释》卷十三「太极贵人，从年干取」
-  # （https://www.suanzhun.net/book/2728.html）。YEAR_AND_DAY 依问真
-  # （https://book.taiyi.me/命/神煞大全，「以日/年干查四地支」）与高人，为本库默认。
-  # 与文昌的出处缺口相反：文昌古籍锚为日干，现代来源加年干；太极古籍锚为年干，现代来源加日干。
+  # 太极贵人：shensha.taiji.readings。
   'taiji_anchor':     frozenset({Anchor.YEAR, Anchor.YEAR_AND_DAY}),
-  # 国印贵人：YEAR 依《五行精纪注释》卷十三今人【注释】：
-  # 「国印星，命局见年干禄前第八位的地支」
-  # （https://www.suanzhun.net/book/2731.html），同页举例「甲禄在寅，
-  # 寅前八位是酉」。YEAR_AND_DAY 依问真、高人的现代读法，为本库默认。
-  # GuoyinDef 的抄本见证不能证明此今人注释所取的锚。
+  # 国印贵人：shensha.guoyin.readings。
   'guoyin_anchor':    frozenset({Anchor.YEAR, Anchor.YEAR_AND_DAY}),
-  # 六甲旬空取完整干支。DAY 依《五行精纪》卷二十五转引《神白经》：
-  # 「此空亡只用生日旬中空亡極緊」，并有运、太岁语境；这里只见汇编转录，未见所引原书。
-  # 同卷转引《林开五命》有「論空亡止以年日所在」，为年、日分别查的依据：
-  # https://zh.wikisource.org/w/index.php?oldid=10494296
-  # YEAR 与年日互查例另见《三命通会》四库本卷三「假令甲子年壬戌日」：
-  # https://zh.wikisource.org/w/index.php?oldid=657369
-  # 现代日柱为主且兼看其他柱／流运的读法：https://www.xifengduzui.com/article461.html
-  # DAY 是本库默认选择，不宣称古籍一致只看日柱；本轮只记本命锚查原局及流运支的原始命中。
+  # 六甲旬空取完整干支；查法见 shensha.kongwang.lookup、shensha.kongwang.repository。
   'kongwang_anchor':  frozenset({Anchor.DAY, Anchor.YEAR, Anchor.YEAR_AND_DAY}),
 })
 
@@ -245,7 +199,7 @@ class BaziSchool:
     每个字段支持的成员见{doc}`配置指南 </guides/configuration>`中的锚点取值表。
 
   Note:
-  - 出生精度、历法后端见 `BaziConfig`；性别由 `Bazi` 输入。
+  - 出生精度见 `BaziConfig`；性别由 `Bazi` 输入。
   - 每个字段均参与相等性；只差一个选项的命盘也不同，相等档案的哈希相等。
   - 字段须为不可变类型（枚举或 frozen 值类型），不得用 dict / list 默认值，避免修改共享默认实例。
   - 默认流派由字段默认值组成；关系定义默认值取自规则层的共享对象。
@@ -306,23 +260,12 @@ class BaziSchool:
   @classmethod
   def mingli_tanyuan(cls) -> 'BaziSchool':
     '''
-    据袁树珊《命理探原》NLC 刊本与既有 ctext 来源记录整理的日锚档案。
+    返回《命理探原》日锚档案，出处见知识条目 concept.mingli_tanyuan.readings。
     驿马、华盖、将星以日支为锚（原局随之查年、月、时支）；天乙贵人与文昌以日干为锚。
-    劫煞、亡神的日支锚沿用既有档案，原刊出处仍待核。
-    金舆的日干锚沿用 ctext 来源记录，原字与载体仍待复核；它恰好也是当前默认，预设仍显式声明，
-    默认值日后改动不该悄悄改写这份档案。
+    劫煞、亡神取日支，金舆取日干。
 
     Note:
     - 其余选项保持默认。
-
-    出处：
-    - 《命理探原·卷上强弱》NLC 刊本：
-      https://commons.wikimedia.org/wiki/File:NLC416-07jh011647-5318_命理探源.pdf
-      扫描文件题《命理探源》，所核页版心题《命理探原》。天乙、文昌见印页六三（PDF94），
-      华盖、将星见六四（PDF95），驿马见六五（PDF96）。
-      已核〈强弱〉印页六二至六六（PDF93–97）未见金輿条，不据此判断全书无此条。
-    - 《命理探源》ctext 金輿祿来源记录，日干锚明文与原字待复核：
-      https://ctext.org/wiki.pl?if=gb&chapter=827425&remap=gb
 
     Return: (BaziSchool) 冻结的流派档案。
     '''
@@ -345,13 +288,12 @@ DEFAULT_SCHOOL: Final[BaziSchool] = BaziSchool()
 @dataclass(frozen=True)
 class BaziConfig:
   '''
-  命盘级不可变配置，包括出生精度、历法后端、大运年份投影及求值时读取的流派档案。
+  命盘级不可变配置，包括出生精度、大运年份投影及求值时读取的流派档案。
   Bazi 持有整个配置，配置参与相等性。大运年份投影虽不改变四柱与大运物理时刻线，
   仍属于命盘身份；相等配置的哈希相等。
 
   Args:
   - precision: (BaziPrecision) 出生时间精度。
-  - backend: (CalendarBackend) 所有历法换算所用的后端。
   - school: (BaziSchool) 流派档案，默认 `DEFAULT_SCHOOL`。
   - dayun_year_rule: (DayunYearRule) 默认大运年份投影。
 
@@ -360,7 +302,6 @@ class BaziConfig:
   - 构造只收声明类型，字符串解析由 `from_values` 提供。
   '''
   precision:        BaziPrecision   = BaziPrecision.DAY
-  backend:          CalendarBackend = CalendarBackend.CELESTIAL
   school:           BaziSchool      = DEFAULT_SCHOOL
   dayun_year_rule:  DayunYearRule   = DayunYearRule.JIE_PROJECTED
 
@@ -373,7 +314,6 @@ class BaziConfig:
 
   @classmethod
   def from_values(cls, precision: BaziPrecision | str = BaziPrecision.DAY,
-                  backend: CalendarBackend | str = CalendarBackend.CELESTIAL,
                   school: BaziSchool = DEFAULT_SCHOOL,
                   dayun_year_rule: DayunYearRule | str = DayunYearRule.JIE_PROJECTED) -> 'BaziConfig':
     '''
@@ -383,8 +323,6 @@ class BaziConfig:
     - precision: (BaziPrecision | str) 出生精度。字符串支持
       "分"/"分钟"/"时"/"小时"/"天"/"日"/"m"/"min"/"minute"/"h"/"hour"/"d"/"day"，
       大小写不敏感，其他值抛 `ValueError`。
-    - backend: (CalendarBackend | str) 历法后端；`CalendarBackend.from_str` 接受成员名或值，
-      如 "HKO"/"hko"，大小写不敏感，其他值抛 `ValueError`。
     - school: (BaziSchool) 流派档案，不接受字符串；类型错误由构造函数抛 `TypeError`。
     - dayun_year_rule: (DayunYearRule | str) 大运年份投影；`DayunYearRule.from_str` 接受成员名或值，
       如 "FIXED_DECADE"/"fixed_decade"，大小写不敏感，其他值抛 `ValueError`。
@@ -394,8 +332,6 @@ class BaziConfig:
 
     if not isinstance(precision, (BaziPrecision, str)):
       raise TypeError(f'Expected BaziPrecision or str, got {type(precision)}')
-    if not isinstance(backend, (CalendarBackend, str)):
-      raise TypeError(f'Expected CalendarBackend or str, got {type(backend)}')
     if not isinstance(dayun_year_rule, (DayunYearRule, str)):
       raise TypeError(f'Expected DayunYearRule or str, got {type(dayun_year_rule)}')
 
@@ -406,7 +342,6 @@ class BaziConfig:
 
     return cls(
       precision=_precision,
-      backend=CalendarBackend.from_str(backend) if isinstance(backend, str) else backend,
       school=school,
       dayun_year_rule=DayunYearRule.from_str(dayun_year_rule) if isinstance(dayun_year_rule, str) else dayun_year_rule,
     )

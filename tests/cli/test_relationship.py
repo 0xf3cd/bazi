@@ -27,7 +27,7 @@ REL_TRANSIT_BASE = ('match', TOUGAN, '--birth-time', '2000-01-01 12:00', '--gend
 @pytest.mark.parametrize('args', [
   ('--observation-scope', 'natal_and_transits'),
   ('--transit-entry', 'at_year'),
-  ('--gz-month', '辰'),
+  ('--ganzhi-month', '辰'),
   ('--solar-date', '2024-04-10'),
   ('--solar-moment', '2024-04-10T12:00:00'),
   ('--transit-kinds', 'liunian'),
@@ -54,7 +54,7 @@ def test_relationship_rejects_unknown_options(tmp_path: Path, extra: tuple[str, 
 
 @pytest.mark.parametrize('extra', [
   ('--transit-entry', 'at_year'),
-  ('--gz-month', '辰'),
+  ('--ganzhi-month', '辰'),
   ('--solar-date', '2024-04-10'),
   ('--solar-moment', '2024-04-10T12:00:00'),
   ('--transit-kinds', 'liunian'),
@@ -81,7 +81,7 @@ def test_relationship_rejects_natal_liunian(tmp_path: Path) -> None:
 
 @pytest.mark.parametrize('extra,error', [
   (('--ganzhi-year', '2024'), 'Transit coordinates require --transit-entry'),
-  (('--gz-month', '辰'), 'Transit coordinates require --transit-entry'),
+  (('--ganzhi-month', '辰'), 'Transit coordinates require --transit-entry'),
   (('--solar-date', '2024-04-10'), 'Transit coordinates require --transit-entry'),
   (('--solar-moment', '2024-04-10T12:00:00'), 'Transit coordinates require --transit-entry'),
   (('--transit-kinds', 'liunian'), 'Natal scope cannot include transit inputs'),
@@ -100,8 +100,8 @@ def test_natal_transits_requires_kinds(tmp_path: Path) -> None:
 
 
 @pytest.mark.parametrize('flag,value,error', [
-  ('--ganzhi-year', 'bad', 'invalid int value'), ('--gz-month', '子丑', 'not a valid Dizhi'),
-  ('--gz-month', 'YOU', 'not a valid Dizhi'),
+  ('--ganzhi-year', 'bad', 'invalid int value'), ('--ganzhi-month', '子丑', 'not a valid Dizhi'),
+  ('--ganzhi-month', 'YOU', 'not a valid Dizhi'),
   ('--solar-date', '2024-04-10T12:00:00', 'Invalid isoformat string'),
   ('--solar-date', '20240410', 'Expected canonical ISO date'),
   ('--solar-moment', '2024-04-10 12:00:00', 'Expected canonical naive moment'),
@@ -116,13 +116,13 @@ def test_coordinate_values_must_be_canonical(tmp_path: Path, flag: str, value: s
 
 
 @pytest.mark.parametrize('entry_args', [
-  ('--transit-entry', 'at_year', '--ganzhi-year', '2024', '--gz-month', '辰'),
+  ('--transit-entry', 'at_year', '--ganzhi-year', '2024', '--ganzhi-month', '辰'),
   ('--transit-entry', 'at_year', '--ganzhi-year', '2024', '--solar-date', '2024-04-10'),
   ('--transit-entry', 'at_year', '--ganzhi-year', '2024', '--solar-moment', '2024-04-10T12:00:00'),
-  ('--transit-entry', 'at_month', '--ganzhi-year', '2024', '--gz-month', '辰', '--solar-date', '2024-04-10'),
-  ('--transit-entry', 'at_month', '--ganzhi-year', '2024', '--gz-month', '辰', '--solar-moment', '2024-04-10T12:00:00'),
+  ('--transit-entry', 'at_month', '--ganzhi-year', '2024', '--ganzhi-month', '辰', '--solar-date', '2024-04-10'),
+  ('--transit-entry', 'at_month', '--ganzhi-year', '2024', '--ganzhi-month', '辰', '--solar-moment', '2024-04-10T12:00:00'),
   ('--transit-entry', 'at_date', '--solar-date', '2024-04-10', '--ganzhi-year', '2024'),
-  ('--transit-entry', 'at_date', '--solar-date', '2024-04-10', '--gz-month', '辰'),
+  ('--transit-entry', 'at_date', '--solar-date', '2024-04-10', '--ganzhi-month', '辰'),
   ('--transit-entry', 'at_moment', '--solar-moment', '2024-04-10T12:00:00', '--ganzhi-year', '2024'),
   ('--transit-entry', 'at_moment', '--solar-moment', '2024-04-10T12:00:00', '--solar-date', '2024-04-10'),
 ])
@@ -133,15 +133,15 @@ def test_entry_fields_are_mutually_exclusive(tmp_path: Path, entry_args: tuple[s
 
 @pytest.mark.parametrize('entry_args, missing', [
   (('--transit-entry', 'at_year'), '--ganzhi-year'),
-  (('--transit-entry', 'at_month', '--ganzhi-year', '2024'), '--gz-month'),
-  (('--transit-entry', 'at_month', '--gz-month', '辰'), '--ganzhi-year'),
+  (('--transit-entry', 'at_month', '--ganzhi-year', '2024'), '--ganzhi-month'),
+  (('--transit-entry', 'at_month', '--ganzhi-month', '辰'), '--ganzhi-year'),
   (('--transit-entry', 'at_date'), '--solar-date'),
   (('--transit-entry', 'at_moment'), '--solar-moment'),
 ])
 def test_entry_fields_are_required(tmp_path: Path, entry_args: tuple[str, ...], missing: str) -> None:
   result = run_cli(tmp_path, *REL_TRANSIT_BASE, '--transit-kinds', 'liunian', *entry_args)
   assert result.returncode == 2 and 'error:' in result.stderr, missing
-  field = {'--ganzhi-year': 'ganzhi_year', '--gz-month': 'ganzhi_month', '--solar-date': 'solar_date', '--solar-moment': 'solar_moment'}[missing]
+  field = {'--ganzhi-year': 'ganzhi_year', '--ganzhi-month': 'ganzhi_month', '--solar-date': 'solar_date', '--solar-moment': 'solar_moment'}[missing]
   assert 'usage: bazi match' in result.stderr
   assert f'Missing coordinate field for {entry_args[1]}: {field}' in result.stderr
 
@@ -149,7 +149,7 @@ def test_entry_fields_are_required(tmp_path: Path, entry_args: tuple[str, ...], 
 @pytest.mark.parametrize('entry_args, kinds', [
   (('--transit-entry', 'at_year', '--ganzhi-year', '2024'), 'liuyue'),
   (('--transit-entry', 'at_year', '--ganzhi-year', '2024'), 'liuri'),
-  (('--transit-entry', 'at_month', '--ganzhi-year', '2024', '--gz-month', '辰'), 'xiaoyun,liuri'),
+  (('--transit-entry', 'at_month', '--ganzhi-year', '2024', '--ganzhi-month', '辰'), 'xiaoyun,liuri'),
 ])
 def test_kinds_must_be_within_entry_support(tmp_path: Path, entry_args: tuple[str, ...], kinds: str) -> None:
   result = run_cli(tmp_path, *REL_TRANSIT_BASE, '--transit-kinds', kinds, *entry_args)
@@ -190,7 +190,7 @@ def test_unordered_kinds_are_normalized(tmp_path: Path) -> None:
 
 
 @pytest.mark.parametrize('entry,gender,kinds,coordinates', [
-  ('at_month', 'female', 'liuyue,liunian', ('--ganzhi-year', '2024', '--gz-month', '午')),
+  ('at_month', 'female', 'liuyue,liunian', ('--ganzhi-year', '2024', '--ganzhi-month', '午')),
   ('at_date', 'male', 'liuri', ('--solar-date', '2024-04-10')),
 ])
 def test_month_and_date_keep_requested_kinds(
@@ -223,17 +223,17 @@ def test_natal_month_hidden_literal(tmp_path: Path) -> None:
 
 
 def test_extra_month_field_names_library_field(tmp_path: Path) -> None:
-  result = run_cli(tmp_path, *REL_TRANSIT_BASE, '--transit-kinds', 'liunian', '--transit-entry', 'at_year', '--ganzhi-year', '2024', '--gz-month', '辰')
+  result = run_cli(tmp_path, *REL_TRANSIT_BASE, '--transit-kinds', 'liunian', '--transit-entry', 'at_year', '--ganzhi-year', '2024', '--ganzhi-month', '辰')
   assert_cli_error(result, 'match', 'Unexpected coordinate field for at_year: ganzhi_month')
 
 
 @pytest.mark.parametrize('entry_args', [
   ('--transit-entry', 'at_year', '--ganzhi-year', '2024'),
-  ('--transit-entry', 'at_month', '--ganzhi-year', '2024', '--gz-month', '辰'),
+  ('--transit-entry', 'at_month', '--ganzhi-year', '2024', '--ganzhi-month', '辰'),
   ('--transit-entry', 'at_date', '--solar-date', '2024-04-10'),
   ('--transit-entry', 'at_moment', '--solar-moment', '2024-04-10T12:00:00'),
 ])
-@pytest.mark.parametrize('flag', [(), ('--include-reference-only',)])
+@pytest.mark.parametrize('flag', [(), ('--knowledge',)])
 def test_legal_relationship_combinations(tmp_path: Path, entry_args: tuple[str, ...], flag: tuple[str, ...]) -> None:
   result = run_cli(tmp_path, *REL_TRANSIT_BASE, '--transit-kinds', 'liunian', *entry_args, *flag)
   assert result.returncode == 0, result.stderr
@@ -242,6 +242,5 @@ def test_legal_relationship_combinations(tmp_path: Path, entry_args: tuple[str, 
   # at_moment requires a HOUR/MINUTE natal chart; with DAY precision the unavailable entry is an EXIT 0 UNKNOWN, not an error.
   if entry_args[1] == 'at_moment':
     assert '事实判别：UNKNOWN；transit_unavailable' in result.stdout
-  assert ('关联参考' in result.stdout) == bool(flag)
-  if flag:
-    assert '该判据的条件参考，不表示事实已成立或完整前提已满足' in result.stdout
+  assert any(line.startswith('条目：') for line in result.stdout.splitlines()) == bool(flag)
+  assert '局部条件' in result.stdout

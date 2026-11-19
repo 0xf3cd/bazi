@@ -47,7 +47,7 @@ def test_match_unknown_id_points_to_the_list(tmp_path: Path) -> None:
   (('--birth-time', '2000-01-03 12:00'), ('--gender', '--observation-scope')),
   (('--gender', 'female'), ('--birth-time', '--observation-scope')),
   (('--observation-scope', 'natal'), ('--birth-time', '--gender')),
-  (('--include-reference-only',), ('--birth-time', '--gender', '--observation-scope')),
+  (('--knowledge',), ('--birth-time', '--gender', '--observation-scope')),
 ])
 def test_match_names_every_missing_input(tmp_path: Path, given: tuple[str, ...], missing: tuple[str, ...]) -> None:
   result = run_cli(tmp_path, 'match', GUANSHA, *given)
@@ -60,12 +60,12 @@ def test_match_names_every_missing_input(tmp_path: Path, given: tuple[str, ...],
 EVALUATION_INPUTS = [
   ('birth_time', ('--birth-time', '2000-01-03 12:00')), ('gender', ('--gender', 'female')),
   ('observation_scope', ('--observation-scope', 'natal')), ('ganzhi_year', ('--ganzhi-year', '2024')),
-  ('transit_entry', ('--transit-entry', 'at_year')), ('gz_month', ('--gz-month', '午')),
+  ('transit_entry', ('--transit-entry', 'at_year')), ('ganzhi_month', ('--ganzhi-month', '午')),
   ('solar_date', ('--solar-date', '2024-04-10')), ('solar_moment', ('--solar-moment', '2024-04-10T12:00:00')),
   ('transit_kinds', ('--transit-kinds', 'liuri')), ('longitude', ('--longitude', '120')),
   ('precision', ('--precision', 'hour')), ('civil_timezone', ('--civil-timezone', '+08:00')),
   ('knowledge_source', ('--knowledge-source', 'src.json')),
-  ('include_reference_only', ('--include-reference-only',)),
+  ('knowledge', ('--knowledge',)), ('show_sources', ('--show-sources',)),
 ]
 
 

@@ -55,6 +55,7 @@ def test_as_list() -> None:
   ]
 
 
+@pytest.mark.input_contract('bazi.defines.jieqi', 'Jieqi.jies')
 def test_jies() -> None:
   assert Jieqi.jies() == (
     Jieqi.立春, Jieqi.惊蛰, Jieqi.清明, Jieqi.立夏, Jieqi.芒种, Jieqi.小暑,

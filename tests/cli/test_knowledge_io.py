@@ -2,8 +2,6 @@
 
 import json
 import shutil
-import subprocess
-import sys
 from pathlib import Path
 
 import pytest
@@ -11,334 +9,122 @@ import pytest
 from bazi import cli
 from bazi.knowledge import DEFAULT_SOURCE_PATH, KnowledgeBase
 
-from cli_runner import ROOT, KNOWLEDGE_BASE, run_cli, run_guarded_script, assert_cli_error
-
-
-def test_knowledge_export_defaults_are_isolated(
-  tmp_path: Path,
-  monkeypatch: pytest.MonkeyPatch,
-) -> None:
-  # cli was imported before chdir: the export directory must follow this call's cwd.
-  monkeypatch.chdir(tmp_path)
-  assert cli.main([
-    'knowledge', '--export-knowledge-base',
-  ]) == 0
-  output = tmp_path / 'output_data'
-  assert not (output / 'interpretation_examples').exists()
-  assert len(list((output / 'knowledge_base' / 'tiangan').glob('*.txt'))) == 10
-  assert len(list((output / 'knowledge_base' / 'shishen').glob('*.txt'))) == 10
-  assert list(tmp_path.iterdir()) == [output]
-  ding = (output / 'knowledge_base' / 'tiangan' / '丁.txt').read_text(encoding='utf-8')
-  assert '丁为阴火。' in ding
-  assert '丁火有烛灯之象' not in ding
-  assert '仅供参考' not in ding
-  assert '来源：' not in ding
+from cli_runner import ROOT, KNOWLEDGE_BASE, MATCH_ARGS, run_cli, run_guarded_script
 
 
 def test_query_needs_no_birth_input_or_writes(tmp_path: Path) -> None:
-  result = run_cli(
-    tmp_path, 'knowledge', '--object', 'tiangan.ding', '--topic', '历史象',
-    '--source', 'yuanhai_ziping_stem_symbols_p70', '--include-reference-only',
-  )
+  result = run_guarded_script(tmp_path, (
+    'knowledge', '丁', '--topic', '历史象', '--source', 'yuanhai_ziping_stem_symbols_p70', '--show-sources',
+  ))
   assert result.returncode == 0, result.stderr
-  assert 'tiangan.ding.lamp_symbol' in result.stdout
-  assert '丁火有烛灯之象。' in result.stdout and '第 70 页' in result.stdout
-  assert '支持范围：' in result.stdout and '局限：' in result.stdout
-  assert '出生时间：' not in result.stdout
-  assert '丁为阴火。' not in result.stdout
-  assert list(tmp_path.iterdir()) == []
-  guarded = run_guarded_script(
-    tmp_path,
-    ('knowledge', '--object', 'tiangan.ding'),
-  )
-  assert guarded.returncode == 0, guarded.stderr
-
-
-def test_manual_context_keeps_open_premises(tmp_path: Path) -> None:
-  result = run_cli(
-    tmp_path, 'knowledge', '--object', 'tiangan.geng',
-    '--context', 'tiangan.geng_regulated_transit', '--topic', '性格',
-    '--applicability', 'described', '--time-scope', '行运', '--include-reference-only',
-  )
-  assert result.returncode == 0, result.stderr
-  for text in ('人工给定情境', '命盘适用性未判断', '后天有教养', '盘外前提', '有制有化尚未定义', '老神婆'):
+  for text in ('tiangan.ding.lamp_symbol', '丁火有烛灯之象。', '第 70 页', '支持范围：', '来源说明：'):
     assert text in result.stdout
-  assert '来源尚未核实' not in result.stdout
-  assert '出生时间：' not in result.stdout
-
-
-def test_default_query_omits_reference_entries(tmp_path: Path) -> None:
-  default = run_cli(tmp_path, 'knowledge', '--object', 'tiangan.ding')
-  assert default.returncode == 0
-  assert '丁为阴火。' in default.stdout and '烛灯' not in default.stdout
-
-
-def test_ding_query_keeps_reference_text(tmp_path: Path) -> None:
-  result = run_cli(tmp_path, 'knowledge', '--object', 'tiangan.ding', '--include-reference-only')
-  assert result.returncode == 0 and result.stderr == ''
-  assert '丁为阴火。' in result.stdout and '丁火有烛灯之象' in result.stdout and '仅供参考' in result.stdout
+  assert '出生时刻：' not in result.stdout and '丁为阴火。' not in result.stdout
   assert list(tmp_path.iterdir()) == []
 
 
-def test_validation_alone_is_read_only(tmp_path: Path) -> None:
-  result = run_cli(tmp_path, 'knowledge', '--validate-knowledge')
-  assert result.returncode == 0 and result.stderr == ''
-  assert result.stdout == '校验通过：326 条目，41 来源见证，10 情境。\n'
-  assert list(tmp_path.iterdir()) == []
-
-
-def test_known_object_can_have_no_entries(tmp_path: Path) -> None:
-  empty = run_cli(tmp_path, 'knowledge', '--object', 'wuxing.tu')
-  assert empty.returncode == 0 and empty.stdout == '无匹配条目。\n'
-
-
-@pytest.mark.parametrize('optimized', [False, True])
-@pytest.mark.parametrize('extra,hint', [
-  ((), True), (('--viewpoint', 'WUXING_JINGJI'), True),
-  (('--topic', '查法口径'), True), (('--source', 'repository_guoyin_variants'), True),
-  (('--applicability', 'unconditional'), True),
-  (('--topic', '定义'), False), (('--source', 'repository_wuxing_relations'), False),
-  (('--context', 'editorial.guansha_coexistence_female'), False),
-  (('--time-scope', '行运'), False),
-  (('--include-reference-only',), False),
-])
-def test_reference_hint_uses_all_filters(
-  tmp_path: Path, optimized: bool, extra: tuple[str, ...], hint: bool,
-) -> None:
-  result = run_cli(tmp_path, 'knowledge', '--object', 'shensha.guoyin', *extra, optimized=optimized)
+def test_open_premises_survive_default_reading(tmp_path: Path) -> None:
+  result = run_cli(tmp_path, 'knowledge', '庚', '--topic', '性格')
   assert result.returncode == 0, result.stderr
-  assert result.stderr == ''
-  message = '有仅供参考的条目，可加 --include-reference-only 查看。'
-  assert (message in result.stdout) is hint
-  if hint:
-    assert result.stdout == '无匹配条目。\n' + message + '\n'
-  elif '--include-reference-only' in extra:
-    assert '条目：shensha.guoyin.modern' in result.stdout
-  else:
-    assert result.stdout == '无匹配条目。\n'
+  for text in ('后天有教养', '盘外前提', '有制有化尚未定义'):
+    assert text in result.stdout
+  ding = run_cli(tmp_path, 'knowledge', '丁')
+  assert ding.returncode == 0 and '丁为阴火。' in ding.stdout and '丁火有烛灯之象。' in ding.stdout
+
+
+def test_validation_and_empty_query(tmp_path: Path) -> None:
+  result = run_cli(tmp_path, 'knowledge', '--validate-knowledge')
+  assert result.returncode == 0 and result.stdout == '校验通过：347 条目，41 来源。\n'
+  empty = run_cli(tmp_path, 'knowledge', 'wuxing.tu')
+  assert empty.returncode == 0 and empty.stdout == '无匹配条目。\n'
   assert list(tmp_path.iterdir()) == []
-
-
-def test_reference_hint_follows_custom_source(tmp_path: Path) -> None:
-  source = tmp_path / 'custom.json'
-  for mutation in ('unchanged', 'visible', 'absent'):
-    data = json.loads(DEFAULT_SOURCE_PATH.read_text(encoding='utf-8'))
-    visible_id = ''
-    if mutation == 'visible':
-      entry = next(entry for entry in data['entries'] if entry['show_by_default'])
-      entry['roles'].append({'name': '测试关联', 'object_id': 'shensha.guoyin'})
-      visible_id = entry['claim_id']
-    elif mutation == 'absent':
-      data['entries'] = [entry for entry in data['entries'] if not entry['claim_id'].startswith('shensha.guoyin.')]
-    source.write_text(json.dumps(data, ensure_ascii=False), encoding='utf-8')
-    result = run_cli(tmp_path, 'knowledge', '--object', 'shensha.guoyin', '--knowledge-source', str(source))
-    assert result.returncode == 0, result.stderr
-    assert ('可加 --include-reference-only 查看' in result.stdout) is (mutation == 'unchanged')
-    if mutation == 'visible':
-      assert f'条目：{visible_id}' in result.stdout
-    elif mutation == 'absent':
-      assert result.stdout == '无匹配条目。\n'
-
-
-def test_query_selects_reference_viewpoint(tmp_path: Path) -> None:
-  variant = run_cli(
-    tmp_path, 'knowledge', '--object', 'shensha.guoyin',
-    '--viewpoint', 'WUXING_JINGJI', '--include-reference-only',
-  )
-  assert variant.returncode == 0 and '#194' in variant.stdout
-  assert 'shensha.guoyin.modern' not in variant.stdout
 
 
 def test_edit_validate_reload_cycle(tmp_path: Path) -> None:
   data = json.loads(DEFAULT_SOURCE_PATH.read_text(encoding='utf-8'))
-  record = next(entry for entry in data['entries'] if entry['claim_id'] == 'tiangan.ding.lamp_symbol')
-  record['limits'] = ['本次编辑的限度。']
+  next(e for e in data['entries'] if e['claim_id'] == 'tiangan.ding.lamp_symbol')['limits'] = ['本次编辑的限度。']
   source = tmp_path / 'source.json'
   source.write_text(json.dumps(data, ensure_ascii=False), encoding='utf-8')
-  query = run_cli(
-    tmp_path, 'knowledge', '--knowledge-source', str(source), '--validate-knowledge',
-    '--object', 'tiangan.ding', '--topic', '历史象', '--include-reference-only',
-  )
-  assert query.returncode == 0, query.stderr
-  assert '校验通过：326 条目，41 来源见证，10 情境。' in query.stdout
-  assert '本次编辑的限度。' in query.stdout
+  result = run_cli(tmp_path, 'knowledge', '丁', '--knowledge-source', str(source), '--validate-knowledge')
+  assert result.returncode == 0, result.stderr
   restored = KnowledgeBase.load(source)
-  assert restored.entry('tiangan.ding.lamp_symbol').limits == ('本次编辑的限度。',)
+  assert result.stdout == '校验通过：347 条目，41 来源。\n' + ''.join(
+    restored.render(entry) + '\n\n' for entry in restored.query('丁')
+  )
+  assert '本次编辑的限度。' in result.stdout
   assert restored.sources == KNOWLEDGE_BASE.sources
-  default = run_cli(tmp_path, 'knowledge', '--object', 'tiangan.ding', '--knowledge-source', str(source))
-  assert default.returncode == 0 and default.stderr == ''
-  assert default.stdout == ''.join(restored.render(entry) + '\n\n' for entry in restored.query(object_id='tiangan.ding'))
-  assert '丁为阴火。' in default.stdout and '仅供参考' not in default.stdout
-  again = run_cli(tmp_path, 'knowledge', '--all', '--knowledge-source', str(source), '--include-reference-only')
-  assert again.returncode == 0 and '本次编辑的限度。' in again.stdout and '第 70 页' in again.stdout
   assert set(tmp_path.iterdir()) == {source}
 
 
-@pytest.mark.parametrize('args,error', [
-  (('--birth-time', '2000-01-01 12:00', '--gender', 'male'), 'unrecognized arguments'),
-  (('--validate-knowledge', '--birth-time', ''), 'unrecognized arguments'),
-  (('--seed', '42'), 'unrecognized arguments'), (('--count', '1'), 'unrecognized arguments'),
-  (('--output-dir', 'output'), '--output-dir only applies with --export-knowledge-base'),
-  (('--knowledge-source', 'source.json'), 'No such file or directory'),
-  (('--object', 'typo'), 'Unknown object_id: typo'), (('--context', 'typo'), 'Unknown context_id: typo'),
-  (('--applicability', 'typo'), 'invalid choice'),
-  (('--validate-knowledge', '--knowledge-source', 'missing.json'), 'No such file or directory'),
-])
-def test_bad_inputs_do_not_create_exports(tmp_path: Path, args: tuple[str, ...], error: str) -> None:
-  result = run_cli(tmp_path, 'knowledge', *args)
-  assert result.returncode == 2
-  assert 'error:' in result.stderr and 'Traceback' not in result.stderr
-  assert_cli_error(result, 'knowledge', error)
-  assert list(tmp_path.iterdir()) == []
+def test_minimal_source_and_ambiguous_name(tmp_path: Path) -> None:
+  source = tmp_path / 'custom.json'
+  objects = [{'object_id': 'custom.ding', 'kind': 'tiangan', 'name': '丁'}]
+  data = {
+    'schema_version': 4,
+    'objects': objects,
+    'sources': [],
+    'entries': [{'claim_id': 'custom', 'objects': ['custom.ding'], 'text': '自定义文字。'}],
+  }
+  source.write_text(json.dumps(data, ensure_ascii=False), encoding='utf-8')
+  result = run_cli(tmp_path, 'knowledge', '丁', '--knowledge-source', str(source))
+  assert result.returncode == 0 and result.stdout == '条目：custom\n自定义文字。\n\n'
+  objects.append({'object_id': 'other.ding', 'kind': 'concept', 'name': '丁'})
+  source.write_text(json.dumps(data, ensure_ascii=False), encoding='utf-8')
+  result = run_cli(tmp_path, 'knowledge', '丁', '--knowledge-source', str(source))
+  assert result.returncode == 2 and 'custom.ding, other.ding' in result.stderr
 
 
-def test_validation_rejects_corrupt_source(tmp_path: Path) -> None:
-  source = tmp_path / 'corrupt.json'
-  source.write_text('{"schema_version":1,"schema_version":1}', encoding='utf-8')
-  result = run_cli(tmp_path, 'knowledge', '--validate-knowledge', '--knowledge-source', str(source))
-  assert result.returncode == 2 and 'Duplicate JSON key' in result.stderr
-  assert not (tmp_path / 'out.json').exists()
+@pytest.mark.parametrize('task', [('knowledge', '--validate-knowledge'), ('chart', '--knowledge'), (*MATCH_ARGS, '--knowledge')])
+def test_bad_source_is_read_only(tmp_path: Path, task: tuple[str, ...]) -> None:
+  source = tmp_path / 'source.json'
+  payload = '{"schema_version":4,"schema_version":4}'
+  source.write_text(payload, encoding='utf-8')
+  result = run_cli(tmp_path, *task, '--knowledge-source', str(source))
+  assert result.returncode == 2 and 'Duplicate JSON key' in result.stderr and not result.stdout
+  assert source.read_text(encoding='utf-8') == payload and set(tmp_path.iterdir()) == {source}
 
 
-@pytest.mark.parametrize('optimized', [False, True])
-@pytest.mark.parametrize('bad', ['surrogate', 'parser_limit', 'nested'])
-def test_cli_text_failures_have_no_traceback(tmp_path: Path, optimized: bool, bad: str) -> None:
-  data = json.loads(DEFAULT_SOURCE_PATH.read_text(encoding='utf-8'))
-  data['entries'][0]['text'] = '\ud800'
-  if bad == 'surrogate':
-    text = json.dumps(data)
-  elif bad == 'parser_limit':
-    text = '{"parser_limit": true}'
-  else:
-    text = '[' * 200 + '0' + ']' * 200
-  source, target = tmp_path / 'source.json', tmp_path / 'out.json'
-  source.write_text(text, encoding='utf-8')
-  args = ('knowledge', '--knowledge-source', str(source), '--validate-knowledge')
-  if bad == 'parser_limit':
-    code = '''
-import json
-import sys
-
-original_loads = json.loads
-def loads(text, *args, **kwargs):
-  if text == '{"parser_limit": true}':
-    raise RecursionError('injected parser limit')
-  return original_loads(text, *args, **kwargs)
-json.loads = loads
-sys.path.insert(0, sys.argv.pop(1))
-from bazi.cli import main
-raise SystemExit(main())
-'''
-    result = subprocess.run(
-      [sys.executable, *(['-O'] if optimized else []), '-B', '-c', code,
-       str(ROOT), *args],
-      cwd=tmp_path, capture_output=True, text=True, encoding='utf-8', timeout=45, check=False,
-    )
-  else:
-    result = run_cli(tmp_path, *args, optimized=optimized)
-  assert result.returncode == 2 and 'Traceback' not in result.stderr
-  if bad != 'nested':
-    assert ('surrogate' if bad == 'surrogate' else 'depth') in result.stderr
-  else:
-    assert 'depth' in result.stderr or 'Expected JSON object' in result.stderr
-  assert not target.exists()
-
-
-@pytest.fixture
-def knowledge_checkout(tmp_path: Path) -> Path:
+def test_missing_bundled_source_is_explicit(tmp_path: Path) -> None:
   shutil.copytree(ROOT / 'bazi', tmp_path / 'bazi', ignore=shutil.ignore_patterns('__pycache__'))
-  return tmp_path
-
-
-def test_validation_reads_corrupt_bundled_source(knowledge_checkout: Path) -> None:
-  corpus = knowledge_checkout / 'bazi/knowledge_data.json'
-  custom = knowledge_checkout / 'custom.json'
+  corpus = tmp_path / 'bazi/knowledge_data.json'
+  custom = tmp_path / 'custom.json'
   custom.write_bytes(corpus.read_bytes())
-  corpus.write_text('{"schema_version":1,"schema_version":1}', encoding='utf-8')
-  invalid = run_cli(knowledge_checkout, 'knowledge', '--validate-knowledge', checkout_root=knowledge_checkout)
-  assert invalid.returncode == 2
-  assert 'Duplicate JSON key' in invalid.stderr and 'Traceback' not in invalid.stderr
-  valid = run_cli(knowledge_checkout, 'knowledge', '--validate-knowledge', '--knowledge-source', str(custom), checkout_root=knowledge_checkout)
-  assert valid.returncode == 0 and '校验通过：' in valid.stdout
   corpus.unlink()
-  independent = run_cli(
-    knowledge_checkout, 'knowledge', '--knowledge-source', str(custom), '--validate-knowledge', checkout_root=knowledge_checkout,
-  )
-  assert independent.returncode == 0, independent.stderr
-  assert KnowledgeBase.load(custom).entries == KNOWLEDGE_BASE.entries
-
-
-@pytest.mark.parametrize('mutation', ['new-source', 'zhushi', 'removed-unused-source'])
-def test_loading_is_independent_of_projection(
-  knowledge_checkout: Path,
-  mutation: str,
-) -> None:
-  corpus = knowledge_checkout / 'bazi/knowledge_data.json'
-  data = json.loads(corpus.read_text(encoding='utf-8'))
-  if mutation == 'new-source':
-    witness = dict(data['sources'][1])
-    witness.update(source_id='independent_probe', lineage='independent_probe')
-    data['sources'].append(witness)
-    next(entry for entry in data['entries'] if entry['claim_id'] == 'tiangan.ding.lamp_symbol')['sources'].append('independent_probe')
-  elif mutation == 'zhushi':
-    data['sources'][1]['text_layer'] = 'zhushi'
-  else:
-    data['sources'] = [source for source in data['sources'] if source['source_id'] != 'yuanhai_ziping_stem_table']
-  corpus.write_text(json.dumps(data, ensure_ascii=False), encoding='utf-8')
-  result = run_cli(knowledge_checkout, 'knowledge', '--validate-knowledge', checkout_root=knowledge_checkout)
+  for task in (('chart', '--seed', '42'), MATCH_ARGS):
+    result = run_cli(tmp_path, *task, checkout_root=tmp_path)
+    assert result.returncode == 0, result.stderr
+  result = run_cli(tmp_path, 'knowledge', '--validate-knowledge', checkout_root=tmp_path)
+  assert result.returncode == 2 and 'No such file' in result.stderr
+  result = run_cli(tmp_path, 'knowledge', '--validate-knowledge', '--knowledge-source', str(custom), checkout_root=tmp_path)
   assert result.returncode == 0 and '校验通过：' in result.stdout
-  imported = subprocess.run(
-    [sys.executable, '-B', '-c', 'from bazi.knowledge import KnowledgeBase; KnowledgeBase.load()'],
-    cwd=knowledge_checkout, capture_output=True, text=True, encoding='utf-8', check=False,
-  )
-  assert imported.returncode == 0, imported.stderr
-  if mutation == 'new-source':
-    queried = run_cli(
-      knowledge_checkout, 'knowledge', '--source', 'independent_probe',
-      '--include-reference-only', checkout_root=knowledge_checkout,
-    )
-    assert queried.returncode == 0, queried.stderr
-    assert '条目：tiangan.ding.lamp_symbol' in queried.stdout
-    assert '来源：independent_probe' in queried.stdout
 
 
 @pytest.mark.parametrize('source_id', tuple(KNOWLEDGE_BASE.sources))
 def test_cli_can_query_every_registered_source(tmp_path: Path, source_id: str) -> None:
-  result = run_cli(tmp_path, 'knowledge', '--source', source_id, '--include-reference-only')
-  assert result.returncode == 0, result.stderr
-  selected = KNOWLEDGE_BASE.query(source_id=source_id, include_reference_only=True)
-  assert result.stdout == ''.join(KNOWLEDGE_BASE.render(entry) + '\n\n' for entry in selected) if selected else result.stdout == '无匹配条目。\n'
+  result = run_cli(tmp_path, 'knowledge', '--source', source_id)
+  selected = KNOWLEDGE_BASE.query(source_id=source_id)
+  expected = ''.join(KNOWLEDGE_BASE.render(entry) + '\n\n' for entry in selected) if selected else '无匹配条目。\n'
+  assert result.returncode == 0 and result.stdout == expected
 
 
-@pytest.mark.parametrize('show_sources', [False, True])
-def test_chart_txt_share_subject_projection(knowledge_checkout: Path, show_sources: bool) -> None:
-  tmp_path = knowledge_checkout
-  data = json.loads(DEFAULT_SOURCE_PATH.read_text(encoding='utf-8'))
-  data['entries'].reverse()
-  corpus = json.dumps(data, ensure_ascii=False)
-  (knowledge_checkout / 'bazi/knowledge_data.json').write_text(corpus, encoding='utf-8')
-  knowledge = KnowledgeBase.load(knowledge_checkout / 'bazi/knowledge_data.json')
-  relation = KNOWLEDGE_BASE.entry('legacy.shishen.SH-052')
-  assert relation in KNOWLEDGE_BASE.query(object_id='shishen.qisha', include_reference_only=True)
-  result = run_cli(
-    tmp_path, 'chart', '--birth-time', '2000-01-03 12:00', '--gender', 'female', '--include-reference-only',
-    *(['--show-sources'] if show_sources else []),
-    '--output-dir', str(tmp_path),
-    checkout_root=knowledge_checkout,
-  )
-  assert result.returncode == 0, result.stderr
-  exported = run_cli(tmp_path, 'knowledge', '--include-reference-only', '--export-knowledge-base',
-                      '--output-dir', str(tmp_path), *(['--show-sources'] if show_sources else []),
-                       checkout_root=knowledge_checkout)
-  assert exported.returncode == 0 and exported.stdout == '' and exported.stderr == ''
-  for subject, kind in (('七杀', 'shishen.qisha'), ('食神', 'shishen.shishen')):
-    text = (tmp_path / 'knowledge_base/shishen' / (subject + '.txt')).read_text(encoding='utf-8')
-    expected = knowledge.render_subject(kind, include_reference_only=True, show_sources=show_sources)
-    assert text == subject + '知识条目：\n' + expected + '\n'
-    assert expected in result.stdout
-    selected = tuple(entry for entry in knowledge.query(object_id=kind, include_reference_only=True)
-                     if entry.legacy is None or entry.legacy.object_id == kind)
-    positions = tuple(text.index(entry.text) for entry in selected)
-    assert positions == tuple(sorted(positions))
-  assert relation.text not in KNOWLEDGE_BASE.render_subject('shishen.qisha', include_reference_only=True)
-  assert relation.text in KNOWLEDGE_BASE.render_subject('shishen.shishen', include_reference_only=True)
+@pytest.mark.parametrize('bundled', [False, True])
+@pytest.mark.parametrize('symlink', [False, True])
+def test_chart_output_protects_editing_source(
+  tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str], bundled: bool, symlink: bool,
+) -> None:
+  source = tmp_path / 'source.json'
+  source.write_bytes(DEFAULT_SOURCE_PATH.read_bytes())
+  before = source.read_bytes()
+  target = tmp_path / 'output.txt' if symlink else source
+  if symlink:
+    try:
+      target.symlink_to(source)
+    except OSError as error:
+      pytest.skip(f'Symlink unavailable: {error}')
+  if bundled:
+    monkeypatch.setattr(cli, 'DEFAULT_SOURCE_PATH', source)
+  args = [] if bundled else ['--knowledge', '--knowledge-source', str(source)]
+  with pytest.raises(SystemExit) as caught:
+    cli.main(['chart', '--output', str(target), *args])
+  assert caught.value.code == 2 and 'must not overwrite' in capsys.readouterr().err
+  assert source.read_bytes() == before

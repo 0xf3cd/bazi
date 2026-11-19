@@ -25,8 +25,25 @@ sys.path.insert(0, str(ROOT / 'docs/_ext'))
 sys.path.insert(0, str(ROOT))
 
 from house_docstrings import HouseDocstring, prepare_markdown, render_attribute_values, source_attribute_docs
-from run_doc_checks import EXAMPLE_GROUPS, Page, check_doctests, check_header_paragraphs
+from run_doc_checks import TASK_EXAMPLES, Page, check_doctests, check_header_paragraphs, source_doctests
+from source_links import missing_reference
 import run_docs
+
+
+@pytest.mark.parametrize('target, plain', [
+  ('bazi.common.K', True),
+  ('bazi.data_types.T', True),
+  ('bazi.utils.relation_discovery.T', True),
+  ('bazi.common.check_declared_types', False),
+  ('bazi.utils.relation_discovery.RelationDiscovery', False),
+  ('bazi.common.missing', False),
+  ('unknown.T', False),
+])
+def test_only_internal_typevars_use_plain_text(target, plain):
+  content = nodes.literal('', target.rsplit('.', 1)[-1])
+  node = addnodes.pending_xref('', reftarget=target)
+  result = missing_reference(Mock(), Mock(), node, content)
+  assert result is (content if plain else None)
 
 
 @pytest.mark.parametrize('mode', ['__main__', 'run_docs'])
@@ -187,55 +204,162 @@ def test_only_api_pages_are_checked():
   assert check_header_paragraphs({'guides/knowledge.html': glued, 'api/example.html': clean}) == 1
 
 
-def doctest_output(singular):
+@pytest.fixture
+def doctest_source(tmp_path):
+  source = tmp_path / 'source'
+  (source / 'guides').mkdir(parents=True)
+  (source / 'readme-example.rst').write_text(
+    '.. testsetup:: readme-first\n\n   x = 1\n\n'
+    '.. testcode:: readme-first\n\n   assert x == 1\n\n'
+    '.. testcleanup:: readme-first\n\n   del x\n',
+    encoding='utf-8',
+  )
+  for name, groups in (
+    ('quickstart', ('quickstart-chart',)), ('relations-transits', ('transits-query',)),
+    ('calendar', ('calendar-lunar-roundtrip',)),
+    ('integration', ('integration-context',)), ('knowledge', ('load', 'edit')),
+  ):
+    (source / 'guides' / (name + '.md')).write_text(
+      ''.join('```{testcode} ' + group + '\nassert True\n```\n\n' for group in groups),
+      encoding='utf-8',
+    )
+  with (source / 'guides/knowledge.md').open('a', encoding='utf-8') as stream:
+    stream.write('```{testsetup} edit\nx = 1\n```\n\n```{testcleanup} edit\ndel x\n```\n')
+  return source
+
+
+def doctest_output(singular=False):
   sections = []
   word = 'test' if singular else 'tests'
-  for document, groups in EXAMPLE_GROUPS.items():
+  groups_by_document = {
+    'readme-example': ('readme-first', 'readme-first (cleanup code)'),
+    'guides/quickstart': ('quickstart-chart',),
+    'guides/calendar': ('calendar-lunar-roundtrip',),
+    'guides/relations-transits': ('transits-query',),
+    'guides/integration': ('integration-context',),
+    'guides/knowledge': ('load', 'edit', 'edit (cleanup code)'),
+  }
+  for document, groups in groups_by_document.items():
     sections.append(f'Document: {document}\n------------------------------\n')
     sections.extend(f'   1 {word} in {group}\n' for group in sorted(groups))
-  count = sum(map(len, EXAMPLE_GROUPS.values()))
-  return ''.join(sections) + f'Doctest summary\n===============\n   {count} tests\n     0 failures in tests\n     0 failures in setup code\n     0 failures in cleanup code\n'
+  return ''.join(sections) + 'Doctest summary\n===============\n   7 tests\n     0 failures in tests\n     0 failures in setup code\n     0 failures in cleanup code\n'
 
 
 @pytest.mark.parametrize('singular', [False, True])
-def test_doctest_count_accepts_both_wordings(tmp_path, singular):
+def test_doctest_count_accepts_both_wordings(tmp_path, doctest_source, singular):
   (tmp_path / 'output.txt').write_text(doctest_output(singular), encoding='utf-8')
-  assert check_doctests(tmp_path) == sum(map(len, EXAMPLE_GROUPS.values()))
+  assert check_doctests(tmp_path, doctest_source) == 7
 
 
 @pytest.mark.parametrize('phase', ['setup', 'cleanup'])
-def test_doctest_phases_are_not_examples(tmp_path, phase):
+def test_doctest_phases_are_not_examples(tmp_path, doctest_source, phase):
+  with (doctest_source / 'guides/quickstart.md').open('a', encoding='utf-8') as stream:
+    stream.write('```{test' + phase + '} quickstart-chart\npass\n```\n')
   output = doctest_output(False).replace(
-    '   1 tests in readme-first\n',
-    f'   1 tests in readme-first\n   1 tests in readme-first ({phase} code)\n',
+    '   1 tests in quickstart-chart\n',
+    f'   1 tests in quickstart-chart\n   1 tests in quickstart-chart ({phase} code)\n',
   )
   (tmp_path / 'output.txt').write_text(output, encoding='utf-8')
-  assert check_doctests(tmp_path) == sum(map(len, EXAMPLE_GROUPS.values()))
+  assert check_doctests(tmp_path, doctest_source) == 7
 
 
 @pytest.mark.parametrize('phase', ['setup', 'cleanup'])
-def test_orphan_doctest_phase_is_rejected(tmp_path, phase):
+def test_orphan_doctest_phase_is_rejected(tmp_path, doctest_source, phase):
   output = doctest_output(False).replace(
     '   1 tests in readme-first\n',
     f'   1 tests in readme-first\n   1 tests in missing-example ({phase} code)\n',
   )
   (tmp_path / 'output.txt').write_text(output, encoding='utf-8')
   with pytest.raises(AssertionError, match='Orphan doctest'):
-    check_doctests(tmp_path)
+    check_doctests(tmp_path, doctest_source)
 
 
 @pytest.mark.parametrize('old,new', [
   ('1 tests in quickstart-chart', '1 tests in omitted-chart'),
-  pytest.param(f'{sum(map(len, EXAMPLE_GROUPS.values()))} tests', '0 tests', id='total-count'),
+  ('7 tests', '0 tests'),
+  ('0 failures in tests', '1 failure in tests'),
   ('0 failures in setup code', '1 failure in setup code'),
   ('0 failures in cleanup code', '1 failure in cleanup code'),
+  ('   1 tests in quickstart-chart\n', ''),
+  ('   1 tests in quickstart-chart\n', '   1 tests in quickstart-chart\n   1 tests in extra\n'),
+  ('   1 tests in quickstart-chart\n', '   1 tests in quickstart-chart\n   1 tests in quickstart-chart (setup code)\n'),
+  ('   1 tests in quickstart-chart\n', '   1 tests in quickstart-chart\n   1 tests in quickstart-chart\n'),
+  ('Document: guides/quickstart\n------------------------------\n', 'Document: guides/quickstart\n---\nDocument: guides/quickstart\n---\n'),
+  ('   1 tests in edit (cleanup code)\n', ''),
 ])
-def test_missing_examples_failed_setup_rejected(tmp_path, old, new):
+def test_missing_examples_failed_setup_rejected(tmp_path, doctest_source, old, new):
   output = doctest_output(False)
   assert old in output
   (tmp_path / 'output.txt').write_text(output.replace(old, new, 1), encoding='utf-8')
   with pytest.raises(AssertionError):
-    check_doctests(tmp_path)
+    check_doctests(tmp_path, doctest_source)
+
+
+@pytest.mark.parametrize('suffix', ['.md', '.rst'])
+def test_optional_examples_follow_source(tmp_path, doctest_source, suffix):
+  extra = doctest_source / ('extra' + suffix)
+  extra.write_text(
+    '```{testcode} extra\nassert True\n```\n' if suffix == '.md' else '.. testcode:: extra\n\n   assert True\n',
+    encoding='utf-8',
+  )
+  output = doctest_output().replace('Doctest summary', 'Document: extra\n---\n   1 tests in extra\nDoctest summary').replace('7 tests', '8 tests')
+  (tmp_path / 'output.txt').write_text(output, encoding='utf-8')
+  assert check_doctests(tmp_path, doctest_source) == 8
+  extra.unlink()
+  (tmp_path / 'output.txt').write_text(doctest_output(), encoding='utf-8')
+  assert check_doctests(tmp_path, doctest_source) == 7
+
+
+@pytest.mark.parametrize('document, group', [
+  (document, group) for document, groups in TASK_EXAMPLES.items() for group in sorted(groups)
+])
+def test_task_removal_cannot_shrink_both_sides(tmp_path, doctest_source, document, group):
+  name, _, phase = group.partition(' (')
+  phase = phase.removesuffix(' code)') or 'code'
+  suffix = '.rst' if document == 'readme-example' else '.md'
+  path = doctest_source / (document + suffix)
+  text = path.read_text(encoding='utf-8')
+  if phase == 'code':
+    kinds = '(?:code|setup|cleanup)'
+  else:
+    kinds = phase
+  pattern = (
+    r'^\.\. test' + kinds + ':: ' + re.escape(name) + r'\n(?:\n|   [^\n]*\n)*'
+    if suffix == '.rst' else r'^```\{test' + kinds + r'\} ' + re.escape(name) + r'\n.*?```\n'
+  )
+  changed = re.sub(pattern, '', text, flags=re.MULTILINE | re.DOTALL)
+  assert changed != text
+  path.write_text(changed, encoding='utf-8')
+  output = doctest_output()
+  output = re.sub(r'^   1 tests in ' + re.escape(name) + (r'(?: \((?:setup|cleanup) code\))?' if phase == 'code' else ' \\(' + phase + r' code\)') + r'\n', '', output, flags=re.MULTILINE)
+  if phase == 'code':
+    output = output.replace('6 tests', '5 tests')
+  (tmp_path / 'output.txt').write_text(output, encoding='utf-8')
+  with pytest.raises(AssertionError, match='Missing task examples'):
+    check_doctests(tmp_path, doctest_source)
+
+
+def test_group_counts_and_shared_setup(doctest_source):
+  (doctest_source / 'extra.md').write_text(
+    '```{testcode}\nassert True\n```\n\n```{testcode}\nassert True\n```\n\n'
+    '```{testcode} first, second\nassert True\n```\n\n```{testsetup} *\nx = 1\n```\n\n'
+    '```text\n.. testcode:: not-a-directive\n```\n',
+    encoding='utf-8',
+  )
+  assert source_doctests(doctest_source)['extra'] == {
+    'default': 2, 'first': 1, 'second': 1,
+    'default (setup code)': 1, 'first (setup code)': 1, 'second (setup code)': 1,
+  }
+
+
+@pytest.mark.parametrize('defect', ['orphan', 'duplicate-document'])
+def test_source_groups_reject_ambiguous_input(doctest_source, defect):
+  if defect == 'orphan':
+    (doctest_source / 'extra.md').write_text('```{testsetup} missing\npass\n```\n', encoding='utf-8')
+  else:
+    (doctest_source / 'readme-example.md').write_text('```{testcode} other\nassert True\n```\n', encoding='utf-8')
+  with pytest.raises(AssertionError, match='Orphan source|Duplicate doctest source'):
+    source_doctests(doctest_source)
 
 
 @pytest.fixture
@@ -265,6 +389,9 @@ def test_build_only_promotes_a_complete_candidate(build_environment, tmp_path, m
       (destination / 'result.txt').write_text(builder, encoding='utf-8')
     else:
       builder = 'check'
+      source = Path(command[-3])
+      assert (source / 'readme-example.rst').is_file()
+      assert (source / 'index.md').is_file()
     if builder == failure:
       raise subprocess.CalledProcessError(1, command)
     return subprocess.CompletedProcess(command, 0)

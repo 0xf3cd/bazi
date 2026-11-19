@@ -15,7 +15,9 @@
 
 - 刑冲破害、合会、神煞、十神等规则承载领域知识。流派有分歧时保留各读法，建模为可选变体，
   不静默合成一个“正确”规则。流派及默认值应可在运行时配置。
-- 已知流派或来源写入 docstring、注释，保留出处。
+- 源码说明保留功能、计算口径和来源入口（条目 ID 或书名篇名）。
+  知识独有的前提、读法、引文与来源限度放进可查的知识条目；
+  搜索过程、开发约束与 PR 定位归研究／开发记录，移动时保留唯一的来源关系。
 - 改规则即改知识，编码前按人工确认要求核定命理依据。
 
 ## 工具链
@@ -29,22 +31,18 @@
   `# noqa: <RULE>`；整类与领域或风格冲突时才在 `ruff.toml` 忽略。只与某一子树冲突的规则，
   可用带理由的 `per-file-ignores`。
 - 安装包为 `bazi`，从定义模块导入，没有根类入口；唯一安装命令为 `bazi`，实现位于 `bazi/cli.py`。
-- 库运行时支持 Python 3.11+；文档构建、文档工具检查及完整开发门禁需要 Python 3.13+。
-  已生成的 HTML 是静态文件，阅读不需要 Python。3.11／3.12 环境不安装 `docs/requirements.txt`，使用
-  `run_tests.py -a -v --runtime-only`：保留全部库检查，排除 `docs/`、`tests/docs/`、
-  `run_docs.py`、`run_doc_checks.py` 的文档工具类型检查和测试／构建。
-  `tests/test_docs_site.py`、`tests/test_docs_workflows.py` 保留。
-- PR 前须在 Python 3.13+ 文档开发环境实跑与 CI 相同的 **`run_tests.py -a -v`**；
-  `--runtime-only` 不能代替该完整门禁。下列内层检查较快，但省略了安装工件与真实安装命令检查，
-  不能替代完整门禁：
+- Python 版本、依赖安装及运行时检查范围见[贡献指南 §准备环境](CONTRIBUTING.md#准备环境)；
+  PR 前执行[完整门禁](CONTRIBUTING.md#完整门禁)。下列内层检查较快，但省略了安装工件与真实安装命令检查：
   - `ruff check .`
   - `python -m mypy . --check-untyped-defs --warn-redundant-casts --warn-unused-ignores --warn-return-any --warn-unreachable`
     （裸 `mypy .` 缺少 `--warn-unreachable`。）
-  - `python -m coverage run --source=bazi --omit='bazi/calendar/hko_data/encoder.py,bazi/calendar/celestial_data/generator.py' -m pytest tests/`
+  - `python -m coverage run --source=bazi -m pytest tests/`
     然后 `python -m coverage report --show-missing --fail-under=100`，覆盖率须为 **100%**。
     没有 fail-under 时即使覆盖率下降也退出 0；CI 通过完整 runner 检查。
     有意不可达的行须有 `# pragma: no cover` 及理由。
-  - `python -O tests/o_smoke.py`，公开输入的立即失败契约须在 `-O` 下保持；脚本拒绝无 `-O` 运行。
+  - `python -O -m pytest tests/ --input-contracts --ignore=tests/docs`，复用普通 pytest 中登记的
+    输入拒绝测试及标为 `optimized` 的代表任务。收集时核对 `INPUT_CONTRACTS` 中每个入口均有
+    `input_contract` 标记关联，未登记或缺失的入口报错；测试 helper 的断言也须在 `-O` 下生效。
 - 裸 `./run_tests.py` 默认用 `-m 'not slow and not hkodata'` 排除测试，神煞套件也在 `slow` 内。
   要验证这些测试须给 `-s -hko` 或完整调用；可用 `pytest tests/ --collect-only -q`
   对比带标记与不带标记的收集结果。
@@ -126,7 +124,8 @@ tests 叙述仍用英文句子夹中文领域实体，不为统一说明语言�
   公开入口显式抛 `TypeError` / `ValueError`：类型或 `callable` 检查失败为 `TypeError`，值、范围、成员
   不支持为 `ValueError`；公开枚举参数的穷尽 `else` 是成员检查，使用 `ValueError`。
   消息沿用 `Expected X, got {type(x)}` / `Unsupported ...: {value}`。
-  立即失败契约须在 `python -O` 下成立，说明见 `hko_data/decoder.py`，门禁见 `tests/o_smoke.py`。
+  立即失败契约须在 `python -O` 下成立；
+  `tests/api_contract.py` 登记输入入口，测试用 `input_contract` 标记关联，`run_tests.py -osmoke` 执行。
 - 清晰时采用函数式写法，如 `map`/`filter`/`starmap`/`product`/`compress`、海象运算符、`functools`。
 - 计算结果用 `property`；昂贵的不可变结果可用 `cached_property`。
 - 保留等号、字典冒号的纵向对齐。

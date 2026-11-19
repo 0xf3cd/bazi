@@ -40,7 +40,7 @@ def test_demo_colors_glyphs_and_day_master(rng: random.Random) -> None:
 def test_main_demo_keeps_the_complete_report(capsys: pytest.CaptureFixture[str]) -> None:
   state = random.getstate()
   chart = BaziChart(Bazi.random(rng=random.Random(236)))
-  assert cli.main(['demo', '--seed', '236']) == 0
+  assert cli.main(['chart', '--seed', '236', '--transits']) == 0
   output = capsys.readouterr()
   assert output.err == ''
   assert output.out == f'random seed: 236\n{cli._get_basic_info(chart)}\n{cli._get_transit_info(chart)}\n'

@@ -47,17 +47,17 @@ def test_knowledge_reads_do_not_resolve_cwd(
   assert list(tmp_path.iterdir()) == []
 
 
-def test_missing_cwd_uses_export_error_exit(
+def test_path_failure_uses_export_error_exit(
   tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str],
 ) -> None:
   monkeypatch.chdir(tmp_path)
-  monkeypatch.setattr(Path, 'cwd', Mock(side_effect=FileNotFoundError('Missing working directory')))
+  monkeypatch.setattr(Path, 'resolve', Mock(side_effect=FileNotFoundError('Missing working directory')))
   with pytest.raises(SystemExit) as caught:
-    cli.main(['knowledge', '--export-knowledge-base'])
+    cli.main(['chart', '--output', 'chart.txt'])
   assert caught.value.code == 2
   captured = capsys.readouterr()
   assert captured.out == ''
-  assert captured.err.endswith('bazi knowledge: error: Missing working directory\n')
+  assert captured.err.endswith('bazi chart: error: Missing working directory\n')
   assert 'Traceback' not in captured.err and list(tmp_path.iterdir()) == []
 
 
@@ -66,10 +66,10 @@ def test_explicit_export_does_not_resolve_cwd(
 ) -> None:
   cwd = Mock(side_effect=FileNotFoundError('Missing working directory'))
   monkeypatch.setattr(Path, 'cwd', cwd)
-  assert cli.main(['knowledge', '--export-knowledge-base', '--output-dir', str(tmp_path)]) == 0
+  assert cli.main(['chart', '--output', str(tmp_path / 'chart.txt')]) == 0
   captured = capsys.readouterr()
-  assert captured.out == captured.err == ''
-  assert len(list(tmp_path.rglob('*.txt'))) == 20
+  assert captured.out and captured.err == ''
+  assert list(tmp_path.glob('*.txt')) == [tmp_path / 'chart.txt']
   cwd.assert_not_called()
 
 
@@ -84,21 +84,20 @@ def _expect_error(capsys: pytest.CaptureFixture[str], args: tuple[str, ...], rea
 
 
 @pytest.mark.parametrize('args,reason', [
-  (('chart', '--count', '0'), '--count must be positive'),
   (('chart', '--birth-time', '2000-01-03 12:00'), '--birth-time and --gender must be supplied together'),
   (('chart', '--gender', 'female'), '--birth-time and --gender must be supplied together'),
-  (('chart', *MATCH_BIRTH, '--seed', '42'), '--seed and multiple charts require random input'),
-  (('chart', *MATCH_BIRTH, '--count', '2'), '--seed and multiple charts require random input'),
+  (('chart', '--show-sources'), '--knowledge-source and --show-sources require --knowledge'),
+  ((*MATCH_ARGS, '--knowledge-source', 'missing.json'), '--knowledge-source and --show-sources require --knowledge'),
+  (('chart', *MATCH_BIRTH, '--seed', '42'), '--seed requires random input'),
   (('chart', '--longitude', '120'), 'Location and precision flags require fixed birth input'),
   (('chart', '--precision', 'minute'), 'Location and precision flags require fixed birth input'),
   (('chart', '--civil-timezone=+08:00'), 'Location and precision flags require fixed birth input'),
   (('chart', '--birth-time', 'invalid', '--gender', 'female'), "Invalid isoformat string: 'invalid'"),
   (('chart', *MATCH_BIRTH, '--longitude', '0', '--precision', 'hour'), 'Longitude requires a timezone-aware birth_time.'),
   (('chart', *MATCH_BIRTH, '--civil-timezone=+08:00'), 'civil_timezone requires longitude.'),
-  (('knowledge', '--object', 'typo'), 'Unknown object_id: typo'),
-  (('knowledge', '--context', 'typo'), 'Unknown context_id: typo'),
+  (('knowledge', '--object', 'typo'), 'Unknown object: typo'),
   (('knowledge', '--object', 'tiangan.ding', '--knowledge-source', 'missing.json'), MISSING_SOURCE),
-  ((*MATCH_ARGS, '--knowledge-source', 'missing.json'), MISSING_SOURCE),
+  ((*MATCH_ARGS, '--knowledge', '--knowledge-source', 'missing.json'), MISSING_SOURCE),
   ((*MATCH_ARGS, '--birth-time', 'invalid'), "Invalid isoformat string: 'invalid'"),
   ((*MATCH_ARGS, '--transit-entry', 'at_year'), 'Context criteria cannot combine transit entry, coordinate or kind inputs'),
   ((*MATCH_ARGS, '--observation-scope', 'natal_and_transits'), 'Unsupported value: natal_and_transits'),
@@ -109,12 +108,12 @@ def _expect_error(capsys: pytest.CaptureFixture[str], args: tuple[str, ...], rea
   ((*REL_NATAL, '--transit-entry', 'at_year', '--ganzhi-year', '2024'), 'Natal scope cannot include transit inputs'),
   (REL_TRANSITS, 'natal_and_transits requires explicit transit kinds'),
   ((*REL_TRANSITS, '--transit-entry', 'at_year', '--transit-kinds', 'liunian'), 'Missing coordinate field for at_year: ganzhi_year'),
-  ((*REL_TRANSITS, '--transit-entry', 'at_year', '--ganzhi-year', '2024', '--gz-month', '辰', '--transit-kinds', 'liunian'),
+  ((*REL_TRANSITS, '--transit-entry', 'at_year', '--ganzhi-year', '2024', '--ganzhi-month', '辰', '--transit-kinds', 'liunian'),
    'Unexpected coordinate field for at_year: ganzhi_month'),
   ((*REL_TRANSITS, '--transit-kinds', 'liunian,liunian'), 'Duplicate transit kinds: liunian,liunian'),
   ((*REL_TRANSITS, '--transit-kinds', 'bogus'), 'Unsupported transit kind: bogus'),
   ((*REL_TRANSITS, '--transit-kinds', 'liunian,'), 'Unsupported transit kind: '),
-  ((*REL_TRANSITS, '--gz-month', 'YOU'), "argument --gz-month: 'YOU' is not a valid Dizhi"),
+  ((*REL_TRANSITS, '--ganzhi-month', 'YOU'), "argument --ganzhi-month: 'YOU' is not a valid Dizhi"),
   ((*REL_TRANSITS, '--solar-date', 'bad'), "argument --solar-date: Invalid isoformat string: 'bad'"),
   ((*REL_TRANSITS, '--solar-date', '20240410'), 'argument --solar-date: Expected canonical ISO date: 20240410'),
   ((*REL_TRANSITS, '--solar-moment', 'bad'), "argument --solar-moment: Invalid isoformat string: 'bad'"),
@@ -181,7 +180,7 @@ def test_corrupt_query_source_is_not_modified(
     '--ganzhi-year', '2024', '--transit-kinds', 'liunian,dayun'),
    TransitObservation((TransitKind.DAYUN, TransitKind.LIUNIAN), YearCoordinate(2024))),
   (XINGCHONG, 'day', ('--observation-scope', 'natal_and_transits', '--transit-entry', 'at_month',
-    '--ganzhi-year', '2024', '--gz-month', '午', '--transit-kinds', 'liuyue,liunian'),
+     '--ganzhi-year', '2024', '--ganzhi-month', '午', '--transit-kinds', 'liuyue,liunian'),
    TransitObservation((TransitKind.LIUNIAN, TransitKind.LIUYUE), MonthCoordinate(2024, Dizhi.午))),
   (XINGCHONG, 'day', ('--observation-scope', 'natal_and_transits', '--transit-entry', 'at_date',
     '--solar-date', '2024-04-10', '--transit-kinds', 'liuri'),
@@ -197,13 +196,17 @@ def test_match_main_preserves_domain_requests(
 ) -> None:
   monkeypatch.chdir(tmp_path)
   chart = BaziChart(Bazi.create('2000-01-03 12:00', 'female', BaziConfig.from_values(precision=precision)))
-  expected = evaluate_context(chart, criterion_id=criterion_id, observation=observation, include_reference_only=reference)
+  expected = evaluate_context(chart, criterion_id=criterion_id, observation=observation)
   argv = ['match', criterion_id, *MATCH_BIRTH, '--precision', precision, *args,
-          *(['--include-reference-only'] if reference else [])]
+          *(['--knowledge'] if reference else [])]
   original = list(argv)
   assert cli.main(argv) == 0 and argv == original
   captured = capsys.readouterr()
-  assert captured.err == '' and captured.out == expected.render() + '\n'
+  text = expected.render()
+  if reference:
+    kb = KnowledgeBase.load()
+    text += ''.join('\n\n' + kb.render(kb.entry(identifier)) for identifier in expected.reference_ids)
+  assert captured.err == '' and captured.out == text + '\n'
   assert list(tmp_path.iterdir()) == []
 
 

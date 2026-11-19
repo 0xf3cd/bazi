@@ -7,7 +7,7 @@ import pytest
 
 from bazi.bazi import Bazi
 from bazi.bazi_chart import BaziChart
-from bazi.calendar import CalendarBackend, CalendarType, calendar_utils_of
+from bazi.calendar import CalendarType, utils
 from bazi.calendar.solar_time import apparent_solar_datetime
 from bazi.defines import Dizhi, Wuxing, WuxingState, 五行状态
 from bazi.school import BaziConfig, BaziPrecision, BaziSchool, TuwangDef
@@ -39,10 +39,9 @@ def _truncate(moment: datetime, precision: BaziPrecision) -> datetime:
   return moment.replace(second=0, microsecond=0)
 
 
-@pytest.mark.parametrize('backend', list(CalendarBackend))
 @pytest.mark.parametrize('definition', list(TuwangDef))
-def test_twelve_months_and_all_five_states(backend: CalendarBackend, definition: TuwangDef) -> None:
-  config = BaziConfig(backend=backend, school=BaziSchool(tuwang_def=definition))
+def test_twelve_months_and_all_five_states(definition: TuwangDef) -> None:
+  config = BaziConfig(school=BaziSchool(tuwang_def=definition))
   for month, dizhi, seasonal in MONTHS:
     chart = BaziChart(Bazi.create(datetime(2026, month, 15, 12), 'male', config))
     assert chart.bazi.month_commander is dizhi
@@ -56,15 +55,12 @@ def test_twelve_months_and_all_five_states(backend: CalendarBackend, definition:
 
 
 @pytest.mark.parametrize('definition', [TuwangDef.AFTER_TWELVE_DAYS, TuwangDef.BEFORE_EIGHTEEN_DAYS])
-@pytest.mark.parametrize('backend,precision', [
-  (backend, precision) for backend in CalendarBackend for precision in BaziPrecision
-  if backend is not CalendarBackend.HKO or precision is BaziPrecision.DAY
-])
+@pytest.mark.parametrize('precision', list(BaziPrecision))
 @pytest.mark.parametrize('month,seasonal', [(1, Wuxing.水), (4, Wuxing.木), (7, Wuxing.火), (10, Wuxing.金)])
 def test_threshold_before_equal_after(
-  definition: TuwangDef, backend: CalendarBackend, precision: BaziPrecision, month: int, seasonal: Wuxing,
+  definition: TuwangDef, precision: BaziPrecision, month: int, seasonal: Wuxing,
 ) -> None:
-  config = BaziConfig(backend=backend, precision=precision, school=BaziSchool(tuwang_def=definition))
+  config = BaziConfig(precision=precision, school=BaziSchool(tuwang_def=definition))
   sample = Bazi.create(datetime(2026, month, 15), 'male', config)
   opening, following = sample.month_jies
   boundary = opening.moment + timedelta(days=12) if definition is TuwangDef.AFTER_TWELVE_DAYS else following.moment - timedelta(days=18)
@@ -128,13 +124,11 @@ def test_enum_defaults_identity_and_immutability() -> None:
     BaziSchool(tuwang_def='whole_month') # type: ignore[arg-type]
 
 
-@pytest.mark.parametrize('backend', list(CalendarBackend))
-def test_supported_window_ends_and_year_rollover(backend: CalendarBackend) -> None:
-  utils = calendar_utils_of(backend)
+def test_supported_window_ends_and_year_rollover() -> None:
   first = utils.to_date(utils.get_min_supported_date(CalendarType.公历))
   last = utils.to_date(utils.get_max_supported_date(CalendarType.公历))
   for definition in TuwangDef:
-    config = BaziConfig(backend=backend, school=BaziSchool(tuwang_def=definition))
+    config = BaziConfig(school=BaziSchool(tuwang_def=definition))
     for birth in (first, last, datetime(2025, 12, 31), datetime(2026, 1, 1)):
       value = datetime.combine(birth, datetime.min.time())
       chart = BaziChart(Bazi.create(value, 'male', config))

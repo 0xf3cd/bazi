@@ -11,7 +11,7 @@ from itertools import combinations, product
 from typing import Final
 from collections.abc import Sequence, Iterable
 
-from ..common import frozendict, check_declared_types
+from ..common import frozendict
 from ..defines import Tiangan, Dizhi, Ganzhi, Wuxing, DizhiRelation
 from ..rules import BaziRules, DizhiRules, DizhiRelationDefinitions, DEFAULT_DIZHI_RELATION_DEFINITIONS
 from .relation_discovery import RelationDiscovery, _ordered_combos, _ordered_relation_pairs
@@ -31,6 +31,8 @@ DizhiRelationCombos = tuple[DizhiCombo, ...]
 class DizhiRelationDiscovery(RelationDiscovery[DizhiRelation, Dizhi]):
   '''以地支关系为键、以满足该关系的地支组合元组为值的冻结映射。
   每个组合是 frozenset[Dizhi]，只保存参与的地支值，不保存柱位。
+
+  继承签名中的 K 为 DizhiRelation，T 为 Dizhi，V 为 tuple[frozenset[Dizhi], ...]。
 
   拱合、拱会的组合只含两个实支。要取得所拱的第三支，分别把这两支传给 gonghe、gonghui。
   干支查询的 gong_def 包含完整成立条件，gonghe 的 definition 只选择拱合的结构范围。
@@ -61,11 +63,6 @@ class GanzhiOccurrence:
   index:  int
   ganzhi: Ganzhi
 
-  def __post_init__(self) -> None:
-    check_declared_types(self)
-    if self.index < 0:
-      raise ValueError(f'Expected a non-negative index, got {self.index}')
-
 
 '''地支满足某关系的具体干支位置组合。'''
 GanzhiRelationCombo = frozenset[GanzhiOccurrence]
@@ -75,7 +72,10 @@ GanzhiRelationCombos = tuple[GanzhiRelationCombo, ...]
 
 class GanzhiRelationDiscovery(frozendict[DizhiRelation, GanzhiRelationCombos]):
   '''地支关系到满足它的具体干支位置组合的冻结映射；具体出现序号按
-  生成该结果的入口所定义的查询序列解释，详见各入口说明。'''
+  生成该结果的入口所定义的查询序列解释，详见各入口说明。
+
+  继承的构造签名中，K 为 DizhiRelation，V 为 GanzhiRelationCombos。
+  '''
 
   def to_dizhi_discovery(self) -> DizhiRelationDiscovery:
     '''把具体出现投影为地支，显式丢弃位置与天干；投影后相同的地支组合会去重。拱局投影保留

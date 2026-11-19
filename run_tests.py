@@ -57,7 +57,7 @@ argparser.add_argument('-m', '-mypy', '--mypy', action='store_true', help='运�
 
 # python -O 公开输入契约冒烟。
 argparser.add_argument('-osmoke', '--o-smoke', action='store_true',
-                       help='用 python -O 运行公开输入契约冒烟脚本 tests/o_smoke.py。')
+                       help='用 python -O 运行 pytest 中登记的公开输入拒绝测试。')
 
 argparser.add_argument('-docs', '--docs', action='store_true', help='在仓外临时目录严格构建文档并执行示例与对账检查。')
 argparser.add_argument('--runtime-only', action='store_true', help='只检查运行时与非文档工具，不收集文档工具测试或构建文档；可用于 Python 3.11／3.12。')
@@ -321,10 +321,6 @@ def run_coverage(test_f: Callable[[], int]) -> int:
 
   cov = coverage.Coverage(
     source=[str(Path(__file__).parent / 'bazi')],
-    omit=[
-      str(Path(__file__).parent / 'bazi/calendar/hko_data/encoder.py'), # 离线生成工具。
-      str(Path(__file__).parent / 'bazi/calendar/celestial_data/generator.py'), # 离线生成工具。
-    ]
   )
   cov.start()
   ret_code: int = test_f()
@@ -383,12 +379,13 @@ def run_mypy() -> int:
 
 
 def run_o_smoke() -> int:
-  '''用 python -O 运行 tests/o_smoke.py 的公开输入契约检查。'''
+  '''用 python -O 运行已登记的输入拒绝测试及标为 optimized 的代表任务。'''
   print('\n' + devider())
   bold_print('>> Running o_smoke (`python -O` contract smoke)...')
 
   ret: int = run_proc_and_print([
-    sys.executable, '-O', str(Path(__file__).parent / 'tests' / 'o_smoke.py')
+    sys.executable, '-O', '-m', 'pytest', str(ROOT / 'tests'),
+    '--input-contracts', '--ignore=' + str(ROOT / 'tests/docs'), '-q',
   ], print_details=True)
 
   if ret == 0:

@@ -21,8 +21,7 @@ __all__ = [
   'analyzer', 'knowledge', 'context_matching', 'transits', 'transit_chart',
 ]
 
-# Bazi / BaziChart 延迟解析历法后端，首次构造 Bazi 才加载历法数据，见 calendar/backend.py。
-# 子模块仍按 PEP 562 延迟导入，减少 import bazi 的成本，也避免离线 HKO encoder 引入命盘层。
+# 子模块按 PEP 562 延迟导入，减少 import bazi 的成本；历法表在首次查询时加载。
 # chart_text 与 cli 不在 __all__：显式导出清单保持不变，仍可按需导入。
 _LAZY_SUBMODULES: Final[frozenset[str]] = frozenset({
   'bazi', 'bazi_chart', 'analyzer', 'knowledge', 'context_matching', 'transits', 'transit_chart', 'chart_text', 'cli',

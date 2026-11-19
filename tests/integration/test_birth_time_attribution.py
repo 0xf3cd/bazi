@@ -8,7 +8,7 @@ import pytest
 
 from bazi.bazi import Bazi
 from bazi.bazi_chart import BaziChart
-from bazi.calendar import CalendarType, JieqiTime, calendar_utils_of
+from bazi.calendar import CalendarType, JieqiTime, utils
 from bazi.calendar.dates import GanzhiYearMonth
 from bazi.defines import Dizhi, Jieqi
 from bazi.school import BaziConfig
@@ -26,10 +26,8 @@ JIE_MONTHS = (
 )
 
 
-@pytest.mark.parametrize('backend', ('celestial', 'celestial-algo2', 'hko'))
 @pytest.mark.parametrize('year', (1902, 1917, 1927, 2000, 2009, 2017, 2099))
-def test_day_ownership_counts_match_scan(backend: str, year: int) -> None:
-  utils = calendar_utils_of(backend)
+def test_day_ownership_counts_match_scan(year: int) -> None:
   candidates = sorted(
     [(utils.jieqi_moment(y, jie), jie, dizhi, month)
      for y in (year - 1, year, year + 1) for jie, dizhi, month in JIE_MONTHS],
@@ -45,9 +43,9 @@ def test_day_ownership_counts_match_scan(backend: str, year: int) -> None:
     for birth in births:
       owning_index = max(i for i, row in enumerate(candidates) if row[0].date() <= birth.date())
       owning, following = candidates[owning_index:owning_index + 2]
-      expected_year = birth.year - (birth.date() < utils.jieqi_date(birth.year, Jieqi.立春))
+      expected_year = birth.year - (birth.date() < utils.jieqi_moment(birth.year, Jieqi.立春).date())
       for gender in ('male', 'female'):
-        chart = BaziChart(Bazi.create(birth, gender, BaziConfig.from_values(backend=backend)))
+        chart = BaziChart(Bazi.create(birth, gender))
         bazi = chart.bazi
         reference = birth.replace(second=0, microsecond=0)
         assert bazi.reference_datetime == reference
@@ -62,12 +60,6 @@ def test_day_ownership_counts_match_scan(backend: str, year: int) -> None:
         expected_start = reference + timedelta(microseconds=round(Fraction(gap_us * 365, 3)))
         assert chart.dayun_order is forward
         assert abs(chart.dayun_start_moment - expected_start) <= timedelta(microseconds=1)
-        _, last_supported = utils.supported_jie_boundaries()
-        if expected_start >= last_supported:
-          assert tuple(chart.dayun) == ()
-          with pytest.raises(ValueError, match='No Dayun starts'):
-            _ = chart.xiaoyun
-          continue
         first = next(chart.dayun)
         start_year = expected_start.year - (expected_start < utils.jieqi_moment(expected_start.year, Jieqi.立春))
         expected_label = max(expected_year, start_year)
@@ -88,26 +80,19 @@ def test_day_ownership_counts_match_scan(backend: str, year: int) -> None:
         assert utils.next_jie(reference) == JieqiTime(candidates[physical_index + 1][1], candidates[physical_index + 1][0])
 
 
-@pytest.mark.parametrize('backend', ('celestial', 'celestial-algo2', 'hko'))
-def test_endpoints_remain_distinct(backend: str) -> None:
-  utils = calendar_utils_of(backend)
+def test_endpoints_remain_distinct() -> None:
   first_date = utils.to_date(utils.get_min_supported_date(CalendarType.SOLAR))
   last_date = utils.to_date(utils.get_max_supported_date(CalendarType.SOLAR))
   for birth_date in (first_date, last_date):
     for gender in ('male', 'female'):
-      chart = BaziChart(Bazi.create(datetime.combine(birth_date, time(12)), gender,
-                                   BaziConfig.from_values(backend=backend)))
+      chart = BaziChart(Bazi.create(datetime.combine(birth_date, time(12)), gender))
       owning, following = chart.bazi.month_jies
       assert owning.moment.date() <= birth_date < following.moment.date()
       dayuns = tuple(chart.dayun)
       first, last = utils.supported_jie_boundaries()
       assert all(first <= item.start_moment < last for item in dayuns)
       assert all(left.end_moment == right.start_moment for left, right in pairwise(dayuns))
-      if dayuns:
-        assert dayuns[-1].end_moment >= last
-      else:
-        with pytest.raises(ValueError, match='No Dayun starts'):
-          _ = chart.xiaoyun
+      assert dayuns[-1].end_moment >= last
       transits = TransitChart(chart)
       assert transits.at_date(birth_date) is not None
       assert transits.at_date(birth_date - timedelta(days=1)) is None
@@ -115,7 +100,7 @@ def test_endpoints_remain_distinct(backend: str) -> None:
       assert transits.at_month(chart.bazi.ganzhi_year, chart.bazi.month_commander) is not None
   for outside in (first_date - timedelta(days=1), last_date + timedelta(days=1)):
     with pytest.raises(ValueError):
-      Bazi.create(datetime.combine(outside, time.min), 'male', BaziConfig.from_values(backend=backend))
+      Bazi.create(datetime.combine(outside, time.min), 'male')
 
 
 @pytest.mark.parametrize('birth,previous_year,previous,current,first_ganzhi', [
@@ -189,6 +174,7 @@ def test_demo_reads_time_facts(
   assert [line for line in text.splitlines() if line.startswith('大运数节依据')] == [counting]
 
 
+@pytest.mark.optimized
 def test_time_facts_are_readonly() -> None:
   bazi = Bazi.create('2000-02-04T07:40:12.123456-05:00', 'male',
                      BaziConfig.from_values(precision='minute'), longitude=0.0)
@@ -203,10 +189,8 @@ def test_time_facts_are_readonly() -> None:
   assert Bazi.create('2000-02-04 10:00', 'male').location_time is None
 
 
-@pytest.mark.parametrize('backend', ('celestial', 'celestial-algo2'))
 @pytest.mark.parametrize('precision', ('hour', 'minute'))
-def test_precise_birth_queries_match_scans(backend: str, precision: str) -> None:
-  utils = calendar_utils_of(backend)
+def test_precise_birth_queries_match_scans(precision: str) -> None:
 
   def truncated(moment: datetime) -> datetime:
     if precision == 'minute':
@@ -228,7 +212,7 @@ def test_precise_birth_queries_match_scans(backend: str, precision: str) -> None
                     moment, moment + timedelta(seconds=1), tie_start + timedelta(hours=2)):
         index = max(i for i, row in enumerate(candidates) if truncated(row[0]) <= truncated(birth))
         owning, following = candidates[index:index + 2]
-        chart = BaziChart(Bazi.create(birth, 'female', BaziConfig.from_values(backend=backend, precision=precision)))
+        chart = BaziChart(Bazi.create(birth, 'female', BaziConfig.from_values(precision=precision)))
         assert chart.bazi.month_commander is owning[2]
         assert chart.bazi.month_jies == (JieqiTime(owning[1], owning[0]), JieqiTime(following[1], following[0]))
         physical_index = max(i for i, row in enumerate(candidates) if row[0] <= chart.bazi.reference_datetime)
@@ -236,16 +220,14 @@ def test_precise_birth_queries_match_scans(backend: str, precision: str) -> None
         assert reading is not None and reading.liuyue is not None
         assert reading.liuyue.dizhi is candidates[physical_index][2]
   precise = TransitChart(BaziChart(Bazi.create('2000-01-01 12:00', 'female',
-                                             BaziConfig.from_values(backend=backend, precision=precision))))
+                                             BaziConfig.from_values(precision=precision))))
   _, last = utils.supported_jie_boundaries()
   assert precise.at_moment(last - timedelta(seconds=1)) is not None
   assert precise.at_moment(last) is None
 
 
-@pytest.mark.parametrize('backend,last_year', [('celestial', 2200), ('celestial-algo2', 2200), ('hko', 2100)])
-def test_month_query_support_endpoint(backend: str, last_year: int) -> None:
-  transits = TransitChart(BaziChart(Bazi.create('1901-02-19 12:00', 'male',
-                                             BaziConfig.from_values(backend=backend))))
-  assert transits.at_month(last_year, Dizhi.亥) is not None
-  assert transits.at_month(last_year, Dizhi.子) is None
-  assert transits.at_month(last_year - 1, Dizhi.丑) is not None
+def test_month_query_support_endpoint() -> None:
+  transits = TransitChart(BaziChart(Bazi.create('1901-02-19 12:00', 'male')))
+  assert transits.at_month(2200, Dizhi.亥) is not None
+  assert transits.at_month(2200, Dizhi.子) is None
+  assert transits.at_month(2199, Dizhi.丑) is not None

@@ -13,7 +13,6 @@ from pathlib import Path
 
 import pytest
 
-from bazi.calendar import CalendarBackend
 from bazi.bazi import Bazi, BaziGender
 from bazi.bazi_chart import BaziChart
 from bazi.rules import DizhiRules, ShenshaRules, DizhiRelationDefinitions, DEFAULT_DIZHI_RELATION_DEFINITIONS
@@ -44,8 +43,8 @@ def test_bazi_precision_basic() -> None:
     'DizhiRelationDefinitions(anhe_def=DizhiRules.AnheDef.NORMAL)',
   ),
   (
-    BaziConfig(backend=CalendarBackend.HKO, school=BaziSchool(day_rollover=DayRollover.ZIZHENG)),
-    'BaziConfig(backend=CalendarBackend.HKO, school=BaziSchool(day_rollover=DayRollover.ZIZHENG))',
+    BaziConfig(school=BaziSchool(day_rollover=DayRollover.ZIZHENG)),
+    'BaziConfig(school=BaziSchool(day_rollover=DayRollover.ZIZHENG))',
   ),
 ])
 def test_configuration_repr(value: BaziConfig | BaziSchool | DizhiRelationDefinitions, expected: str) -> None:
@@ -175,18 +174,26 @@ def test_school_grouped_positional_arguments() -> None:
   )
 
 
+@pytest.mark.input_contract('bazi.school', 'BaziConfig')
 def test_config_type_gates() -> None:
   # The constructor takes the strict types only; coercion lives in `from_values`.
   with pytest.raises(TypeError):
     BaziConfig(precision='day') # type: ignore
-  with pytest.raises(TypeError):
-    BaziConfig(backend='hko') # type: ignore
   with pytest.raises(TypeError):
     BaziConfig(dayun_year_rule='fixed_decade') # type: ignore
   with pytest.raises(TypeError):
     BaziConfig(school=DayRollover.ZIZHENG) # type: ignore # An enum is not a `BaziSchool`.
 
 
+@pytest.mark.input_contract('bazi.school', 'BaziConfig BaziConfig.from_values')
+def test_removed_backend_is_not_accepted() -> None:
+  with pytest.raises(TypeError, match="unexpected keyword argument 'backend'"):
+    BaziConfig(backend='celestial') # type: ignore[call-arg]
+  with pytest.raises(TypeError, match="unexpected keyword argument 'backend'"):
+    BaziConfig.from_values(backend='celestial') # type: ignore[call-arg]
+
+
+@pytest.mark.input_contract('bazi.school', 'BaziConfig')
 def test_every_config_field_has_a_type_gate() -> None:
   # Mechanical binding, the same one `BaziSchool` has: adding a knob without a gate fails here.
   # 机械绑定，与 `BaziSchool` 同款：加字段不加闸会在这里响。
@@ -195,6 +202,7 @@ def test_every_config_field_has_a_type_gate() -> None:
       BaziConfig(**{f.name: object()}) # type: ignore
 
 
+@pytest.mark.input_contract('bazi.school', 'BaziSchool')
 def test_every_school_field_has_a_type_gate() -> None:
   # Mechanical binding: every `BaziSchool` field must reject a wrong type at construction --
   # adding a knob without a gate fails here, no per-field test needed (issue #69).
@@ -218,6 +226,7 @@ def test_anchor_choices_bind_each_field() -> None:
     assert all(isinstance(a, Anchor) for a in allowed), name
 
 
+@pytest.mark.input_contract('bazi.school', 'BaziSchool')
 def test_anchor_choices_are_only_accepted() -> None:
   # Both directions: a supported value constructs, one outside the table raises. Without
   # the second half a table that allowed everything would still pass.
@@ -325,20 +334,6 @@ def test_from_values_precision_aliases(spelling: str, expected: BaziPrecision) -
   assert BaziConfig.from_values(precision=spelling).precision is expected
 
 
-# Both the member name and the value resolve, case insensitively (same face as
-# `CalendarBackend.from_str`, which does the actual parsing).
-@pytest.mark.parametrize('spelling, expected', [
-  ('hko', CalendarBackend.HKO), ('HKO', CalendarBackend.HKO), ('Hko', CalendarBackend.HKO),
-  ('celestial', CalendarBackend.CELESTIAL), ('CELESTIAL', CalendarBackend.CELESTIAL),
-  ('Celestial', CalendarBackend.CELESTIAL),
-  ('celestial-algo2', CalendarBackend.CELESTIAL_ALGO2),
-  ('CELESTIAL_ALGO2', CalendarBackend.CELESTIAL_ALGO2),
-  ('celestial_algo2', CalendarBackend.CELESTIAL_ALGO2),
-])
-def test_from_values_backend_spellings(spelling: str, expected: CalendarBackend) -> None:
-  assert BaziConfig.from_values(backend=spelling).backend is expected
-
-
 @pytest.mark.parametrize('spelling, expected', [
   ('jie_projected', DayunYearRule.JIE_PROJECTED),
   ('JIE_PROJECTED', DayunYearRule.JIE_PROJECTED),
@@ -355,27 +350,23 @@ def test_from_values_dayun_year_rule_spellings(spelling: str, expected: DayunYea
 def test_from_values_enum_passthrough() -> None:
   config: BaziConfig = BaziConfig.from_values(
     precision=BaziPrecision.HOUR,
-    backend=CalendarBackend.HKO,
     dayun_year_rule=DayunYearRule.FIXED_DECADE,
   )
   assert config.precision is BaziPrecision.HOUR
-  assert config.backend is CalendarBackend.HKO
   assert config.dayun_year_rule is DayunYearRule.FIXED_DECADE
 
 
+@pytest.mark.input_contract('bazi.school', 'BaziConfig.from_values')
 @pytest.mark.parametrize('bad', ['sec', '秒', 'hr', 'days', ''])
 def test_from_values_rejects_bad_precision(bad: str) -> None:
   with pytest.raises(ValueError):
     BaziConfig.from_values(precision=bad)
 
 
+@pytest.mark.input_contract('bazi.school', 'BaziConfig.from_values DayunYearRule.from_str')
 def test_from_values_rejection_face() -> None:
-  with pytest.raises(ValueError):
-    BaziConfig.from_values(backend='lunar')
   with pytest.raises(TypeError):
     BaziConfig.from_values(precision=1984) # type: ignore
-  with pytest.raises(TypeError):
-    BaziConfig.from_values(backend=42) # type: ignore
   with pytest.raises(ValueError):
     BaziConfig.from_values(dayun_year_rule='rolling_decade')
   with pytest.raises(TypeError):
@@ -391,7 +382,6 @@ def test_from_values_school_passthrough() -> None:
   config: BaziConfig = BaziConfig.from_values(school=school)
   assert config.school is school
   assert config.precision is BaziPrecision.DAY # Untouched knobs keep their defaults.
-  assert config.backend is CalendarBackend.CELESTIAL
   assert config.dayun_year_rule is DayunYearRule.JIE_PROJECTED
 
 
@@ -483,10 +473,8 @@ def test_bazi_default_config_is_shared(rng: random.Random) -> None:
 @pytest.mark.parametrize('config', [
   BaziConfig(precision=BaziPrecision.HOUR),
   BaziConfig(precision=BaziPrecision.MINUTE),
-  BaziConfig(backend=CalendarBackend.HKO),
-  BaziConfig(backend=CalendarBackend.CELESTIAL_ALGO2),
 ])
-def test_identity_includes_precision_and_backend(config: BaziConfig) -> None:
+def test_identity_includes_precision(config: BaziConfig) -> None:
   dt: datetime = datetime(1984, 4, 2, 4, 2)
   default_bazi = Bazi.create(dt, BaziGender.男)
   variant_bazi = Bazi.create(dt, BaziGender.男, config)

@@ -83,6 +83,7 @@ def test_transit_set() -> None:
   assert selected.ganzhis == (dayun, liuri)
 
 
+@pytest.mark.input_contract('bazi.transits', 'TransitSet TransitSet.select')
 def test_transit_set_negative() -> None:
   with pytest.raises(ValueError, match='^A TransitSet cannot be empty$'):
     TransitSet()
@@ -226,11 +227,11 @@ def test_dayun_database_tail_uses_label_years() -> None:
   assert datetime(2205, 8, 1) < last.end_moment
 
 
+@pytest.mark.usefixtures('short_jie_window')
 def test_empty_dayun_database() -> None:
   chart = BaziChart(Bazi.create(
     '2099-12-20 12:00',
     'male',
-    BaziConfig.from_values(backend='hko'),
   ))
   db = _DayunDatabase(chart)
 
@@ -238,11 +239,11 @@ def test_empty_dayun_database() -> None:
     db[2100]
 
 
+@pytest.mark.usefixtures('short_jie_window')
 def test_empty_transit_database() -> None:
   chart = BaziChart(Bazi.create(
     '2099-12-20 12:00',
     'male',
-    BaziConfig.from_values(backend='hko'),
   ))
   db = _TransitDatabase(chart)
 

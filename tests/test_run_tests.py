@@ -76,21 +76,17 @@ def test_coverage_result(
   options = run_coverage.__globals__['coverage'].Coverage.call_args.kwargs
   package = Path(__file__).parents[1] / 'bazi'
   assert options['source'] == [str(package)]
-  assert options['omit'] == [
-    str(package / 'calendar/hko_data/encoder.py'),
-    str(package / 'calendar/celestial_data/generator.py'),
-  ]
+  assert not options.get('omit')
 
 
 @pytest.mark.parametrize('complete', [False, True])
 def test_coverage_enumerates_unimported_modules(tmp_path: Path, complete: bool) -> None:
   shutil.copyfile(Path(__file__).parents[1] / 'run_tests.py', tmp_path / 'run_tests.py')
   package = tmp_path / 'bazi'
-  for directory in (package, package / 'nested', package / 'calendar/hko_data', package / 'calendar/celestial_data'):
+  for directory in (package, package / 'nested'):
     directory.mkdir(parents=True, exist_ok=True)
     (directory / '__init__.py').write_text('', encoding='utf-8')
-  for relative in ('executed.py', 'unimported.py', 'nested/unimported_runtime.py',
-                   'nested/__init__.py', 'calendar/hko_data/encoder.py', 'calendar/celestial_data/generator.py'):
+  for relative in ('executed.py', 'unimported.py', 'nested/unimported_runtime.py', 'nested/__init__.py'):
     (package / relative).write_text('VALUE = 1\n', encoding='utf-8')
   script = '''
 import importlib
@@ -123,8 +119,7 @@ sys.exit(runner['run_coverage'](execute))
   assert result.returncode == (0 if complete else 0x42), result.stdout + result.stderr
   for module in ('executed.py', 'unimported.py', 'unimported_runtime.py', '__init__.py'):
     assert module in result.stdout
-  for omitted in ('encoder.py', 'generator.py', 'run_tests.py'):
-    assert omitted not in result.stdout
+  assert 'run_tests.py' not in result.stdout
   assert ('100%' in result.stdout.split('TOTAL')[1]) is complete
 
 
@@ -232,9 +227,8 @@ def test_environment_export_requires_package(monkeypatch: pytest.MonkeyPatch, tm
   assert caught.value.code == 2
 
 
-@pytest.mark.parametrize('flag', ['-d', '--demo', '-i', '--interpreter'])
-def test_removed_script_flags_are_rejected(monkeypatch: pytest.MonkeyPatch, flag: str) -> None:
-  monkeypatch.setattr(sys, 'argv', ['run_tests.py', flag])
+def test_d_does_not_abbreviate_docs(monkeypatch: pytest.MonkeyPatch) -> None:
+  monkeypatch.setattr(sys, 'argv', ['run_tests.py', '-d'])
   with pytest.raises(SystemExit) as caught:
     runpy.run_path(str(Path(__file__).parents[1] / 'run_tests.py'))
   assert caught.value.code == 2
@@ -245,7 +239,6 @@ def test_doc_flags_keep_their_current_meaning(monkeypatch: pytest.MonkeyPatch, f
   monkeypatch.setattr(sys, 'argv', ['run_tests.py', '-nt', flag])
   runner = runpy.run_path(str(Path(__file__).parents[1] / 'run_tests.py'))
   assert runner['do_docs'] and runner['skip_test']
-  assert 'do_demo' not in runner
 
 
 def test_full_runner_registers_current_tasks(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -259,8 +252,20 @@ def test_full_runner_registers_current_tasks(monkeypatch: pytest.MonkeyPatch) ->
   statuses = subtasks()
   assert list(statuses) == ['coverage with tests', 'o_smoke', 'ruff', 'mypy', 'docs', 'package']
   coverage.assert_called_once_with(runner['run_tests'])
-  assert not {'do_demo', 'do_interpreter', 'DEMO_SCRIPTS', 'run_demo', 'run_interpreter'} & runner.keys()
-  assert not {'-d', '--demo', '-i', '--interpreter'} & runner['argparser']._option_string_actions.keys()
+
+
+def test_optimized_runner_selects_input_tests(monkeypatch: pytest.MonkeyPatch) -> None:
+  monkeypatch.setattr(sys, 'argv', ['run_tests.py', '-nt', '-osmoke'])
+  runner = runpy.run_path(str(Path(__file__).parents[1] / 'run_tests.py'))
+  function = runner['run_o_smoke']
+  proc = Mock(return_value=7)
+  monkeypatch.setitem(function.__globals__, 'run_proc_and_print', proc)
+  assert function() == 7
+  root = Path(__file__).parents[1]
+  proc.assert_called_once_with([
+    sys.executable, '-O', '-m', 'pytest', str(root / 'tests'),
+    '--input-contracts', '--ignore=' + str(root / 'tests/docs'), '-q',
+  ], print_details=True)
 
 
 def test_pytest_args_keep_replay_details(monkeypatch: pytest.MonkeyPatch) -> None:

@@ -55,7 +55,6 @@ def _chart(case: dict[str, Any], profile: str) -> BaziChart:
     case['gender'],
     BaziConfig.from_values(
       precision=values['precision'],
-      backend=values['backend'],
       school=BaziSchool(day_rollover=DayRollover[values['school']['day_rollover']], kongwang_anchor=Anchor.DAY),
       dayun_year_rule=values['dayun_year_rule'],
     ),

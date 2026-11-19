@@ -10,10 +10,10 @@ import pytest
 
 from bazi.bazi import Bazi
 from bazi.bazi_chart import BaziChart
-from bazi.defines import Zhu, Tiangan, Dizhi, Ganzhi
+from bazi.defines import Zhu, Dizhi, Ganzhi
 from bazi.school import Anchor, BaziConfig, BaziSchool
 from bazi.transits import TransitKind, TransitSet
-from bazi.analyzer.relationship import KongwangHit, KongwangResult, RelationshipAnalyzer
+from bazi.analyzer.relationship import KongwangResult, RelationshipAnalyzer
 
 
 def _analyzer(birth: str, anchor: Anchor) -> RelationshipAnalyzer:
@@ -138,32 +138,7 @@ def test_detail_results_are_frozen_values() -> None:
     _analyzer('1984-03-29 12:00', Anchor.DAY).transits.kongwang(object()) # type: ignore[arg-type]
 
 
-@pytest.mark.parametrize('changes, error', [
-  ({'ganzhi': '甲戌'}, TypeError), ({'ganzhi': Ganzhi('甲', Dizhi.戌)}, TypeError), # type: ignore[arg-type]
-  ({'ganzhi': Ganzhi(Tiangan.甲, '戌')}, TypeError), # type: ignore[arg-type]
-  ({'position': 1}, TypeError), ({'position': 'dayun'}, TypeError),
-  ({'position': 'unknown'}, TypeError), ({'position': None}, TypeError),
-])
-def test_hit_coordinates_are_validated(changes: dict[str, object], error: type[Exception]) -> None:
-  hit = KongwangHit(Zhu.月, Ganzhi.from_str('甲戌'))
-  with pytest.raises(error):
-    replace(hit, **changes) # type: ignore[arg-type] # Deliberately invalid public constructor fields.
-
-
-@pytest.mark.parametrize('changes, error', [
-  ({'anchor': 1}, TypeError), ({'anchor': Zhu.月}, ValueError),
-  ({'ganzhi': '甲子'}, TypeError), ({'ganzhi': Ganzhi.from_str('甲丑')}, ValueError),
-  ({'hits': []}, TypeError), ({'hits': (object(),)}, TypeError),
-  ({'hits': (KongwangHit(Zhu.时, Ganzhi.from_str('甲子')),)}, ValueError),
-  ({'hits': (KongwangHit(Zhu.日, Ganzhi.from_str('甲戌')),)}, ValueError),
-])
-def test_result_anchor_and_hits_are_validated(changes: dict[str, object], error: type[Exception]) -> None:
-  result = KongwangResult(Zhu.日, Ganzhi.from_str('甲子'), ())
-  with pytest.raises(error):
-    replace(result, **changes) # type: ignore[arg-type] # Deliberately invalid public constructor fields.
-
-
-def test_anchor_alias_subset_is_checked() -> None:
+def test_anchor_aliases_preserve_values() -> None:
   anchor = Ganzhi.from_str('甲子')
   results = (
     KongwangResult(Zhu.年, anchor, ()), KongwangResult(Zhu.NIAN, anchor, ()),
@@ -171,11 +146,3 @@ def test_anchor_alias_subset_is_checked() -> None:
   )
   assert tuple(result.anchor for result in results) == (Zhu.年, Zhu.年, Zhu.日, Zhu.日)
   assert tuple(anchor_label(result) for result in results) == ('年', '年', '日', '日')
-  with pytest.raises(ValueError):
-    KongwangResult(Zhu.月, anchor, ()) # type: ignore[arg-type] # 月／时不在年日锚点静态子集中。
-  with pytest.raises(ValueError):
-    KongwangResult(Zhu.YUE, anchor, ()) # type: ignore[arg-type] # 拼音别名也须被静态与运行时同时拒绝。
-  with pytest.raises(ValueError):
-    KongwangResult(Zhu.时, anchor, ()) # type: ignore[arg-type] # 月／时不在年日锚点静态子集中。
-  with pytest.raises(ValueError):
-    KongwangResult(Zhu.SHI, anchor, ()) # type: ignore[arg-type] # 拼音别名也须被静态与运行时同时拒绝。

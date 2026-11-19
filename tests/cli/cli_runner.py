@@ -17,7 +17,7 @@ from bazi.knowledge import DEFAULT_SOURCE_PATH, KnowledgeBase
 KNOWLEDGE_BASE = KnowledgeBase.load()
 
 ROOT = Path(__file__).resolve().parents[2]
-COMMANDS = ('demo', 'relationship', 'chart', 'knowledge', 'match')
+COMMANDS = ('chart', 'knowledge', 'match')
 # Source-checkout tests only; package checks exercise the installed launcher.
 SOURCE_MAIN = 'import sys; sys.path.insert(0, sys.argv.pop(1)); from bazi.cli import main; raise SystemExit(main())'
 GUANSHA = 'editorial.guansha_coexistence.v1'
@@ -32,7 +32,7 @@ def assert_cli_error(result: subprocess.CompletedProcess[str], task: str, error:
   usage = '[-h] <任务>' if error == 'unrecognized arguments' else task
   assert result.returncode == 2 and f'usage: bazi {usage}' in result.stderr
   assert error in result.stderr.split(': error:', 1)[1]
-  assert 'v2.3.0' not in result.stderr and 'Traceback' not in result.stderr
+  assert 'Traceback' not in result.stderr
 
 
 def run_cli(

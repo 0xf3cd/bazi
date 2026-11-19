@@ -9,7 +9,7 @@ import pytest
 
 from bazi.bazi import Bazi, BaziGender
 from bazi.bazi_chart import BaziChart
-from bazi.calendar import CalendarDate, CalendarType
+from bazi.calendar import CalendarDate, CalendarType, utils
 from bazi.context_matching import NatalObservation, evaluate_context
 from bazi.school import BaziConfig, BaziPrecision, BaziSchool, DayRollover
 from bazi import cli
@@ -79,6 +79,7 @@ def test_civil_basis_identity_meridian_aliases() -> None:
 
 @pytest.mark.parametrize('coordinate', ['reference', 'display'])
 @pytest.mark.parametrize('precision', [BaziPrecision.HOUR, BaziPrecision.MINUTE])
+@pytest.mark.optimized
 def test_legacy_location_identity_partition(coordinate: str, precision: BaziPrecision) -> None:
   config = BaziConfig(precision=precision)
   location = Bazi.create('2000-01-01T12:34:00+00:00', 'female', config, longitude=0.0)
@@ -102,14 +103,14 @@ def test_apparent_birth_at_lower_boundary() -> None:
   source_apparent = datetime(1901, 2, 19, 0, 3, 44, 914798)
   assert abs((first._clock_datetime - source_apparent).total_seconds()) < 0.16
   assert first.solar_date == date(1901, 2, 19)
-  assert first._utils.to_lunar(first.solar_date) == CalendarDate(1901, 1, 1, CalendarType.LUNAR)
+  assert utils.to_lunar(first.solar_date) == CalendarDate(1901, 1, 1, CalendarType.LUNAR)
 
 
 def test_apparent_birth_at_upper_boundary() -> None:
   config = BaziConfig(precision=BaziPrecision.MINUTE)
   last = Bazi.create('2100-01-01T12:00:00+00:00', 'male', config, longitude=-180.0)
   assert last.solar_date == date(2099, 12, 31)
-  assert last._utils.to_date(last._utils.to_lunar(last.solar_date)) == date(2099, 12, 31)
+  assert utils.to_date(utils.to_lunar(last.solar_date)) == date(2099, 12, 31)
   assert str(last.month_jies[1].jieqi) == '小寒'
 
 
@@ -124,6 +125,7 @@ def test_apparent_birth_rejects_outside_window() -> None:
       Bazi.create(civil, 'male', config, longitude=longitude)
 
 
+@pytest.mark.input_contract('bazi.bazi', 'Bazi Bazi.create')
 @pytest.mark.parametrize('year', [1850, 2200])
 def test_out_of_table_reports_birth_window(year: int) -> None:
   with pytest.raises(ValueError, match=r'apparent-solar birth date.*1901-02-19.*2099-12-31'):
@@ -131,6 +133,7 @@ def test_out_of_table_reports_birth_window(year: int) -> None:
                 BaziConfig(precision=BaziPrecision.MINUTE), longitude=0.0)
 
 
+@pytest.mark.input_contract('bazi.bazi', 'Bazi Bazi.create')
 @pytest.mark.parametrize('direct', [False, True])
 @pytest.mark.parametrize('birth,basis', [
   pytest.param(datetime.min.replace(tzinfo=timezone(timedelta(hours=14))), None, id='utc-underflow'),
@@ -174,12 +177,13 @@ def test_next_jie_freezes_basis_across_dst(monkeypatch: pytest.MonkeyPatch) -> N
   assert str(birth.month_pillar) == '丁卯'
 
 
+@pytest.mark.input_contract('bazi.bazi', 'Bazi Bazi.create')
 @pytest.mark.parametrize('direct', [False, True])
 def test_civil_timezone_invalid_inputs(direct: bool) -> None:
   create: Any = Bazi if direct else Bazi.create
   gender = BaziGender.男 if direct else 'male'
   config = BaziConfig(precision=BaziPrecision.MINUTE)
-  with pytest.raises(TypeError, match='tzinfo'):
+  with pytest.raises(TypeError, match='^Expected tzinfo, got'):
     create(datetime(2000, 1, 1, tzinfo=UTC), gender, config, longitude=0.0, civil_timezone='+08:00')
   with pytest.raises(ValueError, match='requires longitude'):
     create(datetime(2000, 1, 1), gender, config, civil_timezone=UTC)
@@ -211,6 +215,7 @@ def test_demo_separates_physical_jie_clocks() -> None:
     assert label in cli._get_basic_info(chart)
 
 
+@pytest.mark.optimized
 def test_context_keeps_exact_location_input() -> None:
   chart = BaziChart(Bazi.create('2024-01-01T12:00:00+14:00', 'female',
                                BaziConfig(precision=BaziPrecision.HOUR), longitude=-157.4))

@@ -3,9 +3,12 @@
 import ast
 import json
 from collections import Counter
+from importlib.util import resolve_name
 from pathlib import Path
 
 import pytest
+
+from api_contract import INTERNAL_MODULES, INTERNAL_NAMES
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -16,19 +19,25 @@ def _dependencies(root: Path) -> tuple[Counter[str], Counter[str]]:
   members: Counter[str] = Counter()
   for path in (root / 'bazi').rglob('*.py'):
     name = path.relative_to(root).as_posix()
+    package = '.'.join(path.relative_to(root).parent.parts)
     for node in ast.walk(ast.parse(path.read_text(encoding='utf-8'))):
       if isinstance(node, ast.ImportFrom) and (
         node.level or node.module == 'bazi' or (node.module or '').startswith('bazi.')
       ):
+        module = resolve_name('.' * node.level + (node.module or ''), package)
         for alias in node.names:
           if (
             (alias.name.startswith('_') and not alias.name.startswith('__'))
             or any(part.startswith('_') for part in (node.module or '').split('.'))
+            or module in INTERNAL_MODULES
+            or alias.name in INTERNAL_NAMES.get(module, '').split()
           ):
             imports[f'{name}|{"." * node.level}{node.module or ""}|{alias.name}'] += 1
       if isinstance(node, ast.Import):
         for alias in node.names:
-          if alias.name.startswith('bazi.') and any(part.startswith('_') for part in alias.name.split('.')):
+          if alias.name.startswith('bazi.') and (
+            any(part.startswith('_') for part in alias.name.split('.')) or alias.name in INTERNAL_MODULES
+          ):
             imports[f'{name}|{alias.name}|<module>'] += 1
       if (
         isinstance(node, ast.Attribute) and node.attr.startswith('_') and not node.attr.startswith('__')
@@ -61,6 +70,8 @@ def test_candidate_scan_sees_imports_and_nesting(tmp_path: Path) -> None:
     'from bazi.owner import _shared\n'
     'from bazi._internals import shared\n'
     'import bazi._internals as internal\n'
+    'from .common import check_declared_types\n'
+    'import bazi.defines.enum_base\n'
     'from .owner import Public\n'
     'def use(self, cls, other):\n'
     '  self._own\n'
@@ -76,6 +87,8 @@ def test_candidate_scan_sees_imports_and_nesting(tmp_path: Path) -> None:
       'bazi/sample.py|bazi.owner|_shared': 1,
       'bazi/sample.py|bazi._internals|shared': 1,
       'bazi/sample.py|bazi._internals|<module>': 1,
+      'bazi/sample.py|.common|check_declared_types': 1,
+      'bazi/sample.py|bazi.defines.enum_base|<module>': 1,
     }),
     Counter({'bazi/sample.py|other._shared': 1, 'bazi/sample.py|self._database._shared': 1}),
   )

@@ -33,14 +33,14 @@ BARE_HEADER = re.compile(r'(?:' + '|'.join(HEADER_WORDS) + ')[:：]')
 DOCTEST_PHASES = ('setup', 'cleanup')
 
 
-EXAMPLE_GROUPS = {
-  'readme-example': {'readme-first'},
-  'guides/quickstart': {'quickstart-chart', 'quickstart-text', 'quickstart-save'},
-  'guides/configuration': {'config-create', 'config-precision', 'config-overseas', 'config-backend', 'config-rollover', 'config-school-preset', 'config-dayun-rule', 'config-location', 'config-replace', 'kongwang-configuration', 'config-tuwang'},
-  'guides/relations-transits': {'transits-query', 'relations-day-master', 'relations-house', 'transits-generators', 'transits-text', 'kongwang-details', 'relations-shensha-labels', 'relations-all-positions', 'relations-tonggen-tougan'},
-  'guides/integration': {'integration-fields', 'integration-pillars', 'integration-context', 'integration-transits', 'integration-text-style', 'integration-auxiliary', 'integration-enum-fields'},
-  'guides/knowledge': {'load', 'search', 'sources', 'render', 'edit', 'criteria', 'auxiliary-knowledge', 'shensha-knowledge'},
-  'guides/rule-coverage': {'guoyin-lookup'},
+'''README 首例与各项任务保留代表例；写文件的代表例还须保留隔离目录的准备与清理。'''
+TASK_EXAMPLES = {
+  'readme-example': {'readme-first', 'readme-first (setup code)', 'readme-first (cleanup code)'},
+  'guides/quickstart': {'quickstart-chart'},
+  'guides/calendar': {'calendar-lunar-roundtrip'},
+  'guides/relations-transits': {'transits-query'},
+  'guides/integration': {'integration-context'},
+  'guides/knowledge': {'load', 'edit', 'edit (setup code)', 'edit (cleanup code)'},
 }
 
 SOURCELESS_ALIAS_DESCRIPTIONS = {
@@ -305,7 +305,7 @@ def check_configuration_signatures(site: Path) -> None:
         member = qualified + '.' + name
         assert '= ' + type(value).__qualname__ + '.' + value.name in signatures.texts[member], ('Field default', member)
   assert signature_defaults(signatures.result['bazi.school.BaziConfig.from_values']) == {
-    'precision': 'BaziPrecision.DAY', 'backend': 'CalendarBackend.CELESTIAL',
+    'precision': 'BaziPrecision.DAY',
     'school': 'DEFAULT_SCHOOL', 'dayun_year_rule': 'DayunYearRule.JIE_PROJECTED',
   }
   for rule_class in (BaziRules, TianganRules, DizhiRules, ShenshaRules):
@@ -353,12 +353,10 @@ def contract_class(qualified: str) -> type[typing.Any]:
 
 
 def runtime_members(cls: str) -> set[str]:
-  '''沿实际 __mro__／TypedDict 合并注解求继承期望，不复用生成器的名字解析。'''
+  '''沿实际 __mro__ 求继承期望，不复用生成器的名字解析。'''
   declared = DECLARED_MEMBERS | PRIVATE_BASE_MEMBERS
   names = set(declared.get(cls, '').split())
   value = contract_class(cls)
-  if typing.is_typeddict(value):
-    return names | set(value.__annotations__)
   for base in value.__mro__[1:]:
     names |= set(declared.get(base.__module__ + '.' + base.__qualname__, '').split())
   return names
@@ -399,13 +397,17 @@ def check_related(page: Page, identifier: str, entries: tuple[KnowledgeEntry, ..
 def check_entry_references(page: Page, identifier: str, entry: KnowledgeEntry, kb: KnowledgeBase) -> None:
   '''检查必需链接，而不是仅检查页面上已经存在的链接是否可达。'''
   expected = []
-  for object_id in dict.fromkeys(role.object_id for role in entry.roles):
+  for object_id in entry.objects:
     expected.append(('objects.html#catalog-objects-' + object_id, kb.objects[object_id].name + ' [' + object_id + ']'))
-  for context_id in entry.contexts:
-    expected.append(('contexts.html#catalog-contexts-' + context_id, kb.contexts[context_id].label + ' [' + context_id + ']'))
   for source_id in entry.sources:
     source = kb.sources[source_id]
     expected.append(('sources.html#catalog-sources-' + source_id, source.work + ' · ' + source.locator + ' [' + source_id + ']'))
+  for info in criteria().values():
+    if entry.claim_id in info.claim_ids:
+      expected.append((
+        'criteria.html#catalog-criteria-' + info.criterion_id,
+        info.definition.split('；', 1)[0] + ' [' + info.criterion_id + ']',
+      ))
   assert page.references[identifier] == expected, ('Entry references', identifier)
 
 
@@ -414,11 +416,11 @@ def check_catalog(pages: dict[str, Page]) -> dict[str, int]:
   source = json.loads(DEFAULT_SOURCE_PATH.read_text(encoding='utf-8'))
   records: dict[str, Mapping[str, typing.Any]] = {
     kind: {record[key_name]: record for record in source[kind]} for kind, key_name in (
-      ('objects', 'object_id'), ('contexts', 'context_id'), ('sources', 'source_id'), ('entries', 'claim_id'),
+      ('objects', 'object_id'), ('sources', 'source_id'), ('entries', 'claim_id'),
     )
   }
   registries: dict[str, typing.Mapping[str, typing.Any]] = {
-    'objects': kb.objects, 'contexts': kb.contexts, 'sources': kb.sources, 'entries': kb.entries, 'criteria': criteria(),
+    'objects': kb.objects, 'sources': kb.sources, 'entries': kb.entries, 'criteria': criteria(),
   }
   result = {}
   for kind, registry in registries.items():
@@ -433,7 +435,11 @@ def check_catalog(pages: dict[str, Page]) -> dict[str, int]:
       assert set(section) == names, (kind, key, set(section), names)
       for name in names:
         rendered = getattr(value, name)
-        expected = json_value(rendered) if kind == 'criteria' else records[kind][key][name]
+        if kind == 'criteria':
+          expected = json_value(rendered)
+        else:
+          defaults = {field.name: json_value(field.default) for field in dataclasses.fields(value) if field.default is not dataclasses.MISSING}
+          expected = records[kind][key].get(name, defaults.get(name))
         if isinstance(rendered, str):
           assert normalized(section[name]) == normalized(expected), (kind, key, name)
         else:
@@ -443,9 +449,9 @@ def check_catalog(pages: dict[str, Page]) -> dict[str, int]:
       selected: tuple[KnowledgeEntry, ...]
       if kind == 'entries':
         assert not page.blocks[identifier], ('Repeated entry rendering', key)
-        assert list(section)[:2] == ['text', 'applicability'], ('Entry reading order', key)
+        assert next(iter(section)) == 'text', ('Entry reading order', key)
         if value.premise:
-          assert list(section)[2] == 'premise', ('Entry premise order', key)
+          assert list(section)[1] == 'premise', ('Entry premise order', key)
         check_entry_references(page, identifier, value, kb)
         selected = ()
       elif kind == 'criteria':
@@ -457,23 +463,20 @@ def check_catalog(pages: dict[str, Page]) -> dict[str, int]:
           assert (href, observation_type.__name__) in page.references[identifier], ('Criterion observation', key, qualified)
         selected = tuple(kb.entries[claim_id] for claim_id in value.claim_ids if claim_id in kb.entries)
       elif kind == 'objects':
-        selected = kb.query(object_id=key, include_reference_only=True)
-      elif kind == 'contexts':
-        selected = kb.query(context_id=key, include_reference_only=True)
+        selected = kb.query(key)
       else:
-        selected = kb.query(source_id=key, include_reference_only=True)
+        selected = kb.query(source_id=key)
       check_related(page, identifier, selected)
       heading = page.section_headings[identifier]
       assert '[' + key + ']' in heading, ('Stable ID in title', kind, key)
       if kind == 'objects':
         assert heading.startswith(value.name + ' ['), ('Object name', key)
-      elif kind == 'contexts':
-        assert heading.startswith(value.label + ' ['), ('Context name', key)
       elif kind == 'sources':
         assert heading.startswith(value.work + ' · ' + value.locator + ' ['), ('Source title', key)
-        assert (value.url, value.url) in page.references[identifier], ('Source original', key)
+        if value.url:
+          assert (value.url, value.url) in page.references[identifier], ('Source original', key)
       elif kind == 'entries':
-        object_names = '、'.join(dict.fromkeys(kb.objects[role.object_id].name for role in value.roles))
+        object_names = '、'.join(kb.objects[identifier].name for identifier in value.objects)
         assert heading == object_names + ' · ' + '、'.join(value.topics) + ' [' + key + ']', ('Entry title', key)
     result[kind] = len(registry)
   for kind, dimension in (('topics', 'topic'), ('viewpoints', 'viewpoint')):
@@ -481,17 +484,16 @@ def check_catalog(pages: dict[str, Page]) -> dict[str, int]:
     assert set(pages[f'catalog/{kind}.html'].sections) == expected_ids, kind
     result[kind] = len(expected_ids)
     for value in kb.filter_values(dimension):
-      selected = (kb.query(topic=value, include_reference_only=True) if kind == 'topics'
-                  else kb.query(viewpoint=value, include_reference_only=True))
+      selected = kb.query(topic=value) if kind == 'topics' else kb.query(viewpoint=value)
       check_related(pages[f'catalog/{kind}.html'], 'catalog-' + kind + '-' + value, selected)
-  dimensions = ('object_id', 'context_id', 'source_id', 'topic', 'viewpoint', 'applicability', 'time_scope')
+  dimensions = ('subject', 'topic', 'source_id', 'viewpoint')
   filters = pages['catalog/filters.html']
   assert set(filters.sections) == {'catalog-filters-' + dimension for dimension in dimensions}
   query: Callable[..., tuple[KnowledgeEntry, ...]] = kb.query
   for dimension in dimensions:
-    expected_rows = [['合法值', '默认命中', '含参考命中']]
-    for value in kb.filter_values(dimension):
-      expected_rows.append([value, str(len(query(**{dimension: value}))), str(len(query(**{dimension: value}, include_reference_only=True)))])
+    expected_rows = [['合法值', '命中']]
+    for value in kb.filter_values('object_id' if dimension == 'subject' else dimension):
+      expected_rows.append([value, str(len(query(**{dimension: value})))])
     assert filters.rows['catalog-filters-' + dimension] == expected_rows, dimension
   result['filter_dimensions'] = len(dimensions)
   return result
@@ -513,16 +515,13 @@ def check_links(site: Path, pages: dict[str, Page]) -> None:
 
 
 def check_release_notes(pages: dict[str, Page]) -> int:
-  '''检查发布页导航、必需迁移节及正本标题、段落和表格的渲染对应。'''
+  '''检查发布页导航及正本标题、段落和表格的渲染对应。'''
   page = pages['release-notes.html']
   assert any(urlsplit(link).path == 'release-notes.html' and not urlsplit(link).scheme
     for link in pages['index.html'].links), 'Release notes missing from navigation'
   reference = Page()
   source = (ROOT / 'RELEASE_NOTES.md').read_text(encoding='utf-8')
   reference.feed(MarkdownIt('commonmark').enable('table').render(source))
-  assert {
-    '知识结构迁移', '安装版命令与脚本迁移', '存取接口移除', '结构接口迁移', '源码脚本的平铺参数',
-  } <= set(reference.headings), 'Missing release migration sections'
   assert page.headings[:len(reference.headings)] == reference.headings, 'Rendered release headings differ from source'
   expected = Counter(map(normalized, reference.paragraphs))
   assert expected <= Counter(map(normalized, page.paragraphs)), 'Rendered release paragraphs differ from source'
@@ -568,23 +567,72 @@ def check_attribute_descriptions(site: Path) -> int:
   return checked
 
 
-def check_doctests(doctest: Path) -> int:
+def source_doctests(source: Path) -> dict[str, Counter[str]]:
+  '''从准备后的 MyST／RST 源枚举执行组与准备、清理阶段，不读取执行报告。'''
+  expected = {}
+  parser = MarkdownIt('commonmark')
+  for path in sorted(source.rglob('*')):
+    if path.suffix not in ('.md', '.rst'):
+      continue
+    text = path.read_text(encoding='utf-8')
+    if path.suffix == '.md':
+      directives = [
+        (match[1], match[2] or '') for token in parser.parse(text)
+        if token.type == 'fence' and (match := re.fullmatch(r'\{test(code|setup|cleanup)\}(?:\s+(.*))?', token.info))
+      ]
+    else:
+      directives = re.findall(r'^\.\. test(code|setup|cleanup)::[^\S\n]*(.*)$', text, flags=re.MULTILINE)
+    if not directives:
+      continue
+    name = path.relative_to(source).with_suffix('').as_posix()
+    assert name not in expected, ('Duplicate doctest source document', name)
+    groups: Counter[str] = Counter()
+    for phase, argument in directives:
+      if phase == 'code':
+        groups.update([group.strip() for group in argument.split(',')] if argument else ['default'])
+    examples = set(groups)
+    for phase, argument in directives:
+      if phase == 'code':
+        continue
+      selected = {group.strip() for group in argument.split(',')} if argument else {'default'}
+      if '*' in selected:
+        selected = examples
+      assert selected <= examples, ('Orphan source doctest setup or cleanup', name, selected - examples)
+      for group in selected:
+        groups[f'{group} ({phase} code)'] = 1
+    expected[name] = groups
+  for name, required in TASK_EXAMPLES.items():
+    assert required <= expected.get(name, {}).keys(), ('Missing task examples', name, required - expected.get(name, {}).keys())
+  return expected
+
+
+def check_doctests(doctest: Path, source: Path) -> int:
+  expected = source_doctests(source)
+  phases = tuple(f' ({phase} code)' for phase in DOCTEST_PHASES)
+  count = sum(tests for groups in expected.values() for group, tests in groups.items() if not group.endswith(phases))
   output = (doctest / 'output.txt').read_text(encoding='utf-8')
   summary = re.search(r'Doctest summary\s*=+\s*(\d+) tests?\s*\n\s*(\d+) failures?', output)
-  assert summary is not None and int(summary[1]) == sum(map(len, EXAMPLE_GROUPS.values())) and int(summary[2]) == 0, 'Missing or failing doctests'
+  assert summary is not None and int(summary[1]) == count and int(summary[2]) == 0, 'Missing or failing doctests'
   blocks = re.split(r'^Document: (.+)\n-+\n', output, flags=re.MULTILINE)
   actual = {}
-  phases = tuple(f' ({phase} code)' for phase in DOCTEST_PHASES)
   for index in range(1, len(blocks), 2):
     name, body = blocks[index:index + 2]
     assert name not in actual, ('Duplicate doctest document', name)
-    reported = re.findall(r'^\s+1 tests? in (.+)$', body, flags=re.MULTILINE)
-    assert len(reported) == len(set(reported)), ('Duplicate doctest group', name)
+    rows = re.findall(r'^\s+(\d+) tests? in (.+)$', body, flags=re.MULTILINE)
+    reported = {group: int(tests) for tests, group in rows}
+    assert len(rows) == len(reported), ('Duplicate doctest group', name)
     groups = {group for group in reported if not group.endswith(phases)}
     lifecycle = {group.rsplit(' (', 1)[0] for group in reported if group.endswith(phases)}
     assert lifecycle <= groups, ('Orphan doctest setup or cleanup', name, lifecycle - groups)
-    actual[name] = groups
-  assert actual == EXAMPLE_GROUPS, ('Example coverage', actual, EXAMPLE_GROUPS)
+    # Sphinx 不列成功的 setup；若有 setup 行，仍须对应源中的准备代码。
+    setups = {group: tests for group, tests in reported.items() if group.endswith(' (setup code)')}
+    assert setups.items() <= expected.get(name, {}).items(), ('Example setup coverage', name, setups)
+    actual[name] = {group: tests for group, tests in reported.items() if not group.endswith(' (setup code)')}
+  visible = {
+    name: {group: tests for group, tests in groups.items() if not group.endswith(' (setup code)')}
+    for name, groups in expected.items()
+  }
+  assert actual == visible, ('Example coverage', actual, visible)
   assert not re.search(r'\b[1-9][0-9]* failures? in (?:' + '|'.join(DOCTEST_PHASES) + ') code', output), 'Doctest setup or cleanup failed'
   return int(summary[1])
 
@@ -592,7 +640,7 @@ def check_doctests(doctest: Path) -> int:
 def main() -> None:
   if not __debug__:
     raise RuntimeError('Documentation checks require assertions; do not run with -O')
-  site, doctest = Path(sys.argv[1]).resolve(), Path(sys.argv[2]).resolve()
+  site, doctest, source = (Path(argument).resolve() for argument in sys.argv[1:4])
   pages = {}
   for path in site.rglob('*.html'):
     page = Page()
@@ -602,10 +650,10 @@ def main() -> None:
   result['header_paragraphs'] = check_header_paragraphs(pages)
   check_configuration_signatures(site)
   check_links(site, pages)
-  check_task_navigation(pages, sys.argv[3], sys.argv[4])
+  check_task_navigation(pages, sys.argv[4], sys.argv[5])
   result['release_sections'] = check_release_notes(pages)
   result['source_less_attributes'] = check_attribute_descriptions(site)
-  result['doctests'] = check_doctests(doctest)
+  result['doctests'] = check_doctests(doctest, source)
   examples = collect_examples(ROOT / 'bazi')
   check_example_blocks(examples, {name: page.code_blocks for name, page in pages.items()})
   for example in examples:
