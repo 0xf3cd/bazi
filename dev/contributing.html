@@ -9,7 +9,7 @@
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=5ecbeea2" />
     <link rel="stylesheet" type="text/css" href="_static/basic.css?v=b08954a9" />
     <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=27fed22d" />
-    <link rel="stylesheet" type="text/css" href="_static/documentation.css?v=7838f881" />
+    <link rel="stylesheet" type="text/css" href="_static/documentation.css?v=40cf1dba" />
     <script src="_static/documentation_options.js?v=7d86a446"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
@@ -78,29 +78,46 @@
 <p>模板收集的是线索，不是可直接导入的 JSON。填写与整理时：</p>
 <ul class="simple">
 <li><p>没有在线链接，也可先提交纸本作品、版本、位置和摘录，在表单指定的位置列出缺项。</p></li>
-<li><p>维护者核对并补齐正式来源记录的 <code class="docutils literal notranslate"><span class="pre">url</span></code> 等必填信息。信息未齐不承诺入库，不编造链接或占位值。</p></li>
-<li><p>维护者核对 <code class="docutils literal notranslate"><span class="pre">text_layer</span></code> 的描述，再映射为记录接受的 <code class="docutils literal notranslate"><span class="pre">baiwen</span></code>、<code class="docutils literal notranslate"><span class="pre">zhushi</span></code> 或 <code class="docutils literal notranslate"><span class="pre">editorial</span></code>。</p></li>
+<li><p>正式来源记录只必填 <code class="docutils literal notranslate"><span class="pre">source_id</span></code> 和 <code class="docutils literal notranslate"><span class="pre">work</span></code>，其余信息按材料填写。能加载不等于通过知识审核，
+不为填满字段而编造链接或占位值。</p></li>
+<li><p>摘录属于白文正文、夹注还是原创说明，写入 <code class="docutils literal notranslate"><span class="pre">limitations</span></code>，保留它对读法的限制。</p></li>
 <li><p>表单中的 <code class="docutils literal notranslate"><span class="pre">attribution</span></code> 是来源署名，条目署名由维护者另行填写。</p></li>
 </ul>
 </section>
 <section id="id3">
 <h2>来源状态的含义<a class="headerlink" href="#id3" title="链接到此标题。">¶</a></h2>
-<p>来源记录用 <code class="docutils literal notranslate"><span class="pre">state</span></code>，条目用 <code class="docutils literal notranslate"><span class="pre">source_state</span></code> 表示出处整理状态。与出处核对直接相关的两种状态是：</p>
+<p>来源记录可用 <code class="docutils literal notranslate"><span class="pre">state</span></code> 表示核验状态。与出处核对直接相关的两种状态是：</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">witnessed</span></code>：原文出处已经核定，有可核对的作品、版本、位置和摘录。</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">unverified</span></code>：来源尚未核实，条目不绑定来源见证。</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">unverified</span></code>：来源尚未核实。</p></li>
 </ul>
-<p>两个来源不自动构成独立见证，作品与版本是否同源须由维护者核对。来源核定、前提整理与默认展示分别记录，
-各字段含义及默认展示条件见<a class="reference internal" href="guides/knowledge.html#id6"><span class="std std-ref">知识库指南</span></a>，字段定义与校验见 <a class="reference external" href="https://github.com/0xf3cd/bazi/blob/e768b414bb1dbaec63bbca224caf038bd2f13e48/bazi/knowledge.py">knowledge.py</a>。</p>
+<p>未填状态不表示已核实。两个来源不自动构成独立见证，作品与版本是否同源须由维护者核对；
+加载器不检查来源数量或收录政策。条目保留自己的前提、读法、署名和限度，
+各字段含义见<a class="reference internal" href="guides/knowledge.html#id6"><span class="std std-ref">知识库指南</span></a>，字段定义与校验见 <a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/knowledge.py">knowledge.py</a>。</p>
 </section>
 <section id="pr">
 <h2>提 PR 之前<a class="headerlink" href="#pr" title="链接到此标题。">¶</a></h2>
-<p>从 <code class="docutils literal notranslate"><span class="pre">main</span></code> 分支开始，一个 PR 只做 issue 中讨论过的事。知识编辑来源是 <a class="reference external" href="https://github.com/0xf3cd/bazi/blob/e768b414bb1dbaec63bbca224caf038bd2f13e48/bazi/knowledge_data.json">bazi/knowledge_data.json</a>，不是生成的目录页面。</p>
+<p>默认从 <code class="docutils literal notranslate"><span class="pre">main</span></code> 开分支并向 <code class="docutils literal notranslate"><span class="pre">main</span></code> 提 PR。采用 <code class="docutils literal notranslate"><span class="pre">milestone/&lt;版本&gt;</span></code> 集成分支的阶段任务，
+从指定集成分支开施工分支，阶段 PR 以该集成分支为目标；例如 v3.0.0 使用 <code class="docutils literal notranslate"><span class="pre">milestone/v3.0.0</span></code>。
+一个 PR 只做 issue 中讨论过的事，逐张审阅合并后再开始下一张。</p>
+<p>阶段 PR 正文写 <code class="docutils literal notranslate"><span class="pre">Part</span> <span class="pre">of</span> <span class="pre">#&lt;issue&gt;</span></code>。阶段工作完成后，从集成分支向 <code class="docutils literal notranslate"><span class="pre">main</span></code> 提汇总 PR，
+只对已完成验收的代码任务写 <code class="docutils literal notranslate"><span class="pre">Closes</span> <span class="pre">#&lt;issue&gt;</span></code>，并使用 merge commit 保留阶段历史。
+来源收藏、真实发行等独立验收任务，在实际完成后关单。</p>
+<p><code class="docutils literal notranslate"><span class="pre">main</span></code> 与 <code class="docutils literal notranslate"><span class="pre">milestone/**</span></code> 的 PR 都运行完整 CI 和 PyPy 检查，合并后的 push 运行快速检查。
+维护者另行配置并回读分支保护：必需检查须对应实际 CI job 名，禁止强推和删除；
+修改工作流不会自动启用这些设置。正式发布仍从 <code class="docutils literal notranslate"><span class="pre">main</span></code> 执行，见<a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/RELEASING.md">发布说明</a>。</p>
+<p>知识编辑来源是 <a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/knowledge_data.json">bazi/knowledge_data.json</a>，不是生成的目录页面。
+内容保护测试将每个对象、来源和条目分别与 <code class="docutils literal notranslate"><span class="pre">tests/data/knowledge_content.json</span></code> 的指纹比较。
+有意修改知识后，先核对文字及出处，再只更新受影响记录的指纹，不重建整份基准。
+计算式为 <code class="docutils literal notranslate"><span class="pre">sha256(json.dumps(asdict(record),</span> <span class="pre">ensure_ascii=False,</span> <span class="pre">sort_keys=True).encode('utf-8')).hexdigest()</span></code>；
+<code class="docutils literal notranslate"><span class="pre">record</span></code> 是 <code class="docutils literal notranslate"><span class="pre">KnowledgeBase.load()</span></code> 中对应的记录，三个函数分别来自 <code class="docutils literal notranslate"><span class="pre">hashlib</span></code>、<code class="docutils literal notranslate"><span class="pre">json</span></code> 和 <code class="docutils literal notranslate"><span class="pre">dataclasses</span></code>。</p>
 <p>维护规则与知识关联时：</p>
 <ul class="simple">
 <li><p>计算表归 <code class="docutils literal notranslate"><span class="pre">rules.py</span></code>，默认及合法配置归 <code class="docutils literal notranslate"><span class="pre">school.py</span></code>，知识文字、来源和状态归知识注册表；共表和派生关系继续从计算定义取值。</p></li>
-<li><p>变更时核对条目 ID、定义成员、表值、锚点和实际查找位置。国印的定义成员与条目 ID 由 <code class="docutils literal notranslate"><span class="pre">knowledge.py</span></code> 统一维护，新增成员须同步正反查询测试。</p></li>
-<li><p>原文、解释、锚点依据及来源限度分别保留；单源不默认展示，不把转载网站当成独立谱系，也不因建立关联而升级来源状态。</p></li>
+<li><p>新读法另加定义，保留既有定义；新增神煞的表值、锚点与查找位置分别核定其自身出处，不沿用其他神煞的设置作默认。</p></li>
+<li><p>变更时核对条目 ID、定义成员、表值、锚点和实际查找位置；知识条目与计算表分别维护，
+同一读法的内容应相符。</p></li>
+<li><p>原文、解释、锚点依据及来源限度分别保留；不把转载网站当成独立来源，也不因建立关联而升级来源状态。</p></li>
 <li><p>覆盖表的属性／字段集合与示例由文档检查核对；这些检查不裁定命理依据，也不证明表外规则穷尽。</p></li>
 </ul>
 <section id="id4">
@@ -117,7 +134,7 @@ python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </sp
 </pre></div>
 </div>
 <p><code class="docutils literal notranslate"><span class="pre">Requirements.txt</span></code> 是开发依赖，<code class="docutils literal notranslate"><span class="pre">docs/requirements.txt</span></code> 是文档工具依赖，两者都不是运行时依赖；<code class="docutils literal notranslate"><span class="pre">celestial-calendar==0.6.1</span></code> 是历法测试用的工具依赖。</p>
-<p>如果在 Python 3.11／3.12 上检查运行时，另建对应版本的环境，只安装 <code class="docutils literal notranslate"><span class="pre">Requirements.txt</span></code> 与 <code class="docutils literal notranslate"><span class="pre">celestial-calendar==0.6.1</span></code>，使用 <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">run_tests.py</span> <span class="pre">-a</span> <span class="pre">-v</span> <span class="pre">--runtime-only</span></code>。它保留库测试、覆盖率、lint、运行时类型检查、安装工件与安装命令检查，不收集 <code class="docutils literal notranslate"><span class="pre">tests/docs/</span></code> 或检查、构建文档工具；文档完整检查仍在 3.13+ 环境中执行。不要尝试在 3.11／3.12 环境安装新版 Sphinx。</p>
+<p>如果在 Python 3.11／3.12 上检查运行时，另建对应版本的环境，只安装 <code class="docutils literal notranslate"><span class="pre">Requirements.txt</span></code> 与 <code class="docutils literal notranslate"><span class="pre">celestial-calendar==0.6.1</span></code>，使用 <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">run_tests.py</span> <span class="pre">-a</span> <span class="pre">-v</span> <span class="pre">--runtime-only</span></code>。它保留库测试、覆盖率、lint、运行时类型检查、安装工件与安装命令检查；<code class="docutils literal notranslate"><span class="pre">tests/test_docs_site.py</span></code>、<code class="docutils literal notranslate"><span class="pre">tests/test_docs_workflows.py</span></code> 仍会收集。类型检查排除 <code class="docutils literal notranslate"><span class="pre">docs/</span></code>、<code class="docutils literal notranslate"><span class="pre">tests/docs/</span></code>、<code class="docutils literal notranslate"><span class="pre">run_docs.py</span></code> 和 <code class="docutils literal notranslate"><span class="pre">run_doc_checks.py</span></code>，测试不收集 <code class="docutils literal notranslate"><span class="pre">tests/docs/</span></code>，也不构建文档。文档完整检查仍在 3.13+ 环境中执行；不要尝试在 3.11／3.12 环境安装新版 Sphinx。</p>
 <p>生成后的 HTML 是静态文件，读者只需浏览器；阅读文档或在 Python 3.11 中运行其中的库调用示例，不需要安装文档工具。</p>
 </section>
 <section id="id5">
@@ -144,15 +161,17 @@ python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </sp
 内部链接及发布／迁移页面；成功后可用浏览器打开 <code class="docutils literal notranslate"><span class="pre">output_data/docs-preview/html/index.html</span></code>。
 已经生成的 HTML 阅读不需要 Python。此命令不部署站点、不启用 Pages，构建与归档政策见
 <a class="reference internal" href="versioning.html"><span class="std std-doc">文档归档说明</span></a>。</p>
-<p>要保留已验证的安装工件，见<a class="reference external" href="https://github.com/0xf3cd/bazi/blob/e768b414bb1dbaec63bbca224caf038bd2f13e48/RELEASING.md#%E6%9C%AC%E5%9C%B0%E4%BF%9D%E7%95%99%E5%B7%B2%E9%AA%8C%E8%AF%81%E5%B7%A5%E4%BB%B6">本地保留已验证工件</a>；
+<p>要保留已验证的安装工件，见<a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/RELEASING.md#%E6%9C%AC%E5%9C%B0%E4%BF%9D%E7%95%99%E5%B7%B2%E9%AA%8C%E8%AF%81%E5%B7%A5%E4%BB%B6">本地保留已验证工件</a>；
 不要把一次源码测试通过当作另一份 wheel 已被测试。</p>
 </section>
 <section id="id7">
 <h3>历法数据维护<a class="headerlink" href="#id7" title="链接到此标题。">¶</a></h3>
-<p>离线重建工具为 <a class="reference external" href="https://github.com/0xf3cd/bazi/blob/e768b414bb1dbaec63bbca224caf038bd2f13e48/bazi/calendar/hko_data/encoder.py">HKO 编码器</a>和
-<a class="reference external" href="https://github.com/0xf3cd/bazi/blob/e768b414bb1dbaec63bbca224caf038bd2f13e48/bazi/calendar/celestial_data/generator.py">天文表生成器</a>，天文表的记录布局见
-<a class="reference external" href="https://github.com/0xf3cd/bazi/blob/e768b414bb1dbaec63bbca224caf038bd2f13e48/bazi/calendar/celestial_data/SCHEMA.md">数据格式</a>。它们供维护数据来源使用，不是安装后的修补步骤；
-安装包缺表时应重装包，不运行生成器修补。</p>
+<p>离线重建工具为 <a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/tests/calendar/hko_data/encoder.py">HKO 编码器</a>和根目录的
+天文表生成器 <code class="docutils literal notranslate"><span class="pre">run_calendar_generation.py</span></code>，天文表的记录布局见
+<a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/calendar/celestial_data/SCHEMA.md">数据格式</a>。
+源码与 sdist 保留生成器、<code class="docutils literal notranslate"><span class="pre">tests/calendar/hko_data/</span></code> 下的 HKO 原件、编码表及编解码工具，
+供重建数据与独立对拍；这些材料不进入 wheel，也不是公开 Python API。
+wheel 只带运行时需要的代码与数据，安装包缺表时应重装包，不运行生成器修补。</p>
 </section>
 <section id="id8">
 <h3>提交与 PR 正文<a class="headerlink" href="#id8" title="链接到此标题。">¶</a></h3>
@@ -188,7 +207,7 @@ python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </sp
 <h2>审阅与合并<a class="headerlink" href="#id10" title="链接到此标题。">¶</a></h2>
 <p>维护者负责安排独立的正确性与设计审阅，以及修复后的复验。外部贡献者无需自行安排独立审阅或购买工具订阅。
 仓级编码与执行约定见<a class="reference external" href="https://github.com/0xf3cd/bazi/blob/main/AGENTS.md">当前主干的 AGENTS.md</a>，该链接用于查看现行贡献政策。
-合并及是否 squash 均由维护者决定。</p>
+合并由维护者决定。普通与阶段 PR 可选择 squash；集成分支汇总到 <code class="docutils literal notranslate"><span class="pre">main</span></code> 时使用 merge commit。</p>
 </section>
 </section>
 
@@ -224,6 +243,7 @@ python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </sp
 <li class="toctree-l1"><a class="reference internal" href="guides/quickstart.html">快速开始</a></li>
 <li class="toctree-l1"><a class="reference internal" href="guides/cli.html">命令行</a></li>
 <li class="toctree-l1"><a class="reference internal" href="guides/configuration.html">配置与时间口径</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guides/calendar.html">公历、农历与节气</a></li>
 <li class="toctree-l1"><a class="reference internal" href="guides/relations-transits.html">关系与流运</a></li>
 <li class="toctree-l1"><a class="reference internal" href="guides/knowledge.html">查阅知识库</a></li>
 <li class="toctree-l1"><a class="reference internal" href="guides/integration.html">集成开发</a></li>

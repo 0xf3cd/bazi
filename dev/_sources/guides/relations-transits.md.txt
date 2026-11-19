@@ -4,6 +4,31 @@
 结果是结构事实，描述“哪些干支落在哪些位置、在所选流派或匹配条件下满足哪种关系”，不是旺衰、格局或对事件的预测。
 要检查某条知识条目的前提在一张盘上是否成立，见 {doc}`integration`。
 
+## 查某年的大运和流年
+
+`流年大运` 是 `TransitChart` 的中文类型名。年份填写干支年标签：
+
+```{testcode} transits-chinese-year
+from bazi.bazi import 八字
+from bazi.bazi_chart import 命盘
+from bazi.transit_chart import 流年大运
+
+盘 = 命盘(八字.create('1990-05-17 10:30', '女'))
+岁运 = 流年大运(盘).at_year(2024)
+if 岁运 is not None:
+  print('大运', 岁运.大运)
+  print('流年', 岁运.流年)
+```
+
+```{testoutput} transits-chinese-year
+大运 丁丑
+流年 甲辰
+```
+
+`.大运`、`.流年` 分别是 `.dayun`、`.liunian` 的只读别名，值为 `Ganzhi` 或 `None`。
+早于出生干支年时整次查询返回 `None`；能返回流年但没有对应大运时，仅 `.大运` 为 `None`。
+大运按命盘选择的年份标签规则读取；查具体日期或时刻的交运边界，用下节入口。
+
 ## 查年、月、日或时刻的流运
 
 `TransitChart` 接收 `BaziChart`，返回指定坐标下的 `TransitSet`。下面显式使用 `minute` 精度，
@@ -47,7 +72,7 @@ for label, result in queries:
 | `at_year(gz_year)` | 干支年标签，以年份数字填写 | 返回该年流年及可取得的小运／大运；早于出生干支年为 `None`。远年份仍可有流年，不能用 `None` 判断历法表上界。大运按所选年份标签解释。 |
 | `at_month(gz_year, gz_month)` | 干支年和月份地支，如 `Dizhi.午` | 增加流月；出生干支月前或节令表范围外为 `None`，大运按物理交运月边界解释。午月不等于公历六月。 |
 | `at_date(solar_date)` | 东八区公历 `date`，不能传 `datetime` | 增加流月、流日；出生公历日前或历法范围外为 `None`，大运按物理交运日边界解释。 |
-| `at_moment(solar_moment)` | 东八区无时区 `datetime` | 返回流年、流月、流日及可取得的小运／大运，不增加流时。出生前、节令表范围外或配置不支持为 `None`；须用 celestial 系后端及 HOUR／MINUTE 精度。 |
+| `at_moment(solar_moment)` | 东八区无时区 `datetime` | 返回流年、流月、流日及可取得的小运／大运，不增加流时。出生前、节令表范围外或使用 DAY 精度为 `None`；须用 HOUR／MINUTE 精度。 |
 
 `None` 是整次查询不可取得；返回结果中某种流运的字段为 `None`，则只是缺这一层。
 流运种类从 `bazi.transits` 导入 `TransitKind`；例如 `result.select(TransitKind.LIUNIAN)` 只保留流年，
@@ -83,7 +108,9 @@ print('小运', [(step.xusui, str(step.ganzhi)) for step in chart.xiaoyun[:2]])
 
 每步大运覆盖 `[start_moment, end_moment)`，年份是标签，不表示占据整个标签年；规则见 {doc}`configuration`。
 每次访问 `dayun`／`liunian` 都新建生成器，从头开始读取。把生成器保存到变量后，继续遍历这个变量会从上次位置接着读。
-大运数量取决于后端支持范围。
+大运数量由节气表窗口限定：只生成起点位于 `supported_jie_boundaries()` 首末节时刻之间的大运，
+含首端、不含末端，每步终点可以越界。窗口端点见 {doc}`calendar` 的“查询节气与相邻的节”；
+它不同于日期换算的支持范围。
 `xiaoyun` 则是缓存元组，可反复遍历。排成流运文字的例子在本页{ref}`流运文本 <transits-text>`。
 
 后续按任务选择：原局关系看下节，神煞看{ref}`原局神煞 <relations-shensha>`，
@@ -184,7 +211,7 @@ for result in analyzer.transits.kongwang(transits):
 
 若已持有干支，只需做一次低层查表，使用 {py:func}`~bazi.utils.shensha_utils.xunkong` 返回旬空二支，
 或用 {py:func}`~bazi.utils.shensha_utils.kongwang` 检查某目标支。两者要求查法依据是合法六十甲子，
-目标只按地支判断，不附加天干或纳音条件。阴阳不配的依据会被拒绝，但 `Ganzhi` 自身的构造范围不变。
+目标只按地支判断，不附加天干或纳音条件。阴阳不配的组合在 `Ganzhi` 构造时即被拒绝。
 
 打印位置时，原局柱位 `Zhu` 用 `str(value)` 取得中文值，流运种类 `TransitKind` 用 `.value` 取得
 `dayun`、`liunian` 等标签。
@@ -194,7 +221,7 @@ for result in analyzer.transits.kongwang(transits):
 
 {py:data}`~bazi.analyzer.relationship.SHENSHA_LABELS` 保存支集神煞的22个名称，
 {py:data}`~bazi.analyzer.relationship.WHOLE_PILLAR_SHENSHA_LABELS` 保存魁罡、天赦两个整柱名称。
-两表均从 `relationship` 模块导入；整柱结果是完整日柱或 `None`。
+两表均从 `relationship` 模块导入，键与结果映射对应，值为中文名；整柱结果是完整日柱或 `None`。
 
 ```{testcode} relations-shensha-labels
 from bazi.analyzer.relationship import (
@@ -207,6 +234,7 @@ chart = BaziChart(Bazi.create('1990-05-17 10:30', 'female'))
 result = RelationshipAnalyzer(chart).at_birth.shensha
 for key, label in SHENSHA_LABELS.items():
   branches = result[key]
+  assert isinstance(branches, frozenset)
   if branches:
     print(label, ''.join(map(str, sorted(branches, key=lambda branch: branch.index))))
 for key, label in WHOLE_PILLAR_SHENSHA_LABELS.items():
@@ -223,7 +251,8 @@ for key, label in WHOLE_PILLAR_SHENSHA_LABELS.items():
 天赦 无
 ```
 
-支集结果按地支值汇总，不区分同支的不同柱。旬空需要逐锚和位置时用上文的 `kongwang`。
+支集结果按地支值汇总，不区分同支的不同柱。旬空需要逐锚和位置时，用
+`AtBirthAnalysis.kongwang` 或 `TransitAnalysis.kongwang(transits)`。
 
 (relations-transit-house)=
 ## 查流运与婚姻宫的关系

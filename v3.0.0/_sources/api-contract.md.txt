@@ -1,0 +1,370 @@
+# 公开接口契约
+
+本页说明当前接口的导入路径、输入、返回结果与失败条件。
+第一次使用见[快速开始](guides/quickstart.md)，旧新调用对照见[发布与迁移](release-notes.md)。
+
+## 支持范围与导入路径
+
+常用入口如下；完整签名、参数、字段和错误说明见文档站的 API 参考。
+
+| 任务 | 导入模块与入口 |
+| --- | --- |
+| 排盘 | `bazi.bazi.Bazi`、`bazi.bazi_chart.BaziChart` |
+| 配置 | `bazi.school.BaziConfig`、`BaziSchool` 及该模块的选项枚举 |
+| 领域值 | `bazi.defines` 中的天干、地支、干支、十神等类型 |
+| 流运 | `bazi.transit_chart.TransitChart`；结果及种类在 `bazi.transits` |
+| 查知识 | `bazi.knowledge.KnowledgeBase` 及对象、来源、条目类型 |
+| 判据 | `bazi.context_matching` 中的目录、观察请求与 `evaluate_context` |
+| 关系查询 | `bazi.analyzer.relationship`、`bazi.analyzer.facts` |
+| 命盘文本 | `bazi.chart_text` |
+| 历法 | `bazi.calendar.dates` 的日期类型与 `bazi.calendar.utils` 的换算函数 |
+
+从定义模块导入，不能用 `from bazi import Bazi`。下划线名称、内部校验、数据加载器、
+表类与离线工具不属于公开 API；模块中为实现而导入的第三方名称也不构成重导出。
+
+### 中文读取
+
+中文类型名指向原类型：`八字`、`命盘`、`流年大运`、`知识库` 分别从上表对应模块导入。
+`bazi.defines` 的 `天干`、`地支`、`干支`、`十神`、`五行` 等中文名和原名也可混用，
+领域枚举的中文与拉丁成员别名是同一成员。
+
+| 读取路径 | 原名 |
+| --- | --- |
+| `chart.八字.四柱`、`chart.八字.日主` | `chart.bazi.pillars`、`chart.bazi.day_master` |
+| `chart.十神.年.天干` | `chart.shishen.year.tiangan` |
+| 四柱数据的 `年`／`月`／`日`／`时` | `BaziData.year`／`month`／`day`／`hour` |
+| 每柱数据的 `天干`／`地支` | `GanzhiData.tiangan`／`dizhi` |
+| `transits.大运`、`transits.流年` | `TransitSet.dayun`、`liunian` |
+
+这些属性只读，复用原属性或字段的结果；`chart.十神` 读取同一份缓存。
+通用方法和参数仍用原名，例如 `知识库.load().query(天干.丁)`、`流年大运(chart).at_year(2024)`。
+
+### 可接受的字符串输入
+
+`Bazi.create` 的性别字符串只接受 `男`、`女`、`male`、`female`（拉丁大小写不敏感），
+也可直接传 `BaziGender`。枚举中的 `乾`、`坤`、`阳`、`阴`、`YANG`、`YIN` 不是性别字符串入口。
+
+`BaziConfig` 构造函数接收声明类型；需要字符串解析时使用 `BaziConfig.from_values`。
+精度支持 `分`／`分钟`／`时`／`小时`／`天`／`日` 和
+`m`／`min`／`minute`／`h`／`hour`／`d`／`day`，拉丁大小写不敏感。
+大运年份规则由 `DayunYearRule.from_str` 解释成员名或值；
+流派档案须传 `BaziSchool`，不接受字符串。性别、精度各有自己的字符串写法，互不通用。
+
+## 历法日期与节气
+
+`bazi.calendar.utils` 提供以下十个函数：
+
+| 函数 | 参数与结果 |
+| --- | --- |
+| `get_min_supported_date(date_type)`、`get_max_supported_date(date_type)` | 接收 `CalendarType`，返回该历法的首末 `CalendarDate`，两端都可用于日期换算。 |
+| `to_solar(d)`、`to_lunar(d)`、`to_ganzhi(d)` | 接收 `date` 或 `CalendarDate`，返回相应历法的 `CalendarDate`。 |
+| `to_date(d)` | 接收 `date` 或 `CalendarDate`，返回公历 `date`。 |
+| `jieqi_moment(solar_year, jieqi)` | 接收公历年份 `int` 和 `Jieqi`，返回东八区无时区 `datetime` 标签，截断到秒。 |
+| `supported_jie_boundaries()` | 返回首末支持节的时刻元组；节查询的输入范围为 `[首端, 末端)`。 |
+| `prev_jie(dt)`、`next_jie(dt)` | 接收东八区无时区 `datetime`，返回 `JieqiTime`；前者取不晚于输入的最近一节，后者取严格晚于输入的下一节，均不含中气。 |
+
+日期类型从 `bazi.calendar.dates` 导入。`CalendarDate` 是不可变值，构造时检查字段类型，
+换算入口再检查日期是否合法及是否在支持范围内。错型抛 `TypeError`，无效或越界日期抛 `ValueError`，
+普通运行与 `python -O` 一致。
+
+农历 `month` 按年内实际月序从 1 编号，闰月占独立序号，不能直接当作农历月名。
+例如 2023 年的第 3 个月是闰二月，第 4 个月才是三月。公历与农历往返见[公历、农历与节气](guides/calendar.md)。
+
+日期换算支持的公历范围是 1901-02-19 至 2099-12-31；节气表覆盖公历 1901 至 2200 年，
+不因此扩大日期换算或出生输入的范围。`datetime` 是 `date` 子类，四个 `to_*` 入口接受它，
+但只读取年月日，不换算时区；`to_ganzhi` 按交节日划分年月，不能代替时刻级排盘。
+`BaziPrecision` 的出生比较规则另见[配置指南](guides/configuration.md#选择节气比较精度)。
+
+## 关系与附加查询
+
+### 关系位置、通根与透干
+
+`TransitAnalysis.all_relations(transits)` 返回 `RelationPositionDiscovery`，即地支关系到
+`tuple[frozenset[RelationParticipant], ...]` 的冻结映射。参与者字段为 `position: Zhu | TransitKind`
+和 `ganzhi: Ganzhi`；每个组合跨原局与所选流运两组。查询按本盘流派调用 `discover_mutual_ganzhis`，
+保留其组合与顺序，只将序号改为位置；同干支不同位置不合并。
+
+通根与透干从 `bazi.analyzer.facts` 查询：
+
+- `tonggen(chart, target, transits=None, *, condition=TianganMatch.SAME_WUXING)`
+  返回 `tuple[TianganOccurrence, ...]`，记录匹配的实际藏干。
+- `tougan(chart, target, transits=None, *, condition)` 没有默认条件；省略条件抛 `TypeError`。
+  `target` 先按同干定位实际藏干，再按显式条件与明干匹配，返回 `tuple[TouganHit, ...]`。
+- 两个函数的条件均为 `TianganMatch.SAME_TIANGAN` 或 `SAME_WUXING`。
+  不传流运只查原局；传入后两端均可来自原局或流运，保留同柱与重复干支位置。
+  位置按年、月、日、时，再按 `TransitSet.items` 的固定次序排列。通根在每个位置按
+  `BaziRules.HIDDEN_TIANGANS` 表顺序返回；透干按藏干位置优先、明干位置次序返回。没有匹配返回空元组。
+
+`TianganOccurrence(position, ganzhi, stem)` 是冻结结果，位置为 `Zhu | TransitKind`，
+查询返回的 `stem` 是该干支的明干或藏干。`TouganHit(hidden, visible)` 的两端均为 `TianganOccurrence`：
+`hidden.stem` 属于 `hidden.ganzhi` 的藏干，`visible.stem` 等于 `visible.ganzhi.tiangan`；
+不强制两端同干，结果中的明藏角色由字段指定。
+上述查询入口的错型抛 `TypeError`，普通运行与 `-O` 一致；直接构造结果不检查字段及明藏角色。
+原局位置、流运种类与明藏两端实际值的示例见[关系与流运指南](guides/relations-transits.md)。
+
+### 月令五行状态与神煞名称
+
+`chart.wuxing_states` 是 `frozendict[Wuxing, WuxingState]`，按原局出生月令给出五行各自的旺、相、休、囚、死状态，
+五种状态各出现一次。`WuxingState` 及中文别名 `五行状态` 从 `bazi.defines` 导入。
+季月由 `BaziSchool.tuwang_def` 选择整月或分段取法；时间口径见[配置指南](guides/configuration.md#月令五行状态与土旺口径)。
+
+`relationship.SHENSHA_LABELS`（22 项）与 `WHOLE_PILLAR_SHENSHA_LABELS`（魁罡、天赦两项）
+是公开冻结名称表，CLI 也使用这两张表。
+
+`ShenshaAnalysis` 是 `frozendict[str, frozenset[Dizhi]]` 别名，
+`TransitAnalysis.shensha(...)` 返回的映射按 `SHENSHA_LABELS` 的顺序排键。
+`AtBirthShenshaAnalysis` 是 `frozendict[str, frozenset[Dizhi] | Ganzhi | None]` 别名，
+共同键后按 `WHOLE_PILLAR_SHENSHA_LABELS` 的顺序列出整柱结果。两类映射均不能增删改键。
+调用方读取原局结果后须区分值的类型：支集是 `frozenset[Dizhi]`，整柱值是命中的日柱或 `None`。
+
+### 干支值域
+
+`Ganzhi(tiangan, dizhi)` 只接受六十甲子：字段须分别为 `Tiangan`、`Dizhi`，错型抛 `TypeError`；
+阴阳不配（如甲丑）抛 `ValueError`。`from_strs`、`from_str`、`_make`、`_replace` 和
+Python 3.13+ 的 `copy.replace` 同样守住值域，普通运行与 `-O` 一致。
+合法值保留元组解包、相等、哈希、复制和 pickle 往返；不承诺绕过构造器的低层造值行为。
+
+### 六甲旬空
+
+`shensha_utils.xunkong(ganzhi)` 返回该旬二支冻结集，`kongwang(anchor_ganzhi, target_dizhi)` 返回
+目标支是否命中。查法锚须为 `Ganzhi`，目标须为 `Dizhi`，错型抛 `TypeError`，在 `python -O`
+下同样检查；内部字段及阴阳配对由 `Ganzhi` 构造器检查。目标不附加天干、纳音或冲合条件。
+
+`BaziSchool.kongwang_anchor` 默认 `Anchor.DAY`，支持 `YEAR`、`YEAR_AND_DAY`。
+`AtBirthAnalysis.kongwang` 与 `TransitAnalysis.kongwang(transits)` 返回 `tuple[KongwangResult, ...]`，
+逐锚记录 `anchor`（`Zhu.年`／`Zhu.日`）、`ganzhi`、由锚计算的 `xunkong` 和 `hits`。
+`KongwangHit(position, ganzhi)` 的 `position` 为原局柱位 `Zhu` 或流运种类 `TransitKind`；`ganzhi` 保留完整目标。
+无命中也返回该锚二支，双锚同值与重复目标位置不合并。原局排除锚自身柱，流运只从本命锚单向查询。
+详情命中投影为地支集合，等于 `shensha['kongwang']`。不删除支、不改其他关系，不实现解释性取消或吉凶判断。
+
+### 胎元与命宫附加查询
+
+`chart.taiyuan` 与 `chart.minggong` 是无参缓存属性，返回不可变的 `Ganzhi`，只在首次访问时计算。
+计算口径和可运行示例见[集成指南](guides/integration.md#四柱之外胎元与命宫)。时支固定取本盘时柱，
+`DAY` 也保留输入小时，地点盘取真太阳钟，换日设置（`day_rollover`）不改变时支。
+
+命宫以中气判断月序是否进一，比较时按本盘出生精度处理，相等归新：
+`DAY` 比日期，`HOUR` 比日期及时辰起点，`MINUTE` 比日期及分钟起点；
+地点盘先把边界换到与出生相同的真太阳钟。
+
+纯函数从 `bazi.utils.bazi_utils` 导入：`taiyuan(month_pillar)` 要求输入为 `Ganzhi`，错型立即抛 `TypeError`。
+`minggong(year_tiangan, month_dizhi, hour_dizhi)` 逐参接收
+`Tiangan`、已调整的有效命宫月支 `Dizhi`、本盘时支 `Dizhi`，非相应枚举抛 `TypeError`。
+普通运行与 `python -O` 下的校验行为相同；干支字段及阴阳配对由 `Ganzhi` 构造器检查。
+
+两值是四柱之外的单独查询结果，不扩展 `BaziData` 或柱位，不改变 `school` 和命盘身份。
+它们不出现在 `basic_text` 等命盘文本中，不参与五行、十神、神煞、关系或流运分析。
+读取它们不使任何解释条目的前提自动成立。
+
+## 返回值、拷贝与相等性
+
+### 共享与输入
+
+- 查询结果和规则集合使用 `tuple`、`frozenset`、`frozendict` 等不可变结构；
+  `frozendict` 只冻结映射本身，不深拷贝其中的值。具体接口的可变边界仍看其类型与说明。
+- 命盘直接持有传入的 `Bazi`，`chart.bazi` 每次返回同一对象。调用方不得改写其私有状态，命盘缓存不会随这种改写刷新。
+- `Bazi` 按值比较；`BaziChart` 按对象身份比较。两个命盘的 `bazi` 值可以相等，命盘对象本身仍不相等。
+  知识库按内容及顺序比较，`ContextResult` 按其值字段比较。
+- `ContextResult.bazi` 直接保存求值输入，构造与读取均不深拷贝；
+  相等／哈希使用全部字段，包括 `Bazi` 的完整身份。
+- 每次访问 `chart.dayun`、`chart.liunian` 都获得新生成器。保存到变量的有限生成器会耗尽；
+  流年生成器可无限延续，不要直接对它调用 `tuple`／`list`。`chart.xiaoyun` 是缓存元组，可重复遍历。
+
+### 内存结果与重算
+
+命盘和前提判别结果没有保存恢复接口，知识库也不导出快照，不提供替代记录格式。
+需要当前结论时，用原出生输入与完整配置重新排盘、求值；本库不从历史记录猜补配置或重建当时结果。
+
+## 报错与文本展示
+
+- 对象 `repr` 供交互探索与调试，格式不属于兼容承诺，不应由程序解析。
+- 接收命盘的公开入口（`TransitChart`、三个分析类、`spouse_evidence`、`evaluate_context`、
+  `bazi.chart_text` 的函数）在收到非 `BaziChart` 时立即抛 `TypeError`；调用方须传真正的 `BaziChart`，不接受只具有同名属性的对象。
+- 类型错误消息以 `Expected X, got <type>` 开头，可能追加常见误用的指引；不要匹配全文。
+- `bazi.chart_text` 把命盘排成纯文本，不写文件，不依赖终端着色库，固定输入的输出可重放：
+  `basic_text` 给出盘面，`transit_text` 给出流运，`chart_text` 拼接两者。
+  流运文本由 `dayun_count`、`liunian_count` 限定步数，默认 10 与 100。
+  首步大运起点不在 `supported_jie_boundaries()` 给出的 `[首端, 末端)` 内时，
+  `transit_text`、`chart_text` 与 `BaziChart.xiaoyun` 都抛 `ValueError`；`basic_text` 不受影响。
+  `TextStyle` 的两个钩子返回值原样放进文本，不做检查，默认原样输出；版式由调用方负责。排版随版本调整时在发布说明中说明。
+
+## 观察请求与结果对象
+
+### 位置、观察与坐标
+
+- `bazi.defines.Zhu`（中文类别名 `柱`）按年、月、日、时排列，成员为 `NIAN/YUE/RI/SHI` 与 `年/月/日/时`。
+  同模块的 `TianganLayer`（`天干层次`）成员为 `MINGGAN/CANGGAN` 与 `明干/藏干`。
+- `KongwangHit(position, ganzhi)` 和 `StarAppearance` 的 `position` 类型为 `Zhu | TransitKind`。
+  `StarAppearance(position, ganzhi, layer, stem)` 的 `layer` 用 `TianganLayer`；查询返回的明干与干支一致、藏干属于地支。
+  `KongwangResult.anchor` 的查询结果为年、日，类型注解同时列出中文与拼音拼写；月、时在类型检查时拒绝。
+  配置 `Anchor.YEAR_AND_DAY` 仍是多锚选择策略，不是柱位。
+- `ChartOccurrence(position, ganzhi, layer, stem, shishen)` 的 `position` 为 `Zhu | LiunianPosition`；
+  后者保存具体 `ganzhi_year`。原局 `index` 为 0–3，流年为 4。
+  另一类型 `bazi.utils.dizhi_utils.GanzhiOccurrence` 用于关系查询组合，`index` 是调用方输入序列中的位置，不受四柱限制。
+- `evaluate_context(..., observation=...)` 显式选择观察请求。`NatalObservation()` 供全部判据共用；
+  `LiunianObservation(ganzhi_year=None)` 用于原局加单流年，`TransitObservation(kinds, coordinate=None)` 用于婚恋结构岁运查询。
+
+| 具体坐标构造 | 含义 |
+| --- | --- |
+| `YearCoordinate(ganzhi_year)` | 干支年标签，年份接受 `int`（含 `bool` 与 `int` 子类）。 |
+| `MonthCoordinate(ganzhi_year, ganzhi_month)` | 干支年月，月用 `Dizhi`；年份同上。 |
+| `DateCoordinate(solar_date)` | 东八区公历日，须为 `date` 本身，不接 `datetime` 或 `date` 子类。 |
+| `MomentCoordinate(solar_moment)` | 东八区无时区时刻，接受 `datetime` 及其子类；保留微秒请求身份，求值按秒解释。 |
+
+四类均从 `bazi.context_matching` 导入；`TransitCoordinate` 是四者联合类型，不能直接构造。
+直接构造时，缺字段／多余字段由构造器抛 `TypeError`；值错型或带时区则由各类显式检查。
+坐标缺失是合法观察请求，在求值时为 `UNKNOWN`；畸形坐标、空／重复／不支持的种类立即失败，普通与 `-O` 一致。
+坐标逐字段沿用对应 `TransitChart` 查询入口的类型口径；`LiunianObservation.ganzhi_year` 也接受
+`int`（含 `bool` 与 `int` 子类）或 `None`。坐标构造不检查日期换算或流运查询的支持范围。
+
+### 结果构造与 dataclass 操作
+
+`TianganOccurrence`、`TouganHit`、`RelationParticipant`、`KongwangHit`、`KongwangResult`、
+`StarAppearance`、`RelationshipEvidence`、`GanzhiOccurrence`、`CriterionInfo`、`LiunianPosition`、
+`ChartOccurrence`、`CriterionResult` 和 `ContextResult` 是冻结结果记录；直接构造及 `replace` 不校验字段。
+正常结果的领域约束由生成它们的查询保证。`TransitSet`、观察请求、坐标、配置及知识库记录仍是输入，
+保留各自的校验；`GanzhiYearMonth` 的公开坐标构造与转换同样保留校验。
+
+| 类型 | 实际构造字段 | 派生属性 |
+| --- | --- | --- |
+| `CriterionResult` | `criterion_id`、`reason`、`observations` | `definition`、`status`、`scope_complete` |
+| `ContextResult` | `observation`、`criterion`、`evidence`、`reference_ids`、`bazi` | 无 |
+
+`CriterionInfo.analysis_kind` 取 `'context'`／`'relationship'`；
+`observation_types` 给出可接受的观察请求类元组，不是单个请求类。
+
+`ContextResult.evidence` 保存 `tuple[ChartOccurrence, ...]` 或 `RelationshipEvidence`，`reference_ids` 保存参考条目 ID。
+完整前提与条件参考由已注册判据的 `entry_role` 区分。部分种类不可取得时，结果仍保留已取得部分的证据。
+出生输入及相等性见[共享与输入](#共享与输入)。
+
+正常求值按[判据目录](#判据目录)的声明序与性别筛选规则返回参考 ID；结果不检查知识库中是否有这些条目。
+
+`CriterionReason` 有下表六种原因，`status` 与 `scope_complete` 由原因派生：
+
+| `CriterionReason` | `status` | `scope_complete` |
+| --- | --- | --- |
+| premise_satisfied | SATISFIED | True |
+| required_classification_absent | NOT_SATISFIED | True |
+| day_master_differs | NOT_SATISFIED | True |
+| female_gate_false | NOT_SATISFIED | True |
+| missing_transit_coordinate | UNKNOWN | False |
+| transit_unavailable | UNKNOWN | False |
+
+`premise_satisfied` 表示当前判据的事实成立，两种 `entry_role` 都使用此原因码；
+是否覆盖关联条目的完整前提，须看判据的 `entry_role`。
+
+结果记录不校验手填证据与原因是否一致，实际判别由 `evaluate_context` 计算。
+读取结论时使用属性；`asdict` 不包含派生属性，也不是本库提供的保存恢复格式。
+
+### 枚举字段的读取与穷尽分支
+
+`KongwangResult.anchor`、`StarAppearance.layer`、`ChartOccurrence.layer` 使用不继承 `str` 的枚举。
+判断用成员，如 `result.anchor is Zhu.年`、`appearance.layer is TianganLayer.明干`；
+与 `'year'`、`'visible'` 等字符串比较、作 `in` 判断或关键字类模式匹配不会命中，且不一定报错。
+打印 `Zhu`／`TianganLayer` 用 `str(value)` 取得中文值，打印 `TransitKind` 用 `.value`。
+位置／明藏层显示使用枚举中文值，如 `natal.月`、`藏干`；`scope`、`origin`、`kind` 使用各自的标签。
+
+别名的穷尽分支示例与类型检查说明见[集成指南](guides/integration.md#读取枚举字段)。
+
+## 命令行
+
+安装后使用 `bazi` 命令；不提供 `python -m bazi` 或根目录兼容脚本。
+`chart`、`knowledge`、`match` 三个任务的用途、参数示例与输出路径见[命令行指南](guides/cli.md)。
+
+`chart` 默认随机生成，打印种子，可用 `--seed 整数` 重放。
+固定输入须同时给 `--birth-time`、`--gender`，不能与 `--seed` 组合。
+性别、精度、地点与时区输入沿用库的写法和时间口径。
+`knowledge` 沿用下节的名称、ID 与字面搜索语义，无匹配输出“无匹配条目。”。
+`chart` 默认只展示盘面事实，`--transits`、`--relationship` 分别追加流运与婚恋报告。
+`chart` 与 `match` 只有加 `--knowledge` 才加载正文；`--knowledge-source`、`--show-sources` 须与它同用。
+`chart` 的知识按日主与三处非日主明干、全部藏干对应的十神分组，同次输出按条目 ID 去重。
+自定义库未收录某对象或对象名有歧义时，该组显示查询错误，其他组继续展示；
+`match` 的缺项显示 ID 与“知识库未收录”。
+
+`bazi.cli.main(argv=None)` 的 `argv` 列表不含程序名，`None` 表示读取 `sys.argv[1:]`；
+非列表或包含非字符串成员时抛 `TypeError`。裸调用与 `--help` 只打印帮助并返回 0，不写文件。
+未知任务／选项、缺项或非法输入由 argparse 以退出码 2 报错；普通运行与优化模式保持相同的立即失败行为。
+
+目录的年月字段为 `ganzhi_year`／`ganzhi_month`，对应 CLI flags 为 `--ganzhi-year`／`--ganzhi-month`。
+
+保存输出遵守以下约定：
+
+- 只有 `chart --output 文件` 写文件，保存本次完整显示内容，包括随机种子和已选的扩展文本。
+- 终端输出恒带颜色码，保存的 TXT 剥除颜色码；重定向终端输出不会自动去色。
+- 同名目标会覆盖。用 `Path.resolve()` 比较目标与随包／本次自定义知识源，拒绝覆盖这些路径及其符号链接；
+  不检查硬链接等文件身份别名。输出父目录须已存在。
+
+## 知识查询与编辑
+
+### 名称、关键词与过滤值发现
+
+`KnowledgeBase.find_objects`、`search` 的调用示例见[知识库指南](guides/knowledge.md#按名称或-id-找对象)，
+完整签名与字段说明见定义模块的 API 参考。两个入口的输入检查相同：空或全空白字符串抛 `ValueError`，
+错型抛 `TypeError`，有效字符串的两侧空白不会被剥除。匹配方式与顺序分别为：
+
+| 入口 | 匹配与返回顺序 |
+| --- | --- |
+| `find_objects(name)` | 精确匹配对象名称，重名全部返回，无匹配返回 `()`；按对象注册顺序排列。中文名称不是唯一 ID，不作模糊匹配或大小写转换。 |
+| `query(subject=None, *, topic=None, source_id=None, viewpoint=None)` | 多个条件取交集，返回全部相关条目，保持语料顺序；无条件返回全部条目。 |
+| `search(keyword, ...)` | 先应用 `query` 的交集，再作 Unicode `casefold` 字面子串匹配；按语料顺序排列。 |
+
+`subject` 接受精确名称、对象 ID、`Tiangan`、`Shishen` 或 `Wuxing`；枚举按类别与中文名称解析。
+字符串重名时抛 `ValueError` 并列候选 ID；未知对象或过滤值同样抛 `ValueError`，合法条件无交集返回空元组。
+多对象条目在每个对象下都能查到，关系方向由正文表达。
+关键词检索覆盖条目正文、前提、署名、主题、读法、限度及对象名称，
+不搜对象／条目 ID 或来源全文，不解释正则，也不判断命盘适用性。
+来源全文从 `sources` 读取，关联条目用 `query(source_id=...)` 查询。
+
+`filter_values(dimension)` 给出合法值全集，按 Unicode 字符串序排列：
+
+- 维度为 `object_id`、`source_id`、`topic`、`viewpoint`；未知维度抛 `ValueError`。
+- 目录包括未引用的注册对象与来源；主题与读法取自已有条目。
+- `query` 与该目录共用合法值定义，但合法值不保证有命中。
+
+### 判据目录
+
+`context_matching.criteria()` 返回 `frozendict[str, CriterionInfo]`，`criterion(id)` 返回单项；
+未知 ID 抛 `ValueError`，错型抛 `TypeError`。两者不加载知识库、不创建命盘，也不执行判别。
+目录值冻结，直接构造 `CriterionInfo` 不校验字段，不将自填的 `definition` 当作已注册定义或据此派生结论；
+需要已注册定义时使用这两个查询入口。
+
+判据按稳定条目 ID 关联，不比较知识正文或来源的内容摘要。自定义库负责保持同 ID 的领域含义，
+相同 ID 本身不能证明语义相同，目录也不认证条文真伪或现实适用性。
+
+| 目录信息 | 含义 |
+| --- | --- |
+| `criterion_id`、`definition`、`observation_keys` | 稳定标识、现有判据定义及实际观察键。 |
+| `analysis_kind`、`observation_types`、`scopes` | 分析类别，以及由它派生的可接受观察请求类与合法范围；没有隐式范围默认值。 |
+| `required_inputs`、`optional_inputs`、`scope_inputs` | 求值入口的必填／可选参数及各范围取得完整观察所需的额外输入；关系范围按 `coordinate`、`kinds` 排序。 |
+| `transit_entries`、`transit_kinds` | 婚恋结构观察的坐标入口、必填字段及种类上限；不保证某盘实际可取得。单流年观察不接 `TransitCoordinate`。 |
+| `unknown_conditions` | 缺所需年份／坐标或流运不可用等导致 `UNKNOWN` 的条件；范围完整性先于性别门槛与事实判别。关系流运范围的 `kinds=()` 在构造时抛 `ValueError`，不产生 `UNKNOWN`。 |
+| `entry_role` | `premise` 判关联条目的完整显式前提；`condition` 只判局部事实，不认定条目全文前提已成立。空参考元组也由此区分。 |
+| `required_gender`、`claim_genders` | 分别限制判据和关联条目的性别；具体效果见下文。 |
+| `claim_ids` | 按判据声明序排列的条目 ID；自定义库不保证有这些条目。 |
+
+只有 `editorial.guansha_coexistence_female.v1` 的 `required_gender` 为女命；范围完整时，
+男命得到 `NOT_SATISFIED/female_gate_false`。普通官杀并见判据没有此门槛，两者都保留 `female` 观察键。
+只向男命返回的两条婚恋条目由 `claim_genders` 限制：女命不返回这些关联条目，不改变事实判别。
+
+`evaluate_context(chart, *, criterion_id, observation)` 只执行判据，不读取知识文件。
+`ContextResult.reference_ids` 从判据的 `claim_ids` 依次选取 ID，只跳过要求性别与输入命盘不符的条目。
+返回的 ID 保留声明顺序和重复，不另行去重。没有返回参考 ID 时，判据仍可为 `SATISFIED`。
+状态只在 `CriterionResult` 上，条目没有 `UNKNOWN` 或识别状态；编辑正文、引文和来源说明不改变判据结果。
+使用示例见[知识库指南](guides/knowledge.md#不建命盘浏览判据目录)；
+`ContextResult.render()` 只显示计算结果、证据与参考 ID，不重新排盘或加载知识。
+
+### 知识编辑源与文本边界
+
+`KnowledgeBase.load(Path | None)` 每次读取并校验当前编辑源；省略路径读取随包 `knowledge_data.json`。
+已有内存对象不随文件编辑变化。编辑源须含 `schema_version` 及 `objects`、`sources`、`entries` 三份注册表；
+版本只接受精确整数 4，拒绝 `bool`、浮点数、字符串、容器、旧版与未知版，不自动迁移。
+对象必填 `object_id`、`kind`、`name`；条目必填 `claim_id`、非空讨论对象列表 `objects`、正文 `text`；
+来源必填 `source_id`、`work`。其余字段可省略，未填前提不表示无条件，未填来源状态不表示已核实。
+
+加载检查类型、重复键／ID、未知字段、必填字段与断引用，不执行来源数量等收录政策。
+对象 ID 不能与另一个对象的名称相同，冲突时抛 `ValueError`；同一对象的 ID 与名称可以相同。
+类型错误抛 `TypeError`，值或引用错误抛 `ValueError`；JSON 解析、文件读取和文本编码错误沿用标准库异常。
+条目按稳定 ID 关联，编辑源版本不是条文真伪的认证。
+
+`render(entry, *, show_sources=False)` 默认显示 ID、正文、必要前提、读法、署名、限度与简短出处；
+空字段省略，来源的 `limitations` 始终显示。`show_sources=True` 追加版本、位置、链接、摘录与支持范围。

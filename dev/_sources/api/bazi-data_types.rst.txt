@@ -21,19 +21,10 @@ bazi.data_types
 
 .. autoclass:: bazi.data_types.HiddenTianganDict
 
-.. autodata:: bazi.data_types.PillarDataType
-   :no-value:
-
 .. autoclass:: bazi.data_types.BaziData
-   :members: day, hour, month, year
+   :members: day, hour, month, year, 年, 日, 时, 月
    :undoc-members:
 
-.. autodata:: bazi.data_types.TianganDataType
-   :no-value:
-
-.. autodata:: bazi.data_types.DizhiDataType
-   :no-value:
-
 .. autoclass:: bazi.data_types.GanzhiData
-   :members: dizhi, tiangan
+   :members: dizhi, tiangan, 地支, 天干
    :undoc-members:

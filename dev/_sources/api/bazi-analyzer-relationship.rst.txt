@@ -9,13 +9,11 @@ bazi.analyzer.relationship
 .. autodata:: bazi.analyzer.relationship.WHOLE_PILLAR_SHENSHA_LABELS
    :no-value:
 
-.. autoclass:: bazi.analyzer.relationship.ShenshaAnalysis
-   :members: feiren, guasu, guchen, guoyin, hongluan, hongyan, huagai, jiangxing, jiesha, jinyu, kongwang, lushen, taiji, taohua, tianxi, tianyi, wangshen, wenchang, wenchanggui, yangren, yima, zaisha
-   :undoc-members:
+.. autodata:: bazi.analyzer.relationship.ShenshaAnalysis
+   :no-value:
 
-.. autoclass:: bazi.analyzer.relationship.AtBirthShenshaAnalysis
-   :members: feiren, guasu, guchen, guoyin, hongluan, hongyan, huagai, jiangxing, jiesha, jinyu, kongwang, kuigang, lushen, taiji, taohua, tianshe, tianxi, tianyi, wangshen, wenchang, wenchanggui, yangren, yima, zaisha
-   :undoc-members:
+.. autodata:: bazi.analyzer.relationship.AtBirthShenshaAnalysis
+   :no-value:
 
 .. autoclass:: bazi.analyzer.relationship.RelationParticipant
    :members: ganzhi, position

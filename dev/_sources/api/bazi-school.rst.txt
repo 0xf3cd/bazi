@@ -35,7 +35,7 @@ bazi.school
    :no-value:
 
 .. autoclass:: bazi.school.BaziConfig
-   :members: backend, dayun_year_rule, from_values, precision, school
+   :members: dayun_year_rule, from_values, precision, school
    :undoc-members:
 
 .. autodata:: bazi.school.DEFAULT_CONFIG

@@ -4,9 +4,15 @@
   "versions": [
     {
       "label": "dev",
-      "state": "ready",
-      "commit": "e768b414bb1dbaec63bbca224caf038bd2f13e48",
-      "digest": "d67b74ce7cdb38131bd5e1eabb6ef9fd71300a5e91b119a8cbe2d1f65c791582"
+      "state": "archived",
+      "commit": "9f85f8d0f24e0ef339226627d7ae0af4532dd3cf",
+      "digest": "4b18b92a47a6c356b94f1e84b85cc2268ce0ae24e2800f057694ea54f201bf8f"
+    },
+    {
+      "label": "v3.0.0",
+      "state": "archived",
+      "commit": "9f85f8d0f24e0ef339226627d7ae0af4532dd3cf",
+      "digest": "2fce9f363de71d3a9c09e451cdb4fd16cb923c4b8a28a248fa7cdaed9d3ca146"
     },
     {
       "label": "v2.6.0",

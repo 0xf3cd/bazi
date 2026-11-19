@@ -1,0 +1,6 @@
+bazi.common
+===========
+
+.. automodule:: bazi.common
+
+.. autoclass:: bazi.common.frozendict

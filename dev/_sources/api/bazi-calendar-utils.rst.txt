@@ -1,0 +1,24 @@
+bazi.calendar.utils
+===================
+
+.. automodule:: bazi.calendar.utils
+
+.. autofunction:: bazi.calendar.utils.get_min_supported_date
+
+.. autofunction:: bazi.calendar.utils.get_max_supported_date
+
+.. autofunction:: bazi.calendar.utils.to_solar
+
+.. autofunction:: bazi.calendar.utils.to_lunar
+
+.. autofunction:: bazi.calendar.utils.to_ganzhi
+
+.. autofunction:: bazi.calendar.utils.to_date
+
+.. autofunction:: bazi.calendar.utils.jieqi_moment
+
+.. autofunction:: bazi.calendar.utils.supported_jie_boundaries
+
+.. autofunction:: bazi.calendar.utils.prev_jie
+
+.. autofunction:: bazi.calendar.utils.next_jie

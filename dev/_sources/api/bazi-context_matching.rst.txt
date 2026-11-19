@@ -70,7 +70,7 @@ bazi.context_matching
    :undoc-members:
 
 .. autoclass:: bazi.context_matching.ContextResult
-   :members: bazi, criterion, evidence, knowledge, observation, reference_ids, render
+   :members: bazi, criterion, evidence, observation, reference_ids, render
    :undoc-members:
 
 .. autofunction:: bazi.context_matching.evaluate_context

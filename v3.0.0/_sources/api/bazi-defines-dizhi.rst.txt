@@ -1,0 +1,14 @@
+bazi.defines.dizhi
+==================
+
+.. automodule:: bazi.defines.dizhi
+
+.. autoclass:: bazi.defines.dizhi.Dizhi
+   :members: CHEN, CHOU, HAI, MAO, SHEN, SI, WEI, WU, XU, YIN, YOU, ZI, as_list, from_index, from_str, index, 丑, 亥, 午, 卯, 子, 寅, 巳, 戌, 未, 申, 辰, 酉
+   :undoc-members:
+
+.. py:currentmodule:: bazi.defines.dizhi
+
+.. py:data:: 地支
+
+   :py:obj:`bazi.defines.dizhi.Dizhi` 的别名。

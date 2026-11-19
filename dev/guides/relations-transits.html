@@ -9,7 +9,7 @@
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=5ecbeea2" />
     <link rel="stylesheet" type="text/css" href="../_static/basic.css?v=b08954a9" />
     <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=27fed22d" />
-    <link rel="stylesheet" type="text/css" href="../_static/documentation.css?v=7838f881" />
+    <link rel="stylesheet" type="text/css" href="../_static/documentation.css?v=40cf1dba" />
     <script src="../_static/documentation_options.js?v=7d86a446"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
@@ -17,7 +17,7 @@
     <link rel="index" title="索引" href="../genindex.html" />
     <link rel="search" title="搜索" href="../search.html" />
     <link rel="next" title="查阅知识库" href="knowledge.html" />
-    <link rel="prev" title="配置与时间口径" href="configuration.html" />
+    <link rel="prev" title="公历、农历与节气" href="calendar.html" />
    
   <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
   
@@ -41,7 +41,29 @@
 结果是结构事实，描述“哪些干支落在哪些位置、在所选流派或匹配条件下满足哪种关系”，不是旺衰、格局或对事件的预测。
 要检查某条知识条目的前提在一张盘上是否成立，见 <a class="reference internal" href="integration.html"><span class="doc">集成开发</span></a>。</p>
 <section id="id2">
-<h2>查年、月、日或时刻的流运<a class="headerlink" href="#id2" title="链接到此标题。">¶</a></h2>
+<h2>查某年的大运和流年<a class="headerlink" href="#id2" title="链接到此标题。">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">流年大运</span></code> 是 <code class="docutils literal notranslate"><span class="pre">TransitChart</span></code> 的中文类型名。年份填写干支年标签：</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">bazi.bazi</span><span class="w"> </span><span class="kn">import</span> <span class="n">八字</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bazi.bazi_chart</span><span class="w"> </span><span class="kn">import</span> <span class="n">命盘</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bazi.transit_chart</span><span class="w"> </span><span class="kn">import</span> <span class="n">流年大运</span>
+
+<span class="n">盘</span> <span class="o">=</span> <span class="n">命盘</span><span class="p">(</span><span class="n">八字</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="s1">'1990-05-17 10:30'</span><span class="p">,</span> <span class="s1">'女'</span><span class="p">))</span>
+<span class="n">岁运</span> <span class="o">=</span> <span class="n">流年大运</span><span class="p">(</span><span class="n">盘</span><span class="p">)</span><span class="o">.</span><span class="n">at_year</span><span class="p">(</span><span class="mi">2024</span><span class="p">)</span>
+<span class="k">if</span> <span class="n">岁运</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+  <span class="nb">print</span><span class="p">(</span><span class="s1">'大运'</span><span class="p">,</span> <span class="n">岁运</span><span class="o">.</span><span class="n">大运</span><span class="p">)</span>
+  <span class="nb">print</span><span class="p">(</span><span class="s1">'流年'</span><span class="p">,</span> <span class="n">岁运</span><span class="o">.</span><span class="n">流年</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>大运 丁丑
+流年 甲辰
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">.大运</span></code>、<code class="docutils literal notranslate"><span class="pre">.流年</span></code> 分别是 <code class="docutils literal notranslate"><span class="pre">.dayun</span></code>、<code class="docutils literal notranslate"><span class="pre">.liunian</span></code> 的只读别名，值为 <code class="docutils literal notranslate"><span class="pre">Ganzhi</span></code> 或 <code class="docutils literal notranslate"><span class="pre">None</span></code>。
+早于出生干支年时整次查询返回 <code class="docutils literal notranslate"><span class="pre">None</span></code>；能返回流年但没有对应大运时，仅 <code class="docutils literal notranslate"><span class="pre">.大运</span></code> 为 <code class="docutils literal notranslate"><span class="pre">None</span></code>。
+大运按命盘选择的年份标签规则读取；查具体日期或时刻的交运边界，用下节入口。</p>
+</section>
+<section id="id3">
+<h2>查年、月、日或时刻的流运<a class="headerlink" href="#id3" title="链接到此标题。">¶</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">TransitChart</span></code> 接收 <code class="docutils literal notranslate"><span class="pre">BaziChart</span></code>，返回指定坐标下的 <code class="docutils literal notranslate"><span class="pre">TransitSet</span></code>。下面显式使用 <code class="docutils literal notranslate"><span class="pre">minute</span></code> 精度，
 使四种入口都支持；默认 <code class="docutils literal notranslate"><span class="pre">DAY</span></code> 命盘不支持 <code class="docutils literal notranslate"><span class="pre">at_moment()</span></code>。
 所有出生输入和日期／时刻查询都按东八区参考钟填写，地点盘的流运查询也不改用真太阳钟。</p>
@@ -96,7 +118,7 @@
 </tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">at_moment(solar_moment)</span></code></p></td>
 <td><p>东八区无时区 <code class="docutils literal notranslate"><span class="pre">datetime</span></code></p></td>
-<td><p>返回流年、流月、流日及可取得的小运／大运，不增加流时。出生前、节令表范围外或配置不支持为 <code class="docutils literal notranslate"><span class="pre">None</span></code>；须用 celestial 系后端及 HOUR／MINUTE 精度。</p></td>
+<td><p>返回流年、流月、流日及可取得的小运／大运，不增加流时。出生前、节令表范围外或使用 DAY 精度为 <code class="docutils literal notranslate"><span class="pre">None</span></code>；须用 HOUR／MINUTE 精度。</p></td>
 </tr>
 </tbody>
 </table>
@@ -105,8 +127,8 @@
 所选种类有缺项时抛 <code class="docutils literal notranslate"><span class="pre">ValueError</span></code>。<code class="docutils literal notranslate"><span class="pre">at_moment</span></code> 按秒比较，流日应用所选换日点，可能与同公历日的 <code class="docutils literal notranslate"><span class="pre">at_date</span></code> 不同。
 完整时间与类型边界见 <a class="reference internal" href="../api/bazi-transit_chart.html#bazi.transit_chart.TransitChart" title="bazi.transit_chart.TransitChart"><code class="xref py py-class docutils literal notranslate"><span class="pre">TransitChart</span></code></a>。</p>
 </section>
-<section id="id3">
-<h2>列出几步大运和流年<a class="headerlink" href="#id3" title="链接到此标题。">¶</a></h2>
+<section id="id4">
+<h2>列出几步大运和流年<a class="headerlink" href="#id4" title="链接到此标题。">¶</a></h2>
 <p>大运生成器有限，流年生成器无限。用 <code class="docutils literal notranslate"><span class="pre">islice</span></code> 限定要读的数量，不要直接把 <code class="docutils literal notranslate"><span class="pre">chart.liunian</span></code> 转成 <code class="docutils literal notranslate"><span class="pre">list</span></code> 或 <code class="docutils literal notranslate"><span class="pre">tuple</span></code>：</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">itertools</span><span class="w"> </span><span class="kn">import</span> <span class="n">islice</span>
 
@@ -131,13 +153,15 @@
 </div>
 <p>每步大运覆盖 <code class="docutils literal notranslate"><span class="pre">[start_moment,</span> <span class="pre">end_moment)</span></code>，年份是标签，不表示占据整个标签年；规则见 <a class="reference internal" href="configuration.html"><span class="doc">配置与时间口径</span></a>。
 每次访问 <code class="docutils literal notranslate"><span class="pre">dayun</span></code>／<code class="docutils literal notranslate"><span class="pre">liunian</span></code> 都新建生成器，从头开始读取。把生成器保存到变量后，继续遍历这个变量会从上次位置接着读。
-大运数量取决于后端支持范围。
+大运数量由节气表窗口限定：只生成起点位于 <code class="docutils literal notranslate"><span class="pre">supported_jie_boundaries()</span></code> 首末节时刻之间的大运，
+含首端、不含末端，每步终点可以越界。窗口端点见 <a class="reference internal" href="calendar.html"><span class="doc">公历、农历与节气</span></a> 的“查询节气与相邻的节”；
+它不同于日期换算的支持范围。
 <code class="docutils literal notranslate"><span class="pre">xiaoyun</span></code> 则是缓存元组，可反复遍历。排成流运文字的例子在本页<a class="reference internal" href="#transits-text"><span class="std std-ref">流运文本</span></a>。</p>
 <p>后续按任务选择：原局关系看下节，神煞看<a class="reference internal" href="#relations-shensha"><span class="std std-ref">原局神煞</span></a>，
 原局与流运的关系看<a class="reference internal" href="#relations-transit-house"><span class="std std-ref">流运关系</span></a>，按位置查全部关系看<a class="reference internal" href="#relations-positions"><span class="std std-ref">跨组位置</span></a>。</p>
 </section>
-<section id="id4">
-<h2>原局日主关系：按天干值汇总<a class="headerlink" href="#id4" title="链接到此标题。">¶</a></h2>
+<section id="id5">
+<h2>原局日主关系：按天干值汇总<a class="headerlink" href="#id5" title="链接到此标题。">¶</a></h2>
 <p><a class="reference internal" href="../api/bazi-analyzer-relationship.html#bazi.analyzer.relationship.AtBirthAnalysis.day_master_relations" title="bazi.analyzer.relationship.AtBirthAnalysis.day_master_relations"><code class="xref py py-attr docutils literal notranslate"><span class="pre">day_master_relations</span></code></a> 比较日主与年、月、时的明干，
 返回关系到天干组合元组的冻结映射：</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">bazi.analyzer.relationship</span><span class="w"> </span><span class="kn">import</span> <span class="n">RelationshipAnalyzer</span>
@@ -161,8 +185,8 @@
 需要按柱位比较时由 <code class="docutils literal notranslate"><span class="pre">chart.bazi.four_tiangans</span></code> 取年、月、日、时干，各柱十神见 <code class="docutils literal notranslate"><span class="pre">chart.shishen</span></code>。
 配偶星证据中的 <code class="docutils literal notranslate"><span class="pre">stem_relations</span></code> 仅覆盖含配偶星目标干的明干组合，不是通用的日主关系接口。</p>
 </section>
-<section id="id5">
-<h2>六甲旬空：先选结果，再查柱位<a class="headerlink" href="#id5" title="链接到此标题。">¶</a></h2>
+<section id="id6">
+<h2>六甲旬空：先选结果，再查柱位<a class="headerlink" href="#id6" title="链接到此标题。">¶</a></h2>
 <p>只需要命中了哪些地支时，读取分析层的 <code class="docutils literal notranslate"><span class="pre">shensha['kongwang']</span></code>，结果是地支并集。
 需要知道“依据哪根柱查得、命中哪个位置”时，使用
 <a class="reference internal" href="../api/bazi-analyzer-relationship.html#bazi.analyzer.relationship.AtBirthAnalysis.kongwang" title="bazi.analyzer.relationship.AtBirthAnalysis.kongwang"><code class="xref py py-attr docutils literal notranslate"><span class="pre">kongwang</span></code></a> 或
@@ -234,15 +258,15 @@
 不以冲合刑取消命中，也不改变五行、十神、纳音或其他关系；出空、填实、吉凶、单支筛选、截路及四大空亡均不在此接口中判断。</p>
 <p>若已持有干支，只需做一次低层查表，使用 <a class="reference internal" href="../api/bazi-utils-shensha_utils.html#bazi.utils.shensha_utils.xunkong" title="bazi.utils.shensha_utils.xunkong"><code class="xref py py-func docutils literal notranslate"><span class="pre">xunkong()</span></code></a> 返回旬空二支，
 或用 <a class="reference internal" href="../api/bazi-utils-shensha_utils.html#bazi.utils.shensha_utils.kongwang" title="bazi.utils.shensha_utils.kongwang"><code class="xref py py-func docutils literal notranslate"><span class="pre">kongwang()</span></code></a> 检查某目标支。两者要求查法依据是合法六十甲子，
-目标只按地支判断，不附加天干或纳音条件。阴阳不配的依据会被拒绝，但 <code class="docutils literal notranslate"><span class="pre">Ganzhi</span></code> 自身的构造范围不变。</p>
+目标只按地支判断，不附加天干或纳音条件。阴阳不配的组合在 <code class="docutils literal notranslate"><span class="pre">Ganzhi</span></code> 构造时即被拒绝。</p>
 <p>打印位置时，原局柱位 <code class="docutils literal notranslate"><span class="pre">Zhu</span></code> 用 <code class="docutils literal notranslate"><span class="pre">str(value)</span></code> 取得中文值，流运种类 <code class="docutils literal notranslate"><span class="pre">TransitKind</span></code> 用 <code class="docutils literal notranslate"><span class="pre">.value</span></code> 取得
 <code class="docutils literal notranslate"><span class="pre">dayun</span></code>、<code class="docutils literal notranslate"><span class="pre">liunian</span></code> 等标签。</p>
 </section>
 <section id="relations-shensha">
-<span id="id6"></span><h2>原局神煞与中文名<a class="headerlink" href="#relations-shensha" title="链接到此标题。">¶</a></h2>
+<span id="id7"></span><h2>原局神煞与中文名<a class="headerlink" href="#relations-shensha" title="链接到此标题。">¶</a></h2>
 <p><a class="reference internal" href="../api/bazi-analyzer-relationship.html#bazi.analyzer.relationship.SHENSHA_LABELS" title="bazi.analyzer.relationship.SHENSHA_LABELS"><code class="xref py py-data docutils literal notranslate"><span class="pre">SHENSHA_LABELS</span></code></a> 保存支集神煞的22个名称，
 <a class="reference internal" href="../api/bazi-analyzer-relationship.html#bazi.analyzer.relationship.WHOLE_PILLAR_SHENSHA_LABELS" title="bazi.analyzer.relationship.WHOLE_PILLAR_SHENSHA_LABELS"><code class="xref py py-data docutils literal notranslate"><span class="pre">WHOLE_PILLAR_SHENSHA_LABELS</span></code></a> 保存魁罡、天赦两个整柱名称。
-两表均从 <code class="docutils literal notranslate"><span class="pre">relationship</span></code> 模块导入；整柱结果是完整日柱或 <code class="docutils literal notranslate"><span class="pre">None</span></code>。</p>
+两表均从 <code class="docutils literal notranslate"><span class="pre">relationship</span></code> 模块导入，键与结果映射对应，值为中文名；整柱结果是完整日柱或 <code class="docutils literal notranslate"><span class="pre">None</span></code>。</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">bazi.analyzer.relationship</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
   <span class="n">RelationshipAnalyzer</span><span class="p">,</span> <span class="n">SHENSHA_LABELS</span><span class="p">,</span> <span class="n">WHOLE_PILLAR_SHENSHA_LABELS</span><span class="p">,</span>
 <span class="p">)</span>
@@ -253,6 +277,7 @@
 <span class="n">result</span> <span class="o">=</span> <span class="n">RelationshipAnalyzer</span><span class="p">(</span><span class="n">chart</span><span class="p">)</span><span class="o">.</span><span class="n">at_birth</span><span class="o">.</span><span class="n">shensha</span>
 <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">SHENSHA_LABELS</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
   <span class="n">branches</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+  <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">branches</span><span class="p">,</span> <span class="nb">frozenset</span><span class="p">)</span>
   <span class="k">if</span> <span class="n">branches</span><span class="p">:</span>
     <span class="nb">print</span><span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="s1">''</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">branches</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">branch</span><span class="p">:</span> <span class="n">branch</span><span class="o">.</span><span class="n">index</span><span class="p">))))</span>
 <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">WHOLE_PILLAR_SHENSHA_LABELS</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
@@ -268,10 +293,11 @@
 天赦 无
 </pre></div>
 </div>
-<p>支集结果按地支值汇总，不区分同支的不同柱。旬空需要逐锚和位置时用上文的 <code class="docutils literal notranslate"><span class="pre">kongwang</span></code>。</p>
+<p>支集结果按地支值汇总，不区分同支的不同柱。旬空需要逐锚和位置时，用
+<code class="docutils literal notranslate"><span class="pre">AtBirthAnalysis.kongwang</span></code> 或 <code class="docutils literal notranslate"><span class="pre">TransitAnalysis.kongwang(transits)</span></code>。</p>
 </section>
 <section id="relations-transit-house">
-<span id="id7"></span><h2>查流运与婚姻宫的关系<a class="headerlink" href="#relations-transit-house" title="链接到此标题。">¶</a></h2>
+<span id="id8"></span><h2>查流运与婚姻宫的关系<a class="headerlink" href="#relations-transit-house" title="链接到此标题。">¶</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">RelationshipAnalyzer</span></code> 对查到的 <code class="docutils literal notranslate"><span class="pre">TransitSet</span></code> 做关系查询。下面取 2024 年的流运，查它与婚姻宫的地支关系。</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
 
@@ -316,7 +342,7 @@
 不能先转成集合再查；方向、按值合并与按位置保留是不同结果，不相互替代。</p>
 </section>
 <section id="relations-positions">
-<span id="id8"></span><h2>全部跨组地支关系：保留具体位置<a class="headerlink" href="#relations-positions" title="链接到此标题。">¶</a></h2>
+<span id="id9"></span><h2>全部跨组地支关系：保留具体位置<a class="headerlink" href="#relations-positions" title="链接到此标题。">¶</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">house_relations</span></code> 只查婚姻宫，且按地支值汇总。要查全部原局与所选流运之间的关系，使用
 <a class="reference internal" href="../api/bazi-analyzer-relationship.html#bazi.analyzer.relationship.TransitAnalysis.all_relations" title="bazi.analyzer.relationship.TransitAnalysis.all_relations"><code class="xref py py-meth docutils literal notranslate"><span class="pre">all_relations()</span></code></a>：</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">bazi.analyzer.relationship</span><span class="w"> </span><span class="kn">import</span> <span class="n">RelationshipAnalyzer</span>
@@ -343,8 +369,8 @@
 原局位置用 <code class="docutils literal notranslate"><span class="pre">Zhu</span></code>，流运位置用 <code class="docutils literal notranslate"><span class="pre">TransitKind</span></code>。每个组合两侧都有参与者，不包含纯原局或纯流运组合。
 三支关系和拱局仍按本盘流派判断；结果顺序与低层 <code class="docutils literal notranslate"><span class="pre">discover_mutual_ganzhis</span></code> 一致，只把序号换成位置。</p>
 </section>
-<section id="id9">
-<h2>通根与透干：明藏匹配事实<a class="headerlink" href="#id9" title="链接到此标题。">¶</a></h2>
+<section id="id10">
+<h2>通根与透干：明藏匹配事实<a class="headerlink" href="#id10" title="链接到此标题。">¶</a></h2>
 <p><a class="reference internal" href="../api/bazi-analyzer-facts.html#bazi.analyzer.facts.tonggen" title="bazi.analyzer.facts.tonggen"><code class="xref py py-func docutils literal notranslate"><span class="pre">tonggen()</span></code></a> 查目标干在原局与所选流运藏干中的匹配，默认同五行；同五行包括同干，
 <code class="docutils literal notranslate"><span class="pre">TianganMatch.SAME_TIANGAN</span></code> 则只取同干。返回 <code class="docutils literal notranslate"><span class="pre">TianganOccurrence</span></code> 元组，每条记录的 <code class="docutils literal notranslate"><span class="pre">position</span></code> 是位置，
 <code class="docutils literal notranslate"><span class="pre">ganzhi</span></code> 是完整干支，<code class="docutils literal notranslate"><span class="pre">stem</span></code> 是匹配的实际藏干。</p>
@@ -386,7 +412,7 @@
 <p>两种条件都以藏干表为依据，乙逢午、丁逢酉的阴长生根不在查询范围内。</p>
 </section>
 <section id="transits-text">
-<span id="id10"></span><h2>把流运排成文本<a class="headerlink" href="#transits-text" title="链接到此标题。">¶</a></h2>
+<span id="id11"></span><h2>把流运排成文本<a class="headerlink" href="#transits-text" title="链接到此标题。">¶</a></h2>
 <p>需要的是文字而不是对象时，<code class="docutils literal notranslate"><span class="pre">bazi.chart_text.transit_text</span></code> 把节、交运时间、大运、小运和流年排好。
 流年可以无限延续，所以数量由你给：<code class="docutils literal notranslate"><span class="pre">dayun_count</span></code> 取前几步大运，<code class="docutils literal notranslate"><span class="pre">liunian_count</span></code> 取从出生干支年起的几年，默认分别是 10 和 100。
 小运是有限的，全部列出。</p>
@@ -457,6 +483,7 @@
 <li class="toctree-l1"><a class="reference internal" href="quickstart.html">快速开始</a></li>
 <li class="toctree-l1"><a class="reference internal" href="cli.html">命令行</a></li>
 <li class="toctree-l1"><a class="reference internal" href="configuration.html">配置与时间口径</a></li>
+<li class="toctree-l1"><a class="reference internal" href="calendar.html">公历、农历与节气</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">关系与流运</a></li>
 <li class="toctree-l1"><a class="reference internal" href="knowledge.html">查阅知识库</a></li>
 <li class="toctree-l1"><a class="reference internal" href="integration.html">集成开发</a></li>
@@ -485,7 +512,7 @@
 <h3>Related Topics</h3>
 <ul>
   <li><a href="../index.html">Documentation overview</a><ul>
-      <li>Previous: <a href="configuration.html" title="上一章">配置与时间口径</a></li>
+      <li>Previous: <a href="calendar.html" title="上一章">公历、农历与节气</a></li>
       <li>Next: <a href="knowledge.html" title="下一章">查阅知识库</a></li>
   </ul></li>
 </ul>

@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>bazi.knowledge &#8212; bazi · v3.0.0</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=27fed22d" />
+    <link rel="stylesheet" type="text/css" href="../_static/documentation.css?v=40cf1dba" />
+    <script src="../_static/documentation_options.js?v=7d86a446"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/translations.js?v=540d3cec"></script>
+    <link rel="index" title="索引" href="../genindex.html" />
+    <link rel="search" title="搜索" href="../search.html" />
+    <link rel="next" title="bazi.rules" href="bazi-rules.html" />
+    <link rel="prev" title="bazi.defines.zhu" href="bazi-defines-zhu.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="module-bazi.knowledge">
+<span id="bazi-knowledge"></span><h1>bazi.knowledge<a class="headerlink" href="#module-bazi.knowledge" title="链接到此标题。">¶</a></h1>
+<p>按讨论对象查阅知识条目及其出处；不判断命盘适用性。</p>
+<dl class="py data">
+<dt class="sig sig-object py" id="bazi.knowledge.SourceState">
+<span class="sig-prename descclassname"><span class="pre">bazi.knowledge.</span></span><span class="sig-name descname"><span class="pre">SourceState</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/knowledge.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.knowledge.SourceState" title="链接到此定义。">¶</a></dt>
+<dd><p>来源记录的核验状态；未填写不表示已核实，也不认证命盘前提或现实事件。</p>
+<p><code class="xref py py-obj docutils literal notranslate"><span class="pre">Literal</span></code>['witnessed', 'editorial', 'unverified', 'repository_attributed'] 的别名</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="bazi.knowledge.DEFAULT_SOURCE_PATH">
+<span class="sig-prename descclassname"><span class="pre">bazi.knowledge.</span></span><span class="sig-name descname"><span class="pre">DEFAULT_SOURCE_PATH</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Final</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3.13/library/pathlib.html#pathlib.Path"><span class="pre">Path</span></a><span class="p"><span class="pre">]</span></span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/knowledge.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.knowledge.DEFAULT_SOURCE_PATH" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="bazi.knowledge.KnowledgeObject">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">bazi.knowledge.</span></span><span class="sig-name descname"><span class="pre">KnowledgeObject</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">object_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kind</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/knowledge.py#L23-L34"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.knowledge.KnowledgeObject" title="链接到此定义。">¶</a></dt>
+<dd><p>具名讨论对象；kind 区分同名的天干、十神、五行、神煞与概念。</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.knowledge.KnowledgeObject.kind">
+<span class="sig-name descname"><span class="pre">kind</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><a class="headerlink" href="#bazi.knowledge.KnowledgeObject.kind" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.knowledge.KnowledgeObject.name">
+<span class="sig-name descname"><span class="pre">name</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><a class="headerlink" href="#bazi.knowledge.KnowledgeObject.name" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.knowledge.KnowledgeObject.object_id">
+<span class="sig-name descname"><span class="pre">object_id</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><a class="headerlink" href="#bazi.knowledge.KnowledgeObject.object_id" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="bazi.knowledge.KnowledgeSource">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">bazi.knowledge.</span></span><span class="sig-name descname"><span class="pre">KnowledgeSource</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">work</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attribution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">edition</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">locator</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">url</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">excerpt</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">supports</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">limitations</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">state</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'witnessed'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'editorial'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'unverified'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'repository_attributed'</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/knowledge.py#L37-L61"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.knowledge.KnowledgeSource" title="链接到此定义。">¶</a></dt>
+<dd><p>出处与支持范围；只有 source_id 和作品名 work 必填，摘录按原文保存。</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.knowledge.KnowledgeSource.attribution">
+<span class="sig-name descname"><span class="pre">attribution</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">''</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/knowledge.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.knowledge.KnowledgeSource.attribution" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.knowledge.KnowledgeSource.edition">
+<span class="sig-name descname"><span class="pre">edition</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">''</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/knowledge.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.knowledge.KnowledgeSource.edition" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.knowledge.KnowledgeSource.excerpt">
+<span class="sig-name descname"><span class="pre">excerpt</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">''</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/knowledge.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.knowledge.KnowledgeSource.excerpt" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.knowledge.KnowledgeSource.limitations">
+<span class="sig-name descname"><span class="pre">limitations</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">''</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/knowledge.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.knowledge.KnowledgeSource.limitations" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.knowledge.KnowledgeSource.locator">
+<span class="sig-name descname"><span class="pre">locator</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">''</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/knowledge.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.knowledge.KnowledgeSource.locator" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.knowledge.KnowledgeSource.source_id">
+<span class="sig-name descname"><span class="pre">source_id</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><a class="headerlink" href="#bazi.knowledge.KnowledgeSource.source_id" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.knowledge.KnowledgeSource.state">
+<span class="sig-name descname"><span class="pre">state</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'witnessed'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'editorial'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'unverified'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'repository_attributed'</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/knowledge.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.knowledge.KnowledgeSource.state" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.knowledge.KnowledgeSource.supports">
+<span class="sig-name descname"><span class="pre">supports</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">''</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/knowledge.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.knowledge.KnowledgeSource.supports" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.knowledge.KnowledgeSource.url">
+<span class="sig-name descname"><span class="pre">url</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">''</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/knowledge.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.knowledge.KnowledgeSource.url" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.knowledge.KnowledgeSource.work">
+<span class="sig-name descname"><span class="pre">work</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><a class="headerlink" href="#bazi.knowledge.KnowledgeSource.work" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="bazi.knowledge.KnowledgeEntry">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">bazi.knowledge.</span></span><span class="sig-name descname"><span class="pre">KnowledgeEntry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">claim_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">objects</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">text</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">topics</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">premise</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">viewpoint</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attribution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sources</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">limits</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">()</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/knowledge.py#L64-L93"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.knowledge.KnowledgeEntry" title="链接到此定义。">¶</a></dt>
+<dd><p>讨论对象与正文，附有材料支持的前提、读法、署名和出处。</p>
+<p>只有 claim_id、objects、text 必填。前提为空只表示没有填写；
+多对象条目在每个对象下都能查到，对象顺序不表示主次，关系方向由正文表达。</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.knowledge.KnowledgeEntry.attribution">
+<span class="sig-name descname"><span class="pre">attribution</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">''</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/knowledge.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.knowledge.KnowledgeEntry.attribution" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.knowledge.KnowledgeEntry.claim_id">
+<span class="sig-name descname"><span class="pre">claim_id</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><a class="headerlink" href="#bazi.knowledge.KnowledgeEntry.claim_id" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.knowledge.KnowledgeEntry.limits">
+<span class="sig-name descname"><span class="pre">limits</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">()</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/knowledge.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.knowledge.KnowledgeEntry.limits" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.knowledge.KnowledgeEntry.objects">
+<span class="sig-name descname"><span class="pre">objects</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#bazi.knowledge.KnowledgeEntry.objects" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.knowledge.KnowledgeEntry.premise">
+<span class="sig-name descname"><span class="pre">premise</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">''</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/knowledge.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.knowledge.KnowledgeEntry.premise" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.knowledge.KnowledgeEntry.sources">
+<span class="sig-name descname"><span class="pre">sources</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">()</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/knowledge.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.knowledge.KnowledgeEntry.sources" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.knowledge.KnowledgeEntry.text">
+<span class="sig-name descname"><span class="pre">text</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><a class="headerlink" href="#bazi.knowledge.KnowledgeEntry.text" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.knowledge.KnowledgeEntry.topics">
+<span class="sig-name descname"><span class="pre">topics</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">()</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/knowledge.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.knowledge.KnowledgeEntry.topics" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.knowledge.KnowledgeEntry.viewpoint">
+<span class="sig-name descname"><span class="pre">viewpoint</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">''</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/knowledge.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.knowledge.KnowledgeEntry.viewpoint" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="bazi.knowledge.KnowledgeBase">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">bazi.knowledge.</span></span><span class="sig-name descname"><span class="pre">KnowledgeBase</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">objects</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#bazi.knowledge.KnowledgeObject" title="bazi.knowledge.KnowledgeObject"><span class="pre">KnowledgeObject</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sources</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#bazi.knowledge.KnowledgeSource" title="bazi.knowledge.KnowledgeSource"><span class="pre">KnowledgeSource</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">entries</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#bazi.knowledge.KnowledgeEntry" title="bazi.knowledge.KnowledgeEntry"><span class="pre">KnowledgeEntry</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/knowledge.py#L127-L372"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.knowledge.KnowledgeBase" title="链接到此定义。">¶</a></dt>
+<dd><p>加载、查询并渲染不可变知识条目。</p>
+<p>Note:</p>
+<ul class="simple">
+<li><p>JSON 是编辑源；加载只校验结构与引用，不要求独立来源数量，不认定条目适用于某盘。</p></li>
+<li><p>对象、来源、条目的内容与顺序参与相等和哈希。来源注册表可以包含尚未引用的记录。</p></li>
+<li><p>原创署名与文献引用分别填写；没有引用不表示断言为假，署名也不等于已核定的古籍见证。</p></li>
+</ul>
+<dl class="py property">
+<dt class="sig sig-object py" id="bazi.knowledge.KnowledgeBase.entries">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">entries</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="bazi-common.html#bazi.common.frozendict" title="bazi.common.frozendict"><span class="pre">frozendict</span></a><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#bazi.knowledge.KnowledgeEntry" title="bazi.knowledge.KnowledgeEntry"><span class="pre">KnowledgeEntry</span></a><span class="p"><span class="pre">]</span></span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/knowledge.py#L190-L192"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.knowledge.KnowledgeBase.entries" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bazi.knowledge.KnowledgeBase.entry">
+<span class="sig-name descname"><span class="pre">entry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">claim_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#bazi.knowledge.KnowledgeEntry" title="bazi.knowledge.KnowledgeEntry"><span class="pre">KnowledgeEntry</span></a></span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/knowledge.py#L224-L229"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.knowledge.KnowledgeBase.entry" title="链接到此定义。">¶</a></dt>
+<dd><p>按稳定 ID 读取条目；未知 ID 抛 ValueError。</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bazi.knowledge.KnowledgeBase.filter_values">
+<span class="sig-name descname"><span class="pre">filter_values</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dimension</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/knowledge.py#L255-L266"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.knowledge.KnowledgeBase.filter_values" title="链接到此定义。">¶</a></dt>
+<dd><p>列出 object_id、source_id、topic 或 viewpoint 的合法值，按 Unicode 序排列。</p>
+<p>包括尚未引用的对象和来源；合法过滤值不保证查询有匹配。</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bazi.knowledge.KnowledgeBase.find_objects">
+<span class="sig-name descname"><span class="pre">find_objects</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#bazi.knowledge.KnowledgeObject" title="bazi.knowledge.KnowledgeObject"><span class="pre">KnowledgeObject</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/knowledge.py#L231-L234"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.knowledge.KnowledgeBase.find_objects" title="链接到此定义。">¶</a></dt>
+<dd><p>按名称精确查找对象，重名全部返回，保持注册顺序；无匹配返回空元组。</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bazi.knowledge.KnowledgeBase.load">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">load</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3.13/library/pathlib.html#pathlib.Path"><span class="pre">Path</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#bazi.knowledge.KnowledgeBase" title="bazi.knowledge.KnowledgeBase"><span class="pre">KnowledgeBase</span></a></span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/knowledge.py#L208-L222"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.knowledge.KnowledgeBase.load" title="链接到此定义。">¶</a></dt>
+<dd><p>读取并校验知识 JSON；省略路径时读取随包语料。</p>
+<p>每次重新读取文件，不缓存共享实例；修改文件不影响已加载的知识库。</p>
+<p>Args:</p>
+<ul class="simple">
+<li><p>path: (Path | None) 编辑源路径；None 使用 DEFAULT_SOURCE_PATH。</p></li>
+</ul>
+<p>Return: (KnowledgeBase) 已校验的知识库。</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="bazi.knowledge.KnowledgeBase.objects">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">objects</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="bazi-common.html#bazi.common.frozendict" title="bazi.common.frozendict"><span class="pre">frozendict</span></a><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#bazi.knowledge.KnowledgeObject" title="bazi.knowledge.KnowledgeObject"><span class="pre">KnowledgeObject</span></a><span class="p"><span class="pre">]</span></span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/knowledge.py#L182-L184"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.knowledge.KnowledgeBase.objects" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bazi.knowledge.KnowledgeBase.query">
+<span class="sig-name descname"><span class="pre">query</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">subject</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="bazi-defines-tiangan.html#bazi.defines.tiangan.Tiangan" title="bazi.defines.tiangan.Tiangan"><span class="pre">Tiangan</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="bazi-defines-shishen.html#bazi.defines.shishen.Shishen" title="bazi.defines.shishen.Shishen"><span class="pre">Shishen</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="bazi-defines-wuxing.html#bazi.defines.wuxing.Wuxing" title="bazi.defines.wuxing.Wuxing"><span class="pre">Wuxing</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="仅关键字参数分隔符 (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">topic</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">source_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">viewpoint</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#bazi.knowledge.KnowledgeEntry" title="bazi.knowledge.KnowledgeEntry"><span class="pre">KnowledgeEntry</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/knowledge.py#L268-L299"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.knowledge.KnowledgeBase.query" title="链接到此定义。">¶</a></dt>
+<dd><p>按对象及可选过滤条件取交集，返回语料顺序的条目；无参数返回全部。</p>
+<p>Args:</p>
+<ul class="simple">
+<li><p>subject: (str | Tiangan | Shishen | Wuxing | None) 对象 ID、精确名称或领域枚举；
+枚举按类别与中文名对应。重名抛 ValueError 并列出候选 ID。</p></li>
+<li><p>topic: (str | None) 主题。</p></li>
+<li><p>source_id: (str | None) 来源 ID。</p></li>
+<li><p>viewpoint: (str | None) 读法。</p></li>
+</ul>
+<p>Return: (tuple[KnowledgeEntry, ...]) 命中条目；未知过滤值抛 ValueError。</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bazi.knowledge.KnowledgeBase.render">
+<span class="sig-name descname"><span class="pre">render</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">entry</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#bazi.knowledge.KnowledgeEntry" title="bazi.knowledge.KnowledgeEntry"><span class="pre">KnowledgeEntry</span></a></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="仅关键字参数分隔符 (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">show_sources</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/knowledge.py#L325-L359"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.knowledge.KnowledgeBase.render" title="链接到此定义。">¶</a></dt>
+<dd><p>显示条目、必要前提／限度、读法、署名及简短出处；空栏目省略。</p>
+<p>show_sources=True 另展开定位、原引文及支持范围。来源的必要说明始终显示，
+不因关闭详情而隐藏正文／夹注的区别或证据限度。本方法不求值命盘前提。</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bazi.knowledge.KnowledgeBase.render_subject">
+<span class="sig-name descname"><span class="pre">render_subject</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">subject</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="bazi-defines-tiangan.html#bazi.defines.tiangan.Tiangan" title="bazi.defines.tiangan.Tiangan"><span class="pre">Tiangan</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="bazi-defines-shishen.html#bazi.defines.shishen.Shishen" title="bazi.defines.shishen.Shishen"><span class="pre">Shishen</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="bazi-defines-wuxing.html#bazi.defines.wuxing.Wuxing" title="bazi.defines.wuxing.Wuxing"><span class="pre">Wuxing</span></a></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="仅关键字参数分隔符 (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">show_sources</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/knowledge.py#L361-L372"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.knowledge.KnowledgeBase.render_subject" title="链接到此定义。">¶</a></dt>
+<dd><p>按对象查询并展示全部相关条目；顺序与 query 相同，无相关条目时返回空串。</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bazi.knowledge.KnowledgeBase.search">
+<span class="sig-name descname"><span class="pre">search</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">keyword</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="仅关键字参数分隔符 (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">subject</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="bazi-defines-tiangan.html#bazi.defines.tiangan.Tiangan" title="bazi.defines.tiangan.Tiangan"><span class="pre">Tiangan</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="bazi-defines-shishen.html#bazi.defines.shishen.Shishen" title="bazi.defines.shishen.Shishen"><span class="pre">Shishen</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="bazi-defines-wuxing.html#bazi.defines.wuxing.Wuxing" title="bazi.defines.wuxing.Wuxing"><span class="pre">Wuxing</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">topic</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">source_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">viewpoint</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#bazi.knowledge.KnowledgeEntry" title="bazi.knowledge.KnowledgeEntry"><span class="pre">KnowledgeEntry</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/knowledge.py#L301-L323"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.knowledge.KnowledgeBase.search" title="链接到此定义。">¶</a></dt>
+<dd><p>过滤后作 casefold 字面子串检索，无匹配返回空元组。</p>
+<p>搜索正文、前提、署名、主题、读法、限度及对象名称，不搜索 ID 或来源全文，
+不推断同义词。关键词须非空，不剥除两侧空白；其余条件与 query 相同。</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="bazi.knowledge.KnowledgeBase.sources">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">sources</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="bazi-common.html#bazi.common.frozendict" title="bazi.common.frozendict"><span class="pre">frozendict</span></a><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#bazi.knowledge.KnowledgeSource" title="bazi.knowledge.KnowledgeSource"><span class="pre">KnowledgeSource</span></a><span class="p"><span class="pre">]</span></span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/knowledge.py#L186-L188"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.knowledge.KnowledgeBase.sources" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="bazi.knowledge.">
+<span class="sig-prename descclassname"><span class="pre">bazi.knowledge.</span></span><span class="sig-name descname"><span class="pre">知识库</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/knowledge.py#L127-L372"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.knowledge." title="链接到此定义。">¶</a></dt>
+<dd><p><a class="reference internal" href="#bazi.knowledge.KnowledgeBase" title="bazi.knowledge.KnowledgeBase"><code class="xref py py-obj docutils literal notranslate"><span class="pre">bazi.knowledge.KnowledgeBase</span></code></a> 的别名。</p>
+</dd></dl>
+
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">bazi</a></h1>
+
+
+
+<p class="blurb">排盘、关系与独立知识查阅</p>
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="提交" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>导航</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../guides/quickstart.html">快速开始</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/cli.html">命令行</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/configuration.html">配置与时间口径</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/calendar.html">公历、农历与节气</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/relations-transits.html">关系与流运</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/knowledge.html">查阅知识库</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/integration.html">集成开发</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">API 参考</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../catalog/index.html">知识目录</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/rule-coverage.html">规则、知识与出处的覆盖</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api-contract.html">公开接口契约</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../contributing.html">贡献指南</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../release-notes.html">发布说明</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../versions.html">文档版本</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../versioning.html">维护者：构建与归档文档</a></li>
+</ul>
+
+
+<hr />
+<ul>
+    
+    <li class="toctree-l1"><a href="https://0xf3cd.github.io/bazi/versions/">全部版本</a></li>
+    
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">API 参考</a><ul>
+      <li>Previous: <a href="bazi-defines-zhu.html" title="上一章">bazi.defines.zhu</a></li>
+      <li>Next: <a href="bazi-rules.html" title="下一章">bazi.rules</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      
+      
+      
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.2.0</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

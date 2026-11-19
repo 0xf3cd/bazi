@@ -9,7 +9,7 @@
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=5ecbeea2" />
     <link rel="stylesheet" type="text/css" href="../_static/basic.css?v=b08954a9" />
     <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=27fed22d" />
-    <link rel="stylesheet" type="text/css" href="../_static/documentation.css?v=7838f881" />
+    <link rel="stylesheet" type="text/css" href="../_static/documentation.css?v=40cf1dba" />
     <script src="../_static/documentation_options.js?v=7d86a446"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
@@ -39,32 +39,36 @@
 <h1>查阅知识库<a class="headerlink" href="#id1" title="链接到此标题。">¶</a></h1>
 <p>不创建命盘，也可以按中文名找对象、读条文与出处、搜索文字，或编辑自己的知识文件。</p>
 <p>本页为开发版，下面安装与文档相同提交的源码（需要 Git）：</p>
-<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">"git+https://github.com/0xf3cd/bazi.git@e768b414bb1dbaec63bbca224caf038bd2f13e48"</span>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">"git+https://github.com/0xf3cd/bazi.git@9f85f8d0f24e0ef339226627d7ae0af4532dd3cf"</span>
 </pre></div>
 </div>
 <p>也可下载该提交的源码，在源码根目录运行 <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">-m</span> <span class="pre">pip</span> <span class="pre">install</span> <span class="pre">.</span></code>。最近发布版另见<a class="reference external" href="https://0xf3cd.github.io/bazi/">版本入口</a>。</p>
-<p>排盘路径见 <a class="reference internal" href="quickstart.html"><span class="doc">快速开始</span></a>；不运行 Python 时可直接浏览 <a class="reference internal" href="../catalog/index.html"><span class="doc">知识目录</span></a>。</p>
+<p>排盘路径见 <a class="reference internal" href="quickstart.html"><span class="doc">快速开始</span></a>；不运行 Python 时可直接浏览 <a class="reference internal" href="../catalog/index.html"><span class="doc">知识目录</span></a>。
+旧版调用与知识文件的迁移见 <a class="reference internal" href="../release-notes.html"><span class="doc">发布说明</span></a>。</p>
 <section id="id">
 <h2>按名称或 ID 找对象<a class="headerlink" href="#id" title="链接到此标题。">¶</a></h2>
-<p>先按中文名找到“丁”，再查询并读出条文：</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">bazi.knowledge</span><span class="w"> </span><span class="kn">import</span> <span class="n">KnowledgeBase</span>
+<p>直接按中文名查询；下面只读定义主题：</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">bazi.defines</span><span class="w"> </span><span class="kn">import</span> <span class="n">天干</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bazi.knowledge</span><span class="w"> </span><span class="kn">import</span> <span class="n">知识库</span>
 
-<span class="n">kb</span> <span class="o">=</span> <span class="n">KnowledgeBase</span><span class="o">.</span><span class="n">load</span><span class="p">()</span>
-<span class="k">for</span> <span class="n">obj</span> <span class="ow">in</span> <span class="n">kb</span><span class="o">.</span><span class="n">find_objects</span><span class="p">(</span><span class="s1">'丁'</span><span class="p">):</span>
-  <span class="nb">print</span><span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">obj</span><span class="o">.</span><span class="n">object_id</span><span class="p">)</span>
-  <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">kb</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">object_id</span><span class="o">=</span><span class="n">obj</span><span class="o">.</span><span class="n">object_id</span><span class="p">):</span>
-    <span class="nb">print</span><span class="p">(</span><span class="n">kb</span><span class="o">.</span><span class="n">render</span><span class="p">(</span><span class="n">entry</span><span class="p">,</span> <span class="n">show_sources</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
+<span class="n">kb</span> <span class="o">=</span> <span class="n">知识库</span><span class="o">.</span><span class="n">load</span><span class="p">()</span>
+<span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">kb</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">天干</span><span class="o">.</span><span class="n">丁</span><span class="p">,</span> <span class="n">topic</span><span class="o">=</span><span class="s1">'定义'</span><span class="p">):</span>
+  <span class="nb">print</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
 </pre></div>
 </div>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>丁 tiangan.ding
-丁为阴火。
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>丁为阴火。
 </pre></div>
 </div>
-<p><code class="docutils literal notranslate"><span class="pre">find_objects</span></code> 精确匹配名称，重名会全部返回，无匹配则返回空元组。它不去掉名称两侧空格，也不作模糊搜索；
-<code class="docutils literal notranslate"><span class="pre">'丁火'</span></code> 或 <code class="docutils literal notranslate"><span class="pre">'丁</span> <span class="pre">'</span></code> 不会匹配“丁”。已有 <code class="docutils literal notranslate"><span class="pre">Tiangan.丁</span></code> 或十神枚举时，可用 <code class="docutils literal notranslate"><span class="pre">bazi.knowledge.object_id(成员)</span></code> 得到稳定 ID。
+<p><code class="docutils literal notranslate"><span class="pre">知识库</span></code> 与 <code class="docutils literal notranslate"><span class="pre">KnowledgeBase</span></code> 是同一个类型。<code class="docutils literal notranslate"><span class="pre">kb.query('丁')</span></code> 返回丁的全部相关材料，
+也可传 <code class="docutils literal notranslate"><span class="pre">天干.丁</span></code>、<code class="docutils literal notranslate"><span class="pre">十神.正官</span></code>、<code class="docutils literal notranslate"><span class="pre">五行.木</span></code> 等从 <code class="docutils literal notranslate"><span class="pre">bazi.defines</span></code> 导入的领域枚举。
+枚举按类别和中文名称对应对象。
+字符串可以是对象 ID 或精确名称；重名时抛 <code class="docutils literal notranslate"><span class="pre">ValueError</span></code> 并列出候选，未知名称也报错。
+需要查看候选时，用 <code class="docutils literal notranslate"><span class="pre">find_objects(name)</span></code>，它返回全部同名对象，无匹配返回空元组。
+查询不去掉两侧空格，也不作模糊匹配；<code class="docutils literal notranslate"><span class="pre">'丁火'</span></code> 或 <code class="docutils literal notranslate"><span class="pre">'丁</span> <span class="pre">'</span></code> 不会匹配“丁”。
 已知条目 ID 则用 <code class="docutils literal notranslate"><span class="pre">kb.entry(claim_id)</span></code> 直接读取。</p>
-<p><code class="docutils literal notranslate"><span class="pre">load()</span></code> 每次读取并校验随包知识，返回不可变对象。<code class="docutils literal notranslate"><span class="pre">objects</span></code>、<code class="docutils literal notranslate"><span class="pre">contexts</span></code>、<code class="docutils literal notranslate"><span class="pre">sources</span></code>、<code class="docutils literal notranslate"><span class="pre">entries</span></code>
-分别保存对象、人工查阅情境、来源记录和条目；完整字段见 <a class="reference internal" href="../api/bazi-knowledge.html#bazi.knowledge.KnowledgeBase" title="bazi.knowledge.KnowledgeBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">KnowledgeBase</span></code></a>。</p>
+<p><code class="docutils literal notranslate"><span class="pre">load()</span></code> 每次读取并校验随包知识。<code class="docutils literal notranslate"><span class="pre">objects</span></code>、<code class="docutils literal notranslate"><span class="pre">sources</span></code>、<code class="docutils literal notranslate"><span class="pre">entries</span></code>
+分别保存 <a class="reference internal" href="../api/bazi-knowledge.html#bazi.knowledge.KnowledgeObject" title="bazi.knowledge.KnowledgeObject"><code class="xref py py-class docutils literal notranslate"><span class="pre">KnowledgeObject</span></code></a>、<a class="reference internal" href="../api/bazi-knowledge.html#bazi.knowledge.KnowledgeSource" title="bazi.knowledge.KnowledgeSource"><code class="xref py py-class docutils literal notranslate"><span class="pre">KnowledgeSource</span></code></a>
+和 <a class="reference internal" href="../api/bazi-knowledge.html#bazi.knowledge.KnowledgeEntry" title="bazi.knowledge.KnowledgeEntry"><code class="xref py py-class docutils literal notranslate"><span class="pre">KnowledgeEntry</span></code></a>，完整字段见各类型的 API 参考。</p>
 </section>
 <section id="knowledge-sources">
 <span id="id2"></span><h2>条目的来源<a class="headerlink" href="#knowledge-sources" title="链接到此标题。">¶</a></h2>
@@ -79,8 +83,8 @@
 <span class="nb">print</span><span class="p">(</span><span class="n">source</span><span class="o">.</span><span class="n">edition</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">source</span><span class="o">.</span><span class="n">locator</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">source</span><span class="o">.</span><span class="n">excerpt</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="s1">'支持'</span><span class="p">,</span> <span class="n">source</span><span class="o">.</span><span class="n">supports</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="s1">'限度'</span><span class="p">,</span> <span class="n">source</span><span class="o">.</span><span class="n">limitations</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">'支持范围'</span><span class="p">,</span> <span class="n">source</span><span class="o">.</span><span class="n">supports</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">'来源说明'</span><span class="p">,</span> <span class="n">source</span><span class="o">.</span><span class="n">limitations</span><span class="p">)</span>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>《刻京台增补渊海子平大全》
@@ -88,61 +92,66 @@
 明万历二十八年闽书林刘龙田乔山堂刊本
 PDF 第 70 页左右两半叶，「十干体象」
 丁火其形一燭燈〔……〕戊土城墻堤岸同〔……〕己土田園屬四維〔……〕庚金頑鈍性偏剛〔……〕辛金珠玉性虛靈〔……〕壬水汪洋併百川〔……〕癸水應非雨露麼
-支持 丁至癸的五行称名，以及丁、戊、辛、壬的历史象。
-限度 丁至癸七首各取开头七字，片段间〔……〕为本仓省略标记；干名原作圈示，转录为普通字。不使这些象成为跨流派定义或性格前提。
+支持范围 丁至癸的五行称名，以及丁、戊、辛、壬的历史象。
+来源说明 白文正文。丁至癸七首各取开头七字，片段间〔……〕为本仓省略标记；干名原作圈示，转录为普通字。不使这些象成为跨流派定义或性格前提。
 </pre></div>
 </div>
 <p>这里读取第一份来源；遍历 <code class="docutils literal notranslate"><span class="pre">entry.sources</span></code> 可读到全部来源。<code class="docutils literal notranslate"><span class="pre">source.url</span></code> 是所用版本的链接，
-反向用 <code class="docutils literal notranslate"><span class="pre">kb.query(source_id=source.source_id,</span> <span class="pre">include_reference_only=True)</span></code> 找引用它的条目。
+反向用 <code class="docutils literal notranslate"><span class="pre">kb.query(source_id=source.source_id)</span></code> 找引用它的条目。
 来源记录可能尚无条目引用，不能从条目反推完整来源目录。</p>
-<p><code class="docutils literal notranslate"><span class="pre">kb.render(entry)</span></code> 默认连同来源、前提和限度一起显示；<code class="docutils literal notranslate"><span class="pre">show_sources=False</span></code> 只关闭来源详情，不隐藏前提或限度。
-条目里的 <code class="docutils literal notranslate"><span class="pre">source_state</span></code> 显示为“来源状态”，来源自身的 <code class="docutils literal notranslate"><span class="pre">state</span></code> 显示为“见证状态”。</p>
+<p><code class="docutils literal notranslate"><span class="pre">kb.render(entry)</span></code> 默认显示条目 ID、正文、前提、读法、署名、限度和简短出处。
+<code class="docutils literal notranslate"><span class="pre">show_sources=True</span></code> 追加版本、定位、链接、引文和支持范围；必要来源说明始终显示，包括正文／夹注的区别。</p>
 </section>
 <section id="id3">
 <h2>查询与过滤<a class="headerlink" href="#id3" title="链接到此标题。">¶</a></h2>
-<p><code class="docutils literal notranslate"><span class="pre">query</span></code> 可组合七种条件：<code class="docutils literal notranslate"><span class="pre">object_id</span></code>、<code class="docutils literal notranslate"><span class="pre">context_id</span></code>、<code class="docutils literal notranslate"><span class="pre">topic</span></code>、<code class="docutils literal notranslate"><span class="pre">source_id</span></code>、<code class="docutils literal notranslate"><span class="pre">viewpoint</span></code>、<code class="docutils literal notranslate"><span class="pre">applicability</span></code>、<code class="docutils literal notranslate"><span class="pre">time_scope</span></code>。
-多个条件取交集，结果保持语料顺序。默认只返回 <code class="docutils literal notranslate"><span class="pre">show_by_default=True</span></code> 的条目；加 <code class="docutils literal notranslate"><span class="pre">include_reference_only=True</span></code> 才包含参考条目。</p>
-<p>例如文昌的条目均仅供参考，须显式包含，再读取各读法的文字：</p>
+<p><code class="docutils literal notranslate"><span class="pre">query(subject=None,</span> <span class="pre">*,</span> <span class="pre">topic=None,</span> <span class="pre">source_id=None,</span> <span class="pre">viewpoint=None)</span></code> 可组合对象、主题、来源和读法。
+多个条件取交集，结果保持语料顺序；不传条件返回全部条目。多对象条目在每个对象下都能查到，
+关系方向由正文说明，对象列表不区分主次。</p>
+<p>例如分别查阅文昌的辛戌与现代问真读法：</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">bazi.knowledge</span><span class="w"> </span><span class="kn">import</span> <span class="n">KnowledgeBase</span>
 
 <span class="n">kb</span> <span class="o">=</span> <span class="n">KnowledgeBase</span><span class="o">.</span><span class="n">load</span><span class="p">()</span>
-<span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">kb</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">object_id</span><span class="o">=</span><span class="s1">'shensha.wenchang'</span><span class="p">,</span> <span class="n">include_reference_only</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="k">for</span> <span class="n">viewpoint</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">'XIN_XU'</span><span class="p">,</span> <span class="s1">'现代问真'</span><span class="p">):</span>
+  <span class="n">entry</span><span class="p">,</span> <span class="o">=</span> <span class="n">kb</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s1">'文昌'</span><span class="p">,</span> <span class="n">viewpoint</span><span class="o">=</span><span class="n">viewpoint</span><span class="p">)</span>
   <span class="n">source</span> <span class="o">=</span> <span class="n">kb</span><span class="o">.</span><span class="n">sources</span><span class="p">[</span><span class="n">entry</span><span class="o">.</span><span class="n">sources</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
   <span class="nb">print</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
-  <span class="nb">print</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">viewpoint</span><span class="p">,</span> <span class="n">source</span><span class="o">.</span><span class="n">work</span><span class="p">,</span> <span class="n">source</span><span class="o">.</span><span class="n">text_layer</span><span class="p">)</span>
+  <span class="nb">print</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">viewpoint</span><span class="p">,</span> <span class="n">source</span><span class="o">.</span><span class="n">work</span><span class="p">)</span>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>《星学大成》〈论文昌〉的夹注明定辛取戌，以戌在辛之方位解释该格。
-XIN_XU 星学大成 zhushi
+XIN_XU 星学大成
 问真《神煞大全》以“文昌贵人”为题列出辛取子的十干表，以日干或年干查四地支；对应本库文昌的辛子读法。
-现代问真 问真《神煞大全》 editorial
+现代问真 问真《神煞大全》
 </pre></div>
 </div>
-<p><code class="docutils literal notranslate"><span class="pre">viewpoint</span></code> 可用于进一步过滤。<code class="docutils literal notranslate"><span class="pre">text_layer</span></code> 中 <code class="docutils literal notranslate"><span class="pre">zhushi</span></code> 表示夹注，<code class="docutils literal notranslate"><span class="pre">editorial</span></code> 表示现代编者整理；
-各来源的 <code class="docutils literal notranslate"><span class="pre">supports</span></code>、<code class="docutils literal notranslate"><span class="pre">limitations</span></code> 分别说明它支持表值、锚点或查找位置中的哪一部分。
+<p><code class="docutils literal notranslate"><span class="pre">kb.query('文昌',</span> <span class="pre">viewpoint='XIN_XU')</span></code> 只取辛戌读法。
+来源的 <code class="docutils literal notranslate"><span class="pre">limitations</span></code> 说明摘录属于正文、夹注还是原创说明；<code class="docutils literal notranslate"><span class="pre">supports</span></code> 说明它支持表值、锚点或查找位置中的哪一部分。
 天乙、桃花、驿马、华盖、羊刃也有参考对象；规则与条目入口见 <a class="reference internal" href="rule-coverage.html"><span class="doc">规则、知识与出处的覆盖</span></a>。</p>
+<p>查完整来源说明时，用 <code class="docutils literal notranslate"><span class="pre">kb.entry('shensha.wenchang.readings')</span></code>。这类条目保留表值、
+锚点与查找位置各自的依据，也在正文列出所据载体与限度。
+<code class="docutils literal notranslate"><span class="pre">sources</span></code> 列的是条目直接引用的来源记录；正文提及的载体不一定另有来源记录。</p>
 <p>用 <code class="docutils literal notranslate"><span class="pre">kb.filter_values('topic')</span></code> 等调用列出某个维度的全部合法值，或浏览 <a class="reference internal" href="../catalog/filters.html"><span class="doc">合法过滤值与命中数</span></a>。
-值合法但没有交集时返回空元组；未知值抛 <code class="docutils literal notranslate"><span class="pre">ValueError</span></code>，与无匹配不同。查阅 <code class="docutils literal notranslate"><span class="pre">context_id</span></code> 是人工过滤，不执行命盘前提判别。</p>
+值合法但没有交集时返回空元组；未知值抛 <code class="docutils literal notranslate"><span class="pre">ValueError</span></code>，与无匹配不同。</p>
 </section>
 <section id="id4">
 <h2>字面关键词搜索<a class="headerlink" href="#id4" title="链接到此标题。">¶</a></h2>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">bazi.knowledge</span><span class="w"> </span><span class="kn">import</span> <span class="n">KnowledgeBase</span>
 
 <span class="n">kb</span> <span class="o">=</span> <span class="n">KnowledgeBase</span><span class="o">.</span><span class="n">load</span><span class="p">()</span>
-<span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">kb</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="s1">'火'</span><span class="p">,</span> <span class="n">object_id</span><span class="o">=</span><span class="s1">'tiangan.ding'</span><span class="p">):</span>
-  <span class="nb">print</span><span class="p">(</span><span class="n">kb</span><span class="o">.</span><span class="n">render</span><span class="p">(</span><span class="n">entry</span><span class="p">,</span> <span class="n">show_sources</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
+<span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">kb</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="s1">'火'</span><span class="p">,</span> <span class="n">subject</span><span class="o">=</span><span class="s1">'丁'</span><span class="p">,</span> <span class="n">topic</span><span class="o">=</span><span class="s1">'定义'</span><span class="p">):</span>
+  <span class="nb">print</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>丁为阴火。
 </pre></div>
 </div>
-<p><code class="docutils literal notranslate"><span class="pre">search</span></code> 先按 <code class="docutils literal notranslate"><span class="pre">query</span></code> 的条件过滤，再作不分大小写的字面子串匹配；也可显式包含参考条目。
-它搜索条文、前提、署名、主题、观点、例外、限度和对象名称，不搜 ID、情境标签或来源全文，
-不解释正则，也不自动转换繁简字。查对象 ID 请用 <code class="docutils literal notranslate"><span class="pre">query(object_id=...)</span></code>。</p>
+<p><code class="docutils literal notranslate"><span class="pre">search</span></code> 先按 <code class="docutils literal notranslate"><span class="pre">query</span></code> 的条件过滤，再作不分大小写的字面子串匹配，无匹配返回空元组。
+它搜索条文、前提、署名、主题、读法、限度和对象名称，不搜 ID 或来源全文，
+不解释正则，也不自动转换繁简字。查对象 ID 请用 <code class="docutils literal notranslate"><span class="pre">query('tiangan.ding')</span></code>。</p>
 </section>
 <section id="id5">
 <h2>胎元与命宫的取法与候选<a class="headerlink" href="#id5" title="链接到此标题。">¶</a></h2>
-<p>这两个对象的全部条目都仅供参考。按阅读目的选 ID，用 <code class="docutils literal notranslate"><span class="pre">kb.entry(claim_id)</span></code> 或下例读文字；
+<p>按阅读目的选 ID，用 <code class="docutils literal notranslate"><span class="pre">kb.entry(claim_id)</span></code> 或下例读文字；
 计算入口见 <a class="reference internal" href="integration.html"><span class="doc">集成开发</span></a>。</p>
 <table class="docutils align-default">
 <thead>
@@ -168,7 +177,7 @@ XIN_XU 星学大成 zhushi
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">bazi.knowledge</span><span class="w"> </span><span class="kn">import</span> <span class="n">KnowledgeBase</span>
 
 <span class="n">kb</span> <span class="o">=</span> <span class="n">KnowledgeBase</span><span class="o">.</span><span class="n">load</span><span class="p">()</span>
-<span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">kb</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">object_id</span><span class="o">=</span><span class="s1">'concept.taiyuan'</span><span class="p">,</span> <span class="n">applicability</span><span class="o">=</span><span class="s1">'unresolved'</span><span class="p">,</span> <span class="n">include_reference_only</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">kb</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s1">'胎元'</span><span class="p">,</span> <span class="n">viewpoint</span><span class="o">=</span><span class="s1">'三百日候选待核'</span><span class="p">):</span>
   <span class="nb">print</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">viewpoint</span><span class="p">)</span>
   <span class="nb">print</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
 </pre></div>
@@ -177,47 +186,114 @@ XIN_XU 星学大成 zhushi
 《三命通会》四库本转录有「惟有一法以當生前三百日為十月之氣乃是受胎之正」，同段末又问「然則貴人受胎定在三百日又豈可據乎」。保留三百日说为文献候选，不截句判成唯一正确规则。
 </pre></div>
 </div>
-<p>各条目的 <code class="docutils literal notranslate"><span class="pre">limits</span></code> 和来源的 <code class="docutils literal notranslate"><span class="pre">supports</span></code>、<code class="docutils literal notranslate"><span class="pre">limitations</span></code> 分别保存原文支持范围及版本、校读差异，读出处时一并读取。</p>
+<p>阅读这些候选时，条目的限度和来源说明须一并读取，字段区别见下节。</p>
 </section>
 <section id="id6">
-<h2>来源、前提与默认展示<a class="headerlink" href="#id6" title="链接到此标题。">¶</a></h2>
+<h2>来源与前提<a class="headerlink" href="#id6" title="链接到此标题。">¶</a></h2>
+<p>条目必填 <code class="docutils literal notranslate"><span class="pre">claim_id</span></code>、<code class="docutils literal notranslate"><span class="pre">objects</span></code>、<code class="docutils literal notranslate"><span class="pre">text</span></code>；以下字段可选。表中类型指 JSON 写法；
+加载后，字符串数组成为不可变元组。</p>
 <table class="docutils align-default">
 <thead>
-<tr class="row-odd"><th class="head"><p>字段</p></th>
-<th class="head"><p>回答什么</p></th>
-<th class="head"><p>取值</p></th>
+<tr class="row-odd"><th class="head"><p>条目字段</p></th>
+<th class="head"><p>JSON 类型</p></th>
+<th class="head"><p>含义与文本输出标签</p></th>
 </tr>
 </thead>
 <tbody>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">source_state</span></code></p></td>
-<td><p>出处核定到哪一步</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">witnessed</span></code>、<code class="docutils literal notranslate"><span class="pre">editorial</span></code>、<code class="docutils literal notranslate"><span class="pre">unverified</span></code>、<code class="docutils literal notranslate"><span class="pre">repository_attributed</span></code></p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">topics</span></code></p></td>
+<td><p>字符串数组</p></td>
+<td><p>主题，可填多个；查询参数 <code class="docutils literal notranslate"><span class="pre">topic</span></code> 每次筛选其中一个主题。</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">applicability</span></code></p></td>
-<td><p>前提整理到哪一步</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">unconditional</span></code>、<code class="docutils literal notranslate"><span class="pre">described</span></code>、<code class="docutils literal notranslate"><span class="pre">unresolved</span></code></p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">premise</span></code></p></td>
+<td><p>字符串</p></td>
+<td><p>前提：阅读这条文字所需的条件。</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">show_by_default</span></code></p></td>
-<td><p>默认查询是否返回</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">True</span></code>、<code class="docutils literal notranslate"><span class="pre">False</span></code></p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">viewpoint</span></code></p></td>
+<td><p>字符串</p></td>
+<td><p>读法：区分同一对象的不同解释或取法。</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">attribution</span></code></p></td>
+<td><p>字符串</p></td>
+<td><p>署名：这条文字归于谁；与出处引用分开填写。</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">sources</span></code></p></td>
+<td><p>字符串数组</p></td>
+<td><p>来源 ID，按此顺序读取并显示对应的来源记录。</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">limits</span></code></p></td>
+<td><p>字符串数组</p></td>
+<td><p>限度：这条文字的适用限制或尚未明确的条件，逐项显示。</p></td>
 </tr>
 </tbody>
 </table>
-<p>各项取值的中文解释见 <a class="reference internal" href="../catalog/entries.html"><span class="doc">知识条目</span></a>。
-四种来源状态都不证明条文本身为真或适用于某张命盘；<code class="docutils literal notranslate"><span class="pre">unverified</span></code> 表示来源尚未核实，此时 <code class="docutils literal notranslate"><span class="pre">sources</span></code> 为空。</p>
-<p>例如旧条文的展示会保留来源和适用性提醒：</p>
+<p>来源必填 <code class="docutils literal notranslate"><span class="pre">source_id</span></code>、<code class="docutils literal notranslate"><span class="pre">work</span></code>；以下字段可选：</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>来源字段</p></th>
+<th class="head"><p>JSON 类型</p></th>
+<th class="head"><p>含义与文本输出标签</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">attribution</span></code></p></td>
+<td><p>字符串</p></td>
+<td><p>来源署名：来源的作者或归属。</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">edition</span></code></p></td>
+<td><p>字符串</p></td>
+<td><p>版本：所用版本。</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">locator</span></code></p></td>
+<td><p>字符串</p></td>
+<td><p>定位：页码、篇章等定位信息。</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">url</span></code></p></td>
+<td><p>字符串</p></td>
+<td><p>链接：所用版本的链接。</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">excerpt</span></code></p></td>
+<td><p>字符串</p></td>
+<td><p>引文／记录：按原文保存的摘录。</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">supports</span></code></p></td>
+<td><p>字符串</p></td>
+<td><p>支持范围：这份出处支持条目中的哪一部分。</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">limitations</span></code></p></td>
+<td><p>字符串</p></td>
+<td><p>来源说明：出处的局限及摘录的文本层次，如正文、夹注、原创说明。</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">state</span></code></p></td>
+<td><p>字符串或 <code class="docutils literal notranslate"><span class="pre">null</span></code></p></td>
+<td><p>来源状态：<code class="docutils literal notranslate"><span class="pre">witnessed</span></code>、<code class="docutils literal notranslate"><span class="pre">editorial</span></code>、<code class="docutils literal notranslate"><span class="pre">unverified</span></code>、<code class="docutils literal notranslate"><span class="pre">repository_attributed</span></code>；可不填。</p></td>
+</tr>
+</tbody>
+</table>
+<p>省略的数组字段为空元组，省略的字符串字段为空串；<code class="docutils literal notranslate"><span class="pre">state</span></code> 省略或填 <code class="docutils literal notranslate"><span class="pre">null</span></code> 时为 <code class="docutils literal notranslate"><span class="pre">None</span></code>。</p>
+<p><code class="docutils literal notranslate"><span class="pre">witnessed</span></code> 表示已核原文出处，<code class="docutils literal notranslate"><span class="pre">editorial</span></code> 表示原创说明，<code class="docutils literal notranslate"><span class="pre">unverified</span></code> 表示来源尚未核实，
+<code class="docutils literal notranslate"><span class="pre">repository_attributed</span></code> 表示仓内规则实现的归属。未填状态不表示已核实。
+这些状态均不证明条文本身为真或适用于某张命盘，同一条目可以引用不同状态的来源。
+来源说明中的“原创说明”描述摘录的文本层次，如现代编者整理，不是来源状态；
+这类材料也可以有已核原文出处，标为 <code class="docutils literal notranslate"><span class="pre">witnessed</span></code>。
+条目署名与来源引用分开记录；没有引用不等于内容为假，也不自动认定为作者原创。</p>
+<p>例如读一条尚无已核出处的文字：</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">bazi.knowledge</span><span class="w"> </span><span class="kn">import</span> <span class="n">KnowledgeBase</span>
 
 <span class="n">kb</span> <span class="o">=</span> <span class="n">KnowledgeBase</span><span class="o">.</span><span class="n">load</span><span class="p">()</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">kb</span><span class="o">.</span><span class="n">render</span><span class="p">(</span><span class="n">kb</span><span class="o">.</span><span class="n">entry</span><span class="p">(</span><span class="s1">'legacy.shishen.SH-001'</span><span class="p">),</span> <span class="n">show_sources</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
 </pre></div>
 </div>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>代表同辈、竞争、合作。【仅供参考；来源尚未核实；前提待梳理；命盘适用性未判断】
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>条目：legacy.shishen.SH-001
+代表同辈、竞争、合作。
+主题：取象
+读法：旧语料（未核）
+署名：旧语料，出处未核
 </pre></div>
 </div>
-<p>默认展示要求 <code class="docutils literal notranslate"><span class="pre">applicability='unconditional'</span></code>、<code class="docutils literal notranslate"><span class="pre">source_state='witnessed'</span></code>，
-每份来源状态与条目一致，且来源至少属于两个不同 <code class="docutils literal notranslate"><span class="pre">lineage</span></code>。两个转载站点不自动构成独立谱系。
-已核来源的条目仍可不默认展示；加载器会校验这些条件，来源状态与命盘前提须分别理解。</p>
+<p>查到条目不表示命盘满足其前提；前提为空只表示未填写，空栏目在展示中省略。
+十神与天干的旧描述中，“须结合命盘条件阅读”以及旺衰、状态、喜用等前提文字，
+没有因此获得计算定义：这些条目尚未还原强弱、喜用或有效生克的完整条件。
+需要判断已实现的结构条件时，使用判据入口，见 <a class="reference internal" href="integration.html"><span class="doc">集成开发</span></a>。</p>
 </section>
 <section id="knowledge-edit">
 <span id="id7"></span><h2>保存并编辑自己的知识文件<a class="headerlink" href="#knowledge-edit" title="链接到此标题。">¶</a></h2>
@@ -230,7 +306,7 @@ XIN_XU 星学大成 zhushi
 
 <span class="n">data</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">DEFAULT_SOURCE_PATH</span><span class="o">.</span><span class="n">read_text</span><span class="p">(</span><span class="n">encoding</span><span class="o">=</span><span class="s1">'utf-8'</span><span class="p">))</span>
 <span class="n">entry</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">value</span> <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">data</span><span class="p">[</span><span class="s1">'entries'</span><span class="p">]</span> <span class="k">if</span> <span class="n">value</span><span class="p">[</span><span class="s1">'claim_id'</span><span class="p">]</span> <span class="o">==</span> <span class="s1">'tiangan.ding.definition'</span><span class="p">)</span>
-<span class="n">entry</span><span class="p">[</span><span class="s1">'limits'</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">'个人备注：此行不是来源内容。'</span><span class="p">)</span>
+<span class="n">entry</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">'limits'</span><span class="p">,</span> <span class="p">[])</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">'个人备注：此行不是来源内容。'</span><span class="p">)</span>
 <span class="n">path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="s1">'edited.json'</span><span class="p">)</span>
 <span class="n">path</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">ensure_ascii</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">),</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">'utf-8'</span><span class="p">)</span>
 
@@ -247,15 +323,25 @@ XIN_XU 星学大成 zhushi
 </pre></div>
 </div>
 <p>文件会留在运行代码的目录，以后可用 <code class="docutils literal notranslate"><span class="pre">KnowledgeBase.load(Path('edited.json'))</span></code> 重新加载。
-命令行可用 <code class="docutils literal notranslate"><span class="pre">bazi</span> <span class="pre">knowledge</span> <span class="pre">--knowledge-source</span> <span class="pre">edited.json</span> <span class="pre">--object</span> <span class="pre">tiangan.ding</span></code> 读取；完整用法见 <a class="reference internal" href="cli.html"><span class="doc">命令行</span></a>。
+命令行可用 <code class="docutils literal notranslate"><span class="pre">bazi</span> <span class="pre">knowledge</span> <span class="pre">丁</span> <span class="pre">--knowledge-source</span> <span class="pre">edited.json</span></code> 读取；完整用法见 <a class="reference internal" href="cli.html"><span class="doc">命令行</span></a>。
 备注保留个人归属，不把它写成已核原文；原来的来源状态不认证新增备注。</p>
 <p>编辑时保留稳定 ID、原引文及来源信息；判据按 ID 关联条目，自定义库须保持同 ID 的领域含义。
-当前格式是精确整数 <code class="docutils literal notranslate"><span class="pre">schema_version=3</span></code> 和四份注册表，
-条目以 JSON boolean <code class="docutils literal notranslate"><span class="pre">show_by_default</span></code> 控制默认展示，不接受旧 <code class="docutils literal notranslate"><span class="pre">output</span></code> 键、其他 schema 或自动迁移。
-已有编辑源的升级见 <a class="reference internal" href="../release-notes.html"><span class="doc">发布说明</span></a>。</p>
-<p>加载会检查字段、重复键、状态和引用。断引用时 <code class="docutils literal notranslate"><span class="pre">ValueError</span></code> 会指出未知 ID 与条目；
-把引用改回已有记录，或在相应注册表中补齐可核的记录后再加载。孤立代理项会被拒绝，不修复原文；
-中文、非 BMP 字符和合法 JSON 转义仍可使用。精确条件见 <a class="reference internal" href="../api-contract.html"><span class="doc">公开接口契约</span></a>。</p>
+当前格式是精确整数 <code class="docutils literal notranslate"><span class="pre">schema_version=4</span></code> 和 <code class="docutils literal notranslate"><span class="pre">objects</span></code>、<code class="docutils literal notranslate"><span class="pre">sources</span></code>、<code class="docutils literal notranslate"><span class="pre">entries</span></code> 三份注册表。
+条目只必填 <code class="docutils literal notranslate"><span class="pre">claim_id</span></code>、<code class="docutils literal notranslate"><span class="pre">objects</span></code>、<code class="docutils literal notranslate"><span class="pre">text</span></code>；来源只必填 <code class="docutils literal notranslate"><span class="pre">source_id</span></code>、<code class="docutils literal notranslate"><span class="pre">work</span></code>，其余字段按材料填写。
+例如下面是可独立加载的最小编辑源：</p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">  </span><span class="nt">"schema_version"</span><span class="p">:</span><span class="w"> </span><span class="mi">4</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"objects"</span><span class="p">:</span><span class="w"> </span><span class="p">[{</span><span class="nt">"object_id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"my.ding"</span><span class="p">,</span><span class="w"> </span><span class="nt">"kind"</span><span class="p">:</span><span class="w"> </span><span class="s2">"tiangan"</span><span class="p">,</span><span class="w"> </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"丁"</span><span class="p">}],</span>
+<span class="w">  </span><span class="nt">"sources"</span><span class="p">:</span><span class="w"> </span><span class="p">[],</span>
+<span class="w">  </span><span class="nt">"entries"</span><span class="p">:</span><span class="w"> </span><span class="p">[{</span><span class="nt">"claim_id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"my.note"</span><span class="p">,</span><span class="w"> </span><span class="nt">"objects"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"my.ding"</span><span class="p">],</span><span class="w"> </span><span class="nt">"text"</span><span class="p">:</span><span class="w"> </span><span class="s2">"我的阅读笔记。"</span><span class="p">}]</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>加载检查字段类型、重复键／ID和断引用，不要求来源数量或证明内容正确。
+对象名称可以重名，但一个对象的 ID 不能与另一个对象的名称相同；加载时会拒绝这种冲突，
+以保证按 ID 查询能准确定位对象。同一对象的 ID 与名称可以相同。
+断引用时 <code class="docutils literal notranslate"><span class="pre">ValueError</span></code> 会指出未知 ID 与条目；把引用改回已有记录，或补齐对应记录后再加载。
+精确条件见 <a class="reference internal" href="../api-contract.html"><span class="doc">公开接口契约</span></a>。</p>
 </section>
 <section id="id8">
 <h2>不建命盘浏览判据目录<a class="headerlink" href="#id8" title="链接到此标题。">¶</a></h2>
@@ -311,6 +397,7 @@ XIN_XU 星学大成 zhushi
 <li class="toctree-l1"><a class="reference internal" href="quickstart.html">快速开始</a></li>
 <li class="toctree-l1"><a class="reference internal" href="cli.html">命令行</a></li>
 <li class="toctree-l1"><a class="reference internal" href="configuration.html">配置与时间口径</a></li>
+<li class="toctree-l1"><a class="reference internal" href="calendar.html">公历、农历与节气</a></li>
 <li class="toctree-l1"><a class="reference internal" href="relations-transits.html">关系与流运</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">查阅知识库</a></li>
 <li class="toctree-l1"><a class="reference internal" href="integration.html">集成开发</a></li>

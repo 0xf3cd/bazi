@@ -1,0 +1,14 @@
+bazi.chart_text
+===============
+
+.. automodule:: bazi.chart_text
+
+.. autoclass:: bazi.chart_text.TextStyle
+   :members: day_master_mark, glyph
+   :undoc-members:
+
+.. autofunction:: bazi.chart_text.basic_text
+
+.. autofunction:: bazi.chart_text.transit_text
+
+.. autofunction:: bazi.chart_text.chart_text

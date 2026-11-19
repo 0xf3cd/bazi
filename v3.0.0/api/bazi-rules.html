@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>bazi.rules &#8212; bazi · v3.0.0</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=27fed22d" />
+    <link rel="stylesheet" type="text/css" href="../_static/documentation.css?v=40cf1dba" />
+    <script src="../_static/documentation_options.js?v=7d86a446"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/translations.js?v=540d3cec"></script>
+    <link rel="index" title="索引" href="../genindex.html" />
+    <link rel="search" title="搜索" href="../search.html" />
+    <link rel="next" title="bazi.school" href="bazi-school.html" />
+    <link rel="prev" title="bazi.knowledge" href="bazi-knowledge.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="module-bazi.rules">
+<span id="bazi-rules"></span><h1>bazi.rules<a class="headerlink" href="#module-bazi.rules" title="链接到此标题。">¶</a></h1>
+<p>排盘、天干地支关系与神煞的规则表。</p>
+<p>BaziRules、TianganRules、DizhiRules 与 ShenshaRules 分别保存对应规则；
+DizhiRelationDefinitions 承载可选择的地支关系定义。
+API 页列出表的名称、类型与说明，完整表值可从源码入口或按键查阅。</p>
+<p>Examples:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">bazi.defines</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tiangan</span><span class="p">,</span> <span class="n">Dizhi</span><span class="p">,</span> <span class="n">Ganzhi</span><span class="p">,</span> <span class="n">Wuxing</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bazi.rules</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaziRules</span><span class="p">,</span> <span class="n">TianganRules</span><span class="p">,</span> <span class="n">ShenshaRules</span>
+
+<span class="k">assert</span> <span class="n">BaziRules</span><span class="o">.</span><span class="n">NAYIN</span><span class="p">[</span><span class="n">Ganzhi</span><span class="o">.</span><span class="n">from_str</span><span class="p">(</span><span class="s1">'甲子'</span><span class="p">)]</span> <span class="o">==</span> <span class="s1">'海中金'</span>
+<span class="k">assert</span> <span class="n">TianganRules</span><span class="o">.</span><span class="n">TIANGAN_HE</span><span class="p">[</span><span class="nb">frozenset</span><span class="p">({</span><span class="n">Tiangan</span><span class="o">.</span><span class="n">甲</span><span class="p">,</span> <span class="n">Tiangan</span><span class="o">.</span><span class="n">己</span><span class="p">})]</span> <span class="ow">is</span> <span class="n">Wuxing</span><span class="o">.</span><span class="n">土</span>
+<span class="k">assert</span> <span class="n">ShenshaRules</span><span class="o">.</span><span class="n">TAOHUA</span><span class="p">[</span><span class="n">Dizhi</span><span class="o">.</span><span class="n">申</span><span class="p">]</span> <span class="ow">is</span> <span class="n">Dizhi</span><span class="o">.</span><span class="n">酉</span>
+</pre></div>
+</div>
+<dl class="py class">
+<dt class="sig sig-object py" id="bazi.rules.BaziRules">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">bazi.rules.</span></span><span class="sig-name descname"><span class="pre">BaziRules</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/rules.py#L63-L185"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.rules.BaziRules" title="链接到此定义。">¶</a></dt>
+<dd><p>Bazi 与 BaziChart 的基础规则。</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.rules.BaziRules.DAY_TO_HOUR_TABLE">
+<span class="sig-name descname"><span class="pre">DAY_TO_HOUR_TABLE</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Final</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-common.html#bazi.common.frozendict" title="bazi.common.frozendict"><span class="pre">frozendict</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-defines-tiangan.html#bazi.defines.tiangan.Tiangan" title="bazi.defines.tiangan.Tiangan"><span class="pre">Tiangan</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="bazi-defines-tiangan.html#bazi.defines.tiangan.Tiangan" title="bazi.defines.tiangan.Tiangan"><span class="pre">Tiangan</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/rules.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.rules.BaziRules.DAY_TO_HOUR_TABLE" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.rules.BaziRules.DIZHI_TRAITS">
+<span class="sig-name descname"><span class="pre">DIZHI_TRAITS</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Final</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-common.html#bazi.common.frozendict" title="bazi.common.frozendict"><span class="pre">frozendict</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><span class="pre">Dizhi</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="bazi-data_types.html#bazi.data_types.TraitTuple" title="bazi.data_types.TraitTuple"><span class="pre">TraitTuple</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/rules.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.rules.BaziRules.DIZHI_TRAITS" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.rules.BaziRules.HIDDEN_TIANGANS">
+<span class="sig-name descname"><span class="pre">HIDDEN_TIANGANS</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Final</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-common.html#bazi.common.frozendict" title="bazi.common.frozendict"><span class="pre">frozendict</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><span class="pre">Dizhi</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="bazi-data_types.html#bazi.data_types.HiddenTianganDict" title="bazi.data_types.HiddenTianganDict"><span class="pre">HiddenTianganDict</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/rules.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.rules.BaziRules.HIDDEN_TIANGANS" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.rules.BaziRules.MONTH_WUXING">
+<span class="sig-name descname"><span class="pre">MONTH_WUXING</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Final</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-common.html#bazi.common.frozendict" title="bazi.common.frozendict"><span class="pre">frozendict</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><span class="pre">Dizhi</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="bazi-defines-wuxing.html#bazi.defines.wuxing.Wuxing" title="bazi.defines.wuxing.Wuxing"><span class="pre">Wuxing</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/rules.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.rules.BaziRules.MONTH_WUXING" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.rules.BaziRules.NAYIN">
+<span class="sig-name descname"><span class="pre">NAYIN</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Final</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-common.html#bazi.common.frozendict" title="bazi.common.frozendict"><span class="pre">frozendict</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-defines-ganzhi.html#bazi.defines.ganzhi.Ganzhi" title="bazi.defines.ganzhi.Ganzhi"><span class="pre">Ganzhi</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/rules.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.rules.BaziRules.NAYIN" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.rules.BaziRules.TIANGAN_LU">
+<span class="sig-name descname"><span class="pre">TIANGAN_LU</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Final</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-common.html#bazi.common.frozendict" title="bazi.common.frozendict"><span class="pre">frozendict</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-defines-tiangan.html#bazi.defines.tiangan.Tiangan" title="bazi.defines.tiangan.Tiangan"><span class="pre">Tiangan</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><span class="pre">Dizhi</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/rules.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.rules.BaziRules.TIANGAN_LU" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.rules.BaziRules.TIANGAN_TRAITS">
+<span class="sig-name descname"><span class="pre">TIANGAN_TRAITS</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Final</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-common.html#bazi.common.frozendict" title="bazi.common.frozendict"><span class="pre">frozendict</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-defines-tiangan.html#bazi.defines.tiangan.Tiangan" title="bazi.defines.tiangan.Tiangan"><span class="pre">Tiangan</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="bazi-data_types.html#bazi.data_types.TraitTuple" title="bazi.data_types.TraitTuple"><span class="pre">TraitTuple</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/rules.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.rules.BaziRules.TIANGAN_TRAITS" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.rules.BaziRules.TIANGAN_ZHANGSHENG">
+<span class="sig-name descname"><span class="pre">TIANGAN_ZHANGSHENG</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Final</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-common.html#bazi.common.frozendict" title="bazi.common.frozendict"><span class="pre">frozendict</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-defines-tiangan.html#bazi.defines.tiangan.Tiangan" title="bazi.defines.tiangan.Tiangan"><span class="pre">Tiangan</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><span class="pre">Dizhi</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/rules.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.rules.BaziRules.TIANGAN_ZHANGSHENG" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.rules.BaziRules.YEAR_TO_MONTH_TABLE">
+<span class="sig-name descname"><span class="pre">YEAR_TO_MONTH_TABLE</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Final</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-common.html#bazi.common.frozendict" title="bazi.common.frozendict"><span class="pre">frozendict</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-defines-tiangan.html#bazi.defines.tiangan.Tiangan" title="bazi.defines.tiangan.Tiangan"><span class="pre">Tiangan</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="bazi-defines-tiangan.html#bazi.defines.tiangan.Tiangan" title="bazi.defines.tiangan.Tiangan"><span class="pre">Tiangan</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/rules.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.rules.BaziRules.YEAR_TO_MONTH_TABLE" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="bazi.rules.TianganRules">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">bazi.rules.</span></span><span class="sig-name descname"><span class="pre">TianganRules</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/rules.py#L205-L241"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.rules.TianganRules" title="链接到此定义。">¶</a></dt>
+<dd><p>天干关系规则。</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.rules.TianganRules.TIANGAN_CHONG">
+<span class="sig-name descname"><span class="pre">TIANGAN_CHONG</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Final</span><span class="p"><span class="pre">[</span></span><span class="pre">frozenset</span><span class="p"><span class="pre">[</span></span><span class="pre">frozenset</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-defines-tiangan.html#bazi.defines.tiangan.Tiangan" title="bazi.defines.tiangan.Tiangan"><span class="pre">Tiangan</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/rules.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.rules.TianganRules.TIANGAN_CHONG" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.rules.TianganRules.TIANGAN_HE">
+<span class="sig-name descname"><span class="pre">TIANGAN_HE</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Final</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-common.html#bazi.common.frozendict" title="bazi.common.frozendict"><span class="pre">frozendict</span></a><span class="p"><span class="pre">[</span></span><span class="pre">frozenset</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-defines-tiangan.html#bazi.defines.tiangan.Tiangan" title="bazi.defines.tiangan.Tiangan"><span class="pre">Tiangan</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="bazi-defines-wuxing.html#bazi.defines.wuxing.Wuxing" title="bazi.defines.wuxing.Wuxing"><span class="pre">Wuxing</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/rules.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.rules.TianganRules.TIANGAN_HE" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.rules.TianganRules.TIANGAN_KE">
+<span class="sig-name descname"><span class="pre">TIANGAN_KE</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Final</span><span class="p"><span class="pre">[</span></span><span class="pre">frozenset</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-defines-tiangan.html#bazi.defines.tiangan.Tiangan" title="bazi.defines.tiangan.Tiangan"><span class="pre">Tiangan</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="bazi-defines-tiangan.html#bazi.defines.tiangan.Tiangan" title="bazi.defines.tiangan.Tiangan"><span class="pre">Tiangan</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/rules.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.rules.TianganRules.TIANGAN_KE" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.rules.TianganRules.TIANGAN_SHENG">
+<span class="sig-name descname"><span class="pre">TIANGAN_SHENG</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Final</span><span class="p"><span class="pre">[</span></span><span class="pre">frozenset</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-defines-tiangan.html#bazi.defines.tiangan.Tiangan" title="bazi.defines.tiangan.Tiangan"><span class="pre">Tiangan</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="bazi-defines-tiangan.html#bazi.defines.tiangan.Tiangan" title="bazi.defines.tiangan.Tiangan"><span class="pre">Tiangan</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/rules.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.rules.TianganRules.TIANGAN_SHENG" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="bazi.rules.DizhiRules">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">bazi.rules.</span></span><span class="sig-name descname"><span class="pre">DizhiRules</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/rules.py#L267-L512"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.rules.DizhiRules" title="链接到此定义。">¶</a></dt>
+<dd><p>地支关系规则。</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="bazi.rules.DizhiRules.AnheDef">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">AnheDef</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">values</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/rules.py#L342-L352"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.rules.DizhiRules.AnheDef" title="链接到此定义。">¶</a></dt>
+<dd><p>不同的地支暗合关系看法。</p>
+<p>暗合无方向，每个直接或批量查法入口看到的表一致——无 <code class="docutils literal notranslate"><span class="pre">XingDef</span></code> 那种入口层分歧。</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.rules.DizhiRules.AnheDef.MANGPAI">
+<span class="sig-name descname"><span class="pre">MANGPAI</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">2</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/rules.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.rules.DizhiRules.AnheDef.MANGPAI" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.rules.DizhiRules.AnheDef.NORMAL">
+<span class="sig-name descname"><span class="pre">NORMAL</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/rules.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.rules.DizhiRules.AnheDef.NORMAL" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.rules.DizhiRules.AnheDef.NORMAL_EXTENDED">
+<span class="sig-name descname"><span class="pre">NORMAL_EXTENDED</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/rules.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.rules.DizhiRules.AnheDef.NORMAL_EXTENDED" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.rules.DizhiRules.DIZHI_ANHE">
+<span class="sig-name descname"><span class="pre">DIZHI_ANHE</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Final</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-common.html#bazi.common.frozendict" title="bazi.common.frozendict"><span class="pre">frozendict</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#bazi.rules.DizhiRules.AnheDef" title="bazi.rules.DizhiRules.AnheDef"><span class="pre">AnheDef</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">frozenset</span><span class="p"><span class="pre">[</span></span><span class="pre">frozenset</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><span class="pre">Dizhi</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/rules.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.rules.DizhiRules.DIZHI_ANHE" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.rules.DizhiRules.DIZHI_BANHE">
+<span class="sig-name descname"><span class="pre">DIZHI_BANHE</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Final</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-common.html#bazi.common.frozendict" title="bazi.common.frozendict"><span class="pre">frozendict</span></a><span class="p"><span class="pre">[</span></span><span class="pre">frozenset</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><span class="pre">Dizhi</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="bazi-defines-wuxing.html#bazi.defines.wuxing.Wuxing" title="bazi.defines.wuxing.Wuxing"><span class="pre">Wuxing</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/rules.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.rules.DizhiRules.DIZHI_BANHE" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.rules.DizhiRules.DIZHI_CHONG">
+<span class="sig-name descname"><span class="pre">DIZHI_CHONG</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Final</span><span class="p"><span class="pre">[</span></span><span class="pre">frozenset</span><span class="p"><span class="pre">[</span></span><span class="pre">frozenset</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><span class="pre">Dizhi</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/rules.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.rules.DizhiRules.DIZHI_CHONG" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.rules.DizhiRules.DIZHI_GONGHE">
+<span class="sig-name descname"><span class="pre">DIZHI_GONGHE</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Final</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-common.html#bazi.common.frozendict" title="bazi.common.frozendict"><span class="pre">frozendict</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#bazi.rules.DizhiRules.GongheDef" title="bazi.rules.DizhiRules.GongheDef"><span class="pre">GongheDef</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="bazi-common.html#bazi.common.frozendict" title="bazi.common.frozendict"><span class="pre">frozendict</span></a><span class="p"><span class="pre">[</span></span><span class="pre">frozenset</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><span class="pre">Dizhi</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><span class="pre">Dizhi</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/rules.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.rules.DizhiRules.DIZHI_GONGHE" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.rules.DizhiRules.DIZHI_GONGHUI">
+<span class="sig-name descname"><span class="pre">DIZHI_GONGHUI</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Final</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-common.html#bazi.common.frozendict" title="bazi.common.frozendict"><span class="pre">frozendict</span></a><span class="p"><span class="pre">[</span></span><span class="pre">frozenset</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><span class="pre">Dizhi</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><span class="pre">Dizhi</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/rules.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.rules.DizhiRules.DIZHI_GONGHUI" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.rules.DizhiRules.DIZHI_GONG_LU_TIANGAN">
+<span class="sig-name descname"><span class="pre">DIZHI_GONG_LU_TIANGAN</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Final</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-common.html#bazi.common.frozendict" title="bazi.common.frozendict"><span class="pre">frozendict</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-defines-wuxing.html#bazi.defines.wuxing.Wuxing" title="bazi.defines.wuxing.Wuxing"><span class="pre">Wuxing</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="bazi-defines-tiangan.html#bazi.defines.tiangan.Tiangan" title="bazi.defines.tiangan.Tiangan"><span class="pre">Tiangan</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/rules.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.rules.DizhiRules.DIZHI_GONG_LU_TIANGAN" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.rules.DizhiRules.DIZHI_HAI">
+<span class="sig-name descname"><span class="pre">DIZHI_HAI</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Final</span><span class="p"><span class="pre">[</span></span><span class="pre">frozenset</span><span class="p"><span class="pre">[</span></span><span class="pre">frozenset</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><span class="pre">Dizhi</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/rules.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.rules.DizhiRules.DIZHI_HAI" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.rules.DizhiRules.DIZHI_KE">
+<span class="sig-name descname"><span class="pre">DIZHI_KE</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Final</span><span class="p"><span class="pre">[</span></span><span class="pre">frozenset</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><span class="pre">Dizhi</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><span class="pre">Dizhi</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/rules.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.rules.DizhiRules.DIZHI_KE" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.rules.DizhiRules.DIZHI_LIUHE">
+<span class="sig-name descname"><span class="pre">DIZHI_LIUHE</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Final</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-common.html#bazi.common.frozendict" title="bazi.common.frozendict"><span class="pre">frozendict</span></a><span class="p"><span class="pre">[</span></span><span class="pre">frozenset</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><span class="pre">Dizhi</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="bazi-defines-wuxing.html#bazi.defines.wuxing.Wuxing" title="bazi.defines.wuxing.Wuxing"><span class="pre">Wuxing</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/rules.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.rules.DizhiRules.DIZHI_LIUHE" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.rules.DizhiRules.DIZHI_PO">
+<span class="sig-name descname"><span class="pre">DIZHI_PO</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Final</span><span class="p"><span class="pre">[</span></span><span class="pre">frozenset</span><span class="p"><span class="pre">[</span></span><span class="pre">frozenset</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><span class="pre">Dizhi</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/rules.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.rules.DizhiRules.DIZHI_PO" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.rules.DizhiRules.DIZHI_SANHE">
+<span class="sig-name descname"><span class="pre">DIZHI_SANHE</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Final</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-common.html#bazi.common.frozendict" title="bazi.common.frozendict"><span class="pre">frozendict</span></a><span class="p"><span class="pre">[</span></span><span class="pre">frozenset</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><span class="pre">Dizhi</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="bazi-defines-wuxing.html#bazi.defines.wuxing.Wuxing" title="bazi.defines.wuxing.Wuxing"><span class="pre">Wuxing</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/rules.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.rules.DizhiRules.DIZHI_SANHE" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.rules.DizhiRules.DIZHI_SANHUI">
+<span class="sig-name descname"><span class="pre">DIZHI_SANHUI</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Final</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-common.html#bazi.common.frozendict" title="bazi.common.frozendict"><span class="pre">frozendict</span></a><span class="p"><span class="pre">[</span></span><span class="pre">frozenset</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><span class="pre">Dizhi</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="bazi-defines-wuxing.html#bazi.defines.wuxing.Wuxing" title="bazi.defines.wuxing.Wuxing"><span class="pre">Wuxing</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/rules.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.rules.DizhiRules.DIZHI_SANHUI" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.rules.DizhiRules.DIZHI_SHENG">
+<span class="sig-name descname"><span class="pre">DIZHI_SHENG</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Final</span><span class="p"><span class="pre">[</span></span><span class="pre">frozenset</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><span class="pre">Dizhi</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><span class="pre">Dizhi</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/rules.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.rules.DizhiRules.DIZHI_SHENG" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.rules.DizhiRules.DIZHI_TONGHE">
+<span class="sig-name descname"><span class="pre">DIZHI_TONGHE</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Final</span><span class="p"><span class="pre">[</span></span><span class="pre">frozenset</span><span class="p"><span class="pre">[</span></span><span class="pre">frozenset</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><span class="pre">Dizhi</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/rules.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.rules.DizhiRules.DIZHI_TONGHE" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.rules.DizhiRules.DIZHI_TONGLUHE">
+<span class="sig-name descname"><span class="pre">DIZHI_TONGLUHE</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Final</span><span class="p"><span class="pre">[</span></span><span class="pre">frozenset</span><span class="p"><span class="pre">[</span></span><span class="pre">frozenset</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><span class="pre">Dizhi</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/rules.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.rules.DizhiRules.DIZHI_TONGLUHE" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.rules.DizhiRules.DIZHI_XING">
+<span class="sig-name descname"><span class="pre">DIZHI_XING</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Final</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-common.html#bazi.common.frozendict" title="bazi.common.frozendict"><span class="pre">frozendict</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#bazi.rules.DizhiRules.XingDef" title="bazi.rules.DizhiRules.XingDef"><span class="pre">XingDef</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="bazi-common.html#bazi.common.frozendict" title="bazi.common.frozendict"><span class="pre">frozendict</span></a><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><span class="pre">Dizhi</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#bazi.rules.DizhiRules.XingSubType" title="bazi.rules.DizhiRules.XingSubType"><span class="pre">XingSubType</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/rules.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.rules.DizhiRules.DIZHI_XING" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.rules.DizhiRules.GONG_GONGHE_SCOPE">
+<span class="sig-name descname"><span class="pre">GONG_GONGHE_SCOPE</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Final</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-common.html#bazi.common.frozendict" title="bazi.common.frozendict"><span class="pre">frozendict</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#bazi.rules.DizhiRules.GongDef" title="bazi.rules.DizhiRules.GongDef"><span class="pre">GongDef</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#bazi.rules.DizhiRules.GongheDef" title="bazi.rules.DizhiRules.GongheDef"><span class="pre">GongheDef</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/rules.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.rules.DizhiRules.GONG_GONGHE_SCOPE" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.rules.DizhiRules.GONG_RELATIONS">
+<span class="sig-name descname"><span class="pre">GONG_RELATIONS</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Final</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-defines-relations.html#bazi.defines.relations.DizhiRelation" title="bazi.defines.relations.DizhiRelation"><span class="pre">DizhiRelation</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/rules.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.rules.DizhiRules.GONG_RELATIONS" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="bazi.rules.DizhiRules.GongDef">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">GongDef</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">values</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/rules.py#L280-L300"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.rules.DizhiRules.GongDef" title="链接到此定义。">¶</a></dt>
+<dd><p>拱合、拱会成立条件的来源档案；只列有出处的组合，不任意拼接分歧条件。</p>
+<ul class="simple">
+<li><p>SAME_STEM_NARROW：两柱同干；狭义拱合并收拱会。</p></li>
+<li><p>SAME_STEM_WIDE：两柱同干；广义拱合并收拱会。</p></li>
+<li><p>TRANSFORMING_NARROW：查询范围透出化神；狭义拱合并收拱会。</p></li>
+<li><p>LU_NARROW：查询范围见所拱五行的乙、丁、辛、癸禄字；只收狭义拱合，来源未扩到拱会。</p></li>
+</ul>
+<p>候选柱位由入口决定：<code class="docutils literal notranslate"><span class="pre">search_ganzhis</span></code> 只查相邻具体出现，<code class="docutils literal notranslate"><span class="pre">discover_mutual_ganzhis</span></code>
+查横跨两组输入的柱位对。</p>
+<p>出处：</p>
+<ul class="simple">
+<li><p>同干、广义：https://www.sohu.com/a/471337600_310486</p></li>
+<li><p>透化神：https://www.suanzhun.net/article/2395.html</p></li>
+<li><p>禄字：https://services.shen88.cn/bazisuanming/pc-74297.html</p></li>
+<li><p>拱会 / 夹术语：https://www.sohu.com/a/805277582_120167645</p></li>
+</ul>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.rules.DizhiRules.GongDef.LU_NARROW">
+<span class="sig-name descname"><span class="pre">LU_NARROW</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">3</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/rules.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.rules.DizhiRules.GongDef.LU_NARROW" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.rules.DizhiRules.GongDef.SAME_STEM_NARROW">
+<span class="sig-name descname"><span class="pre">SAME_STEM_NARROW</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/rules.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.rules.DizhiRules.GongDef.SAME_STEM_NARROW" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.rules.DizhiRules.GongDef.SAME_STEM_WIDE">
+<span class="sig-name descname"><span class="pre">SAME_STEM_WIDE</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/rules.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.rules.DizhiRules.GongDef.SAME_STEM_WIDE" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.rules.DizhiRules.GongDef.TRANSFORMING_NARROW">
+<span class="sig-name descname"><span class="pre">TRANSFORMING_NARROW</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">2</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/rules.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.rules.DizhiRules.GongDef.TRANSFORMING_NARROW" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="bazi.rules.DizhiRules.GongheDef">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">GongheDef</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">values</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/rules.py#L270-L278"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.rules.DizhiRules.GongheDef" title="链接到此定义。">¶</a></dt>
+<dd><p>拱合结构定义：NARROW 只收三合缺中神；WIDE 收三合任意两支并拱出第三支。</p>
+<p>出处：</p>
+<ul class="simple">
+<li><p>狭义：https://services.shen88.cn/bazisuanming/pc-74297.html</p></li>
+<li><p>广义：https://www.sohu.com/a/471337600_310486</p></li>
+</ul>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.rules.DizhiRules.GongheDef.NARROW">
+<span class="sig-name descname"><span class="pre">NARROW</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/rules.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.rules.DizhiRules.GongheDef.NARROW" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.rules.DizhiRules.GongheDef.WIDE">
+<span class="sig-name descname"><span class="pre">WIDE</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/rules.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.rules.DizhiRules.GongheDef.WIDE" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="bazi.rules.DizhiRules.XingDef">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">XingDef</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">values</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/rules.py#L444-L455"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.rules.DizhiRules.XingDef" title="链接到此定义。">¶</a></dt>
+<dd><p>不同的地支相刑的看法。主要区别在于丑未戌、寅巳申之间相刑的定义。</p>
+<ul class="simple">
+<li><p>定义层（各查法入口共有）：STRICT 要求丑未戌 / 寅巳申三支齐现；LOOSE 三取二即成立。</p></li>
+<li><p>入口层：方向（谁刑谁）只有按序查法（<code class="docutils literal notranslate"><span class="pre">dizhi_utils.xing</span></code>）可见；批量查法入口按多重集
+比对，看不出方向。</p></li>
+</ul>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.rules.DizhiRules.XingDef.LOOSE">
+<span class="sig-name descname"><span class="pre">LOOSE</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/rules.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.rules.DizhiRules.XingDef.LOOSE" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.rules.DizhiRules.XingDef.STRICT">
+<span class="sig-name descname"><span class="pre">STRICT</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/rules.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.rules.DizhiRules.XingDef.STRICT" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="bazi.rules.DizhiRules.XingSubType">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">XingSubType</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">values</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/rules.py#L457-L464"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.rules.DizhiRules.XingSubType" title="链接到此定义。">¶</a></dt>
+<dd><dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.rules.DizhiRules.XingSubType.SANXING">
+<span class="sig-name descname"><span class="pre">SANXING</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/rules.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.rules.DizhiRules.XingSubType.SANXING" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.rules.DizhiRules.XingSubType.ZIMAOXING">
+<span class="sig-name descname"><span class="pre">ZIMAOXING</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/rules.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.rules.DizhiRules.XingSubType.ZIMAOXING" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.rules.DizhiRules.XingSubType.ZIXING">
+<span class="sig-name descname"><span class="pre">ZIXING</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">2</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/rules.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.rules.DizhiRules.XingSubType.ZIXING" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.rules.DizhiRules.XingSubType.">
+<span class="sig-name descname"><span class="pre">三刑</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/rules.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.rules.DizhiRules.XingSubType." title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id0">
+<span class="sig-name descname"><span class="pre">子卯刑</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/rules.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#id0" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id1">
+<span class="sig-name descname"><span class="pre">自刑</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">2</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/rules.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#id1" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="bazi.rules.DizhiRelationDefinitions">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">bazi.rules.</span></span><span class="sig-name descname"><span class="pre">DizhiRelationDefinitions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">anhe_def</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#bazi.rules.DizhiRules.AnheDef" title="bazi.rules.DizhiRules.AnheDef"><span class="pre">AnheDef</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">AnheDef.NORMAL_EXTENDED</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xing_def</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#bazi.rules.DizhiRules.XingDef" title="bazi.rules.DizhiRules.XingDef"><span class="pre">XingDef</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">XingDef.LOOSE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gong_def</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#bazi.rules.DizhiRules.GongDef" title="bazi.rules.DizhiRules.GongDef"><span class="pre">GongDef</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">GongDef.SAME_STEM_NARROW</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/rules.py#L515-L534"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.rules.DizhiRelationDefinitions" title="链接到此定义。">¶</a></dt>
+<dd><p>地支批量查法共用的暗合、刑与拱局定义。</p>
+<p>构造时检查各字段的枚举类型；本对象不含排盘或神煞选项。</p>
+<p>Args:</p>
+<ul class="simple">
+<li><p>anhe_def: (DizhiRules.AnheDef) 暗合定义。</p></li>
+<li><p>xing_def: (DizhiRules.XingDef) 刑定义。</p></li>
+<li><p>gong_def: (DizhiRules.GongDef) 拱局天干与结构条件。</p></li>
+</ul>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.rules.DizhiRelationDefinitions.anhe_def">
+<span class="sig-name descname"><span class="pre">anhe_def</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#bazi.rules.DizhiRules.AnheDef" title="bazi.rules.DizhiRules.AnheDef"><span class="pre">AnheDef</span></a></span><span class="property"> <span class="pre">=</span> <span class="pre">DizhiRules.AnheDef.NORMAL_EXTENDED</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/rules.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.rules.DizhiRelationDefinitions.anhe_def" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.rules.DizhiRelationDefinitions.gong_def">
+<span class="sig-name descname"><span class="pre">gong_def</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#bazi.rules.DizhiRules.GongDef" title="bazi.rules.DizhiRules.GongDef"><span class="pre">GongDef</span></a></span><span class="property"> <span class="pre">=</span> <span class="pre">DizhiRules.GongDef.SAME_STEM_NARROW</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/rules.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.rules.DizhiRelationDefinitions.gong_def" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.rules.DizhiRelationDefinitions.xing_def">
+<span class="sig-name descname"><span class="pre">xing_def</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#bazi.rules.DizhiRules.XingDef" title="bazi.rules.DizhiRules.XingDef"><span class="pre">XingDef</span></a></span><span class="property"> <span class="pre">=</span> <span class="pre">DizhiRules.XingDef.LOOSE</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/rules.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.rules.DizhiRelationDefinitions.xing_def" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="bazi.rules.DEFAULT_DIZHI_RELATION_DEFINITIONS">
+<span class="sig-prename descclassname"><span class="pre">bazi.rules.</span></span><span class="sig-name descname"><span class="pre">DEFAULT_DIZHI_RELATION_DEFINITIONS</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Final</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#bazi.rules.DizhiRelationDefinitions" title="bazi.rules.DizhiRelationDefinitions"><span class="pre">DizhiRelationDefinitions</span></a><span class="p"><span class="pre">]</span></span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/rules.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.rules.DEFAULT_DIZHI_RELATION_DEFINITIONS" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="bazi.rules.ShenshaRules">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">bazi.rules.</span></span><span class="sig-name descname"><span class="pre">ShenshaRules</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/rules.py#L564-L953"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.rules.ShenshaRules" title="链接到此定义。">¶</a></dt>
+<dd><p>神煞规则表与可选定义。各表附知识条目入口；现代来源的关系见 concept.shensha_sources.readings。</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.rules.ShenshaRules.FEIREN">
+<span class="sig-name descname"><span class="pre">FEIREN</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Final</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-common.html#bazi.common.frozendict" title="bazi.common.frozendict"><span class="pre">frozendict</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#bazi.rules.ShenshaRules.YangrenDef" title="bazi.rules.ShenshaRules.YangrenDef"><span class="pre">YangrenDef</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="bazi-common.html#bazi.common.frozendict" title="bazi.common.frozendict"><span class="pre">frozendict</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-defines-tiangan.html#bazi.defines.tiangan.Tiangan" title="bazi.defines.tiangan.Tiangan"><span class="pre">Tiangan</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><span class="pre">Dizhi</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/rules.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.rules.ShenshaRules.FEIREN" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.rules.ShenshaRules.GUASU">
+<span class="sig-name descname"><span class="pre">GUASU</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Final</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-common.html#bazi.common.frozendict" title="bazi.common.frozendict"><span class="pre">frozendict</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><span class="pre">Dizhi</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><span class="pre">Dizhi</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/rules.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.rules.ShenshaRules.GUASU" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.rules.ShenshaRules.GUCHEN">
+<span class="sig-name descname"><span class="pre">GUCHEN</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Final</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-common.html#bazi.common.frozendict" title="bazi.common.frozendict"><span class="pre">frozendict</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><span class="pre">Dizhi</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><span class="pre">Dizhi</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/rules.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.rules.ShenshaRules.GUCHEN" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.rules.ShenshaRules.GUOYIN">
+<span class="sig-name descname"><span class="pre">GUOYIN</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Final</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-common.html#bazi.common.frozendict" title="bazi.common.frozendict"><span class="pre">frozendict</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#bazi.rules.ShenshaRules.GuoyinDef" title="bazi.rules.ShenshaRules.GuoyinDef"><span class="pre">GuoyinDef</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="bazi-common.html#bazi.common.frozendict" title="bazi.common.frozendict"><span class="pre">frozendict</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-defines-tiangan.html#bazi.defines.tiangan.Tiangan" title="bazi.defines.tiangan.Tiangan"><span class="pre">Tiangan</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><span class="pre">Dizhi</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/rules.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.rules.ShenshaRules.GUOYIN" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="bazi.rules.ShenshaRules.GuoyinDef">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">GuoyinDef</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">values</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/rules.py#L922-L935"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.rules.ShenshaRules.GuoyinDef" title="链接到此定义。">¶</a></dt>
+<dd><p>国印贵人的查法定义。两读都取该干禄位的固定偏移（含禄起算），只在偏移量上分歧。</p>
+<ul class="simple">
+<li><p>WUXING_JINGJI：禄 + 7，禄前第八位。</p></li>
+<li><p>MODERN：禄 + 8，果老一脉的禄前第九位，也是现代通行表。</p></li>
+</ul>
+<p>默认 MODERN。</p>
+<p>两读无一格重合：每个天干在两读下各得不同地支，故命中结果不会含混。</p>
+<p>表值、锚点与查找位置的来源说明见知识条目 shensha.guoyin.readings。</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.rules.ShenshaRules.GuoyinDef.MODERN">
+<span class="sig-name descname"><span class="pre">MODERN</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/rules.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.rules.ShenshaRules.GuoyinDef.MODERN" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.rules.ShenshaRules.GuoyinDef.WUXING_JINGJI">
+<span class="sig-name descname"><span class="pre">WUXING_JINGJI</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/rules.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.rules.ShenshaRules.GuoyinDef.WUXING_JINGJI" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.rules.ShenshaRules.HONGLUAN">
+<span class="sig-name descname"><span class="pre">HONGLUAN</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Final</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-common.html#bazi.common.frozendict" title="bazi.common.frozendict"><span class="pre">frozendict</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><span class="pre">Dizhi</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><span class="pre">Dizhi</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/rules.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.rules.ShenshaRules.HONGLUAN" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.rules.ShenshaRules.HONGYAN">
+<span class="sig-name descname"><span class="pre">HONGYAN</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Final</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-common.html#bazi.common.frozendict" title="bazi.common.frozendict"><span class="pre">frozendict</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-defines-tiangan.html#bazi.defines.tiangan.Tiangan" title="bazi.defines.tiangan.Tiangan"><span class="pre">Tiangan</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><span class="pre">Dizhi</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/rules.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.rules.ShenshaRules.HONGYAN" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.rules.ShenshaRules.HUAGAI">
+<span class="sig-name descname"><span class="pre">HUAGAI</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Final</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-common.html#bazi.common.frozendict" title="bazi.common.frozendict"><span class="pre">frozendict</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><span class="pre">Dizhi</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><span class="pre">Dizhi</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/rules.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.rules.ShenshaRules.HUAGAI" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.rules.ShenshaRules.JIANGXING">
+<span class="sig-name descname"><span class="pre">JIANGXING</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Final</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-common.html#bazi.common.frozendict" title="bazi.common.frozendict"><span class="pre">frozendict</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><span class="pre">Dizhi</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><span class="pre">Dizhi</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/rules.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.rules.ShenshaRules.JIANGXING" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.rules.ShenshaRules.JIESHA">
+<span class="sig-name descname"><span class="pre">JIESHA</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Final</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-common.html#bazi.common.frozendict" title="bazi.common.frozendict"><span class="pre">frozendict</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><span class="pre">Dizhi</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><span class="pre">Dizhi</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/rules.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.rules.ShenshaRules.JIESHA" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.rules.ShenshaRules.JINYU">
+<span class="sig-name descname"><span class="pre">JINYU</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Final</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-common.html#bazi.common.frozendict" title="bazi.common.frozendict"><span class="pre">frozendict</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-defines-tiangan.html#bazi.defines.tiangan.Tiangan" title="bazi.defines.tiangan.Tiangan"><span class="pre">Tiangan</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><span class="pre">Dizhi</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/rules.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.rules.ShenshaRules.JINYU" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.rules.ShenshaRules.KONGWANG">
+<span class="sig-name descname"><span class="pre">KONGWANG</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Final</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-common.html#bazi.common.frozendict" title="bazi.common.frozendict"><span class="pre">frozendict</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-defines-ganzhi.html#bazi.defines.ganzhi.Ganzhi" title="bazi.defines.ganzhi.Ganzhi"><span class="pre">Ganzhi</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">frozenset</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><span class="pre">Dizhi</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/rules.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.rules.ShenshaRules.KONGWANG" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.rules.ShenshaRules.KUIGANG">
+<span class="sig-name descname"><span class="pre">KUIGANG</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Final</span><span class="p"><span class="pre">[</span></span><span class="pre">frozenset</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-defines-ganzhi.html#bazi.defines.ganzhi.Ganzhi" title="bazi.defines.ganzhi.Ganzhi"><span class="pre">Ganzhi</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/rules.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.rules.ShenshaRules.KUIGANG" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.rules.ShenshaRules.LUSHEN">
+<span class="sig-name descname"><span class="pre">LUSHEN</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Final</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-common.html#bazi.common.frozendict" title="bazi.common.frozendict"><span class="pre">frozendict</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-defines-tiangan.html#bazi.defines.tiangan.Tiangan" title="bazi.defines.tiangan.Tiangan"><span class="pre">Tiangan</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><span class="pre">Dizhi</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/rules.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.rules.ShenshaRules.LUSHEN" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.rules.ShenshaRules.TAIJI">
+<span class="sig-name descname"><span class="pre">TAIJI</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Final</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-common.html#bazi.common.frozendict" title="bazi.common.frozendict"><span class="pre">frozendict</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#bazi.rules.ShenshaRules.TaijiDef" title="bazi.rules.ShenshaRules.TaijiDef"><span class="pre">TaijiDef</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="bazi-common.html#bazi.common.frozendict" title="bazi.common.frozendict"><span class="pre">frozendict</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-defines-tiangan.html#bazi.defines.tiangan.Tiangan" title="bazi.defines.tiangan.Tiangan"><span class="pre">Tiangan</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">frozenset</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><span class="pre">Dizhi</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/rules.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.rules.ShenshaRules.TAIJI" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.rules.ShenshaRules.TAOHUA">
+<span class="sig-name descname"><span class="pre">TAOHUA</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Final</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-common.html#bazi.common.frozendict" title="bazi.common.frozendict"><span class="pre">frozendict</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><span class="pre">Dizhi</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><span class="pre">Dizhi</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/rules.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.rules.ShenshaRules.TAOHUA" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.rules.ShenshaRules.TIANSHE">
+<span class="sig-name descname"><span class="pre">TIANSHE</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Final</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-common.html#bazi.common.frozendict" title="bazi.common.frozendict"><span class="pre">frozendict</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><span class="pre">Dizhi</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="bazi-defines-ganzhi.html#bazi.defines.ganzhi.Ganzhi" title="bazi.defines.ganzhi.Ganzhi"><span class="pre">Ganzhi</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/rules.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.rules.ShenshaRules.TIANSHE" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.rules.ShenshaRules.TIANXI">
+<span class="sig-name descname"><span class="pre">TIANXI</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Final</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-common.html#bazi.common.frozendict" title="bazi.common.frozendict"><span class="pre">frozendict</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><span class="pre">Dizhi</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><span class="pre">Dizhi</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/rules.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.rules.ShenshaRules.TIANXI" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.rules.ShenshaRules.TIANYI">
+<span class="sig-name descname"><span class="pre">TIANYI</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Final</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-common.html#bazi.common.frozendict" title="bazi.common.frozendict"><span class="pre">frozendict</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#bazi.rules.ShenshaRules.TianyiDef" title="bazi.rules.ShenshaRules.TianyiDef"><span class="pre">TianyiDef</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="bazi-common.html#bazi.common.frozendict" title="bazi.common.frozendict"><span class="pre">frozendict</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-defines-tiangan.html#bazi.defines.tiangan.Tiangan" title="bazi.defines.tiangan.Tiangan"><span class="pre">Tiangan</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">frozenset</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><span class="pre">Dizhi</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/rules.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.rules.ShenshaRules.TIANYI" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="bazi.rules.ShenshaRules.TaijiDef">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">TaijiDef</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">values</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/rules.py#L883-L892"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.rules.ShenshaRules.TaijiDef" title="链接到此定义。">¶</a></dt>
+<dd><p>太极贵人的查法定义。两读只在壬癸分歧。</p>
+<ul class="simple">
+<li><p>REN_GUI_BOTH：壬癸各兼巳申。</p></li>
+<li><p>REN_SI_GUI_SHEN：壬取巳、癸取申。</p></li>
+</ul>
+<p>默认 REN_GUI_BOTH。两读与锚点的出处见知识条目 shensha.taiji.readings。</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.rules.ShenshaRules.TaijiDef.REN_GUI_BOTH">
+<span class="sig-name descname"><span class="pre">REN_GUI_BOTH</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/rules.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.rules.ShenshaRules.TaijiDef.REN_GUI_BOTH" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.rules.ShenshaRules.TaijiDef.REN_SI_GUI_SHEN">
+<span class="sig-name descname"><span class="pre">REN_SI_GUI_SHEN</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/rules.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.rules.ShenshaRules.TaijiDef.REN_SI_GUI_SHEN" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="bazi.rules.ShenshaRules.TianyiDef">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">TianyiDef</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">values</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/rules.py#L762-L777"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.rules.ShenshaRules.TianyiDef" title="链接到此定义。">¶</a></dt>
+<dd><p>天乙贵人的查法定义；口诀、庚辛分组与阳贵／阴贵表彼此牵连，按出处保留完整档案，
+不作无出处的自由组合。</p>
+<ul class="simple">
+<li><p>GENG_WITH_JIA_WU：庚与甲戊同组、辛取午寅的传统合并表。</p></li>
+<li><p>GENG_WITH_XIN：庚改与辛同组的合并表。</p></li>
+<li><p>YANGGUI、YINGUI：依《三命通会》所引通玄经推法命名的阳贵、阴贵表；
+两表合并即为 GENG_WITH_JIA_WU。</p></li>
+</ul>
+<p><code class="docutils literal notranslate"><span class="pre">BaziSchool.tianyi_def</span></code> 与 <code class="docutils literal notranslate"><span class="pre">BaziSchool.tianyi_anchor</span></code> 相互独立，
+本表不代选使用时间或界线。各表与查法的出处见知识条目 shensha.tianyi.readings。</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.rules.ShenshaRules.TianyiDef.GENG_WITH_JIA_WU">
+<span class="sig-name descname"><span class="pre">GENG_WITH_JIA_WU</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/rules.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.rules.ShenshaRules.TianyiDef.GENG_WITH_JIA_WU" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.rules.ShenshaRules.TianyiDef.GENG_WITH_XIN">
+<span class="sig-name descname"><span class="pre">GENG_WITH_XIN</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/rules.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.rules.ShenshaRules.TianyiDef.GENG_WITH_XIN" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.rules.ShenshaRules.TianyiDef.YANGGUI">
+<span class="sig-name descname"><span class="pre">YANGGUI</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">2</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/rules.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.rules.ShenshaRules.TianyiDef.YANGGUI" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.rules.ShenshaRules.TianyiDef.YINGUI">
+<span class="sig-name descname"><span class="pre">YINGUI</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">3</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/rules.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.rules.ShenshaRules.TianyiDef.YINGUI" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.rules.ShenshaRules.WANGSHEN">
+<span class="sig-name descname"><span class="pre">WANGSHEN</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Final</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-common.html#bazi.common.frozendict" title="bazi.common.frozendict"><span class="pre">frozendict</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><span class="pre">Dizhi</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><span class="pre">Dizhi</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/rules.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.rules.ShenshaRules.WANGSHEN" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.rules.ShenshaRules.WENCHANG">
+<span class="sig-name descname"><span class="pre">WENCHANG</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Final</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-common.html#bazi.common.frozendict" title="bazi.common.frozendict"><span class="pre">frozendict</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#bazi.rules.ShenshaRules.WenchangDef" title="bazi.rules.ShenshaRules.WenchangDef"><span class="pre">WenchangDef</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="bazi-common.html#bazi.common.frozendict" title="bazi.common.frozendict"><span class="pre">frozendict</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-defines-tiangan.html#bazi.defines.tiangan.Tiangan" title="bazi.defines.tiangan.Tiangan"><span class="pre">Tiangan</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><span class="pre">Dizhi</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/rules.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.rules.ShenshaRules.WENCHANG" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.rules.ShenshaRules.WENCHANGGUI">
+<span class="sig-name descname"><span class="pre">WENCHANGGUI</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Final</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-common.html#bazi.common.frozendict" title="bazi.common.frozendict"><span class="pre">frozendict</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-defines-tiangan.html#bazi.defines.tiangan.Tiangan" title="bazi.defines.tiangan.Tiangan"><span class="pre">Tiangan</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><span class="pre">Dizhi</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/rules.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.rules.ShenshaRules.WENCHANGGUI" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="bazi.rules.ShenshaRules.WenchangDef">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">WenchangDef</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">values</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/rules.py#L830-L839"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.rules.ShenshaRules.WenchangDef" title="链接到此定义。">¶</a></dt>
+<dd><p>文昌的查法定义。两表只在辛一格分歧。</p>
+<ul class="simple">
+<li><p>XIN_ZI：辛 → 子。</p></li>
+<li><p>XIN_XU：辛 → 戌。</p></li>
+</ul>
+<p>默认取 XIN_ZI。两读与禄命法文昌贵的区别、表值与查法出处见知识条目 shensha.wenchang.readings。</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.rules.ShenshaRules.WenchangDef.XIN_XU">
+<span class="sig-name descname"><span class="pre">XIN_XU</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/rules.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.rules.ShenshaRules.WenchangDef.XIN_XU" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.rules.ShenshaRules.WenchangDef.XIN_ZI">
+<span class="sig-name descname"><span class="pre">XIN_ZI</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/rules.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.rules.ShenshaRules.WenchangDef.XIN_ZI" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.rules.ShenshaRules.YANGREN">
+<span class="sig-name descname"><span class="pre">YANGREN</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Final</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-common.html#bazi.common.frozendict" title="bazi.common.frozendict"><span class="pre">frozendict</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#bazi.rules.ShenshaRules.YangrenDef" title="bazi.rules.ShenshaRules.YangrenDef"><span class="pre">YangrenDef</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="bazi-common.html#bazi.common.frozendict" title="bazi.common.frozendict"><span class="pre">frozendict</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-defines-tiangan.html#bazi.defines.tiangan.Tiangan" title="bazi.defines.tiangan.Tiangan"><span class="pre">Tiangan</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><span class="pre">Dizhi</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/rules.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.rules.ShenshaRules.YANGREN" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.rules.ShenshaRules.YIMA">
+<span class="sig-name descname"><span class="pre">YIMA</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Final</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-common.html#bazi.common.frozendict" title="bazi.common.frozendict"><span class="pre">frozendict</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><span class="pre">Dizhi</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><span class="pre">Dizhi</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/rules.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.rules.ShenshaRules.YIMA" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="bazi.rules.ShenshaRules.YangrenDef">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">YangrenDef</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">values</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/rules.py#L724-L743"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.rules.ShenshaRules.YangrenDef" title="链接到此定义。">¶</a></dt>
+<dd><p>羊刃（阳刃）与飞刃共用的三种定义。羊刃分歧在阴干有无刃及刃位；每套飞刃均取
+对应羊刃定义的对冲支。</p>
+<ul class="simple">
+<li><p>ZIPING：子平法，仅五阳干有阳刃。</p></li>
+<li><p>LUMING：古禄命法，十干皆有羊刃，取禄前一辰。</p></li>
+<li><p>DIWANG：十干各取帝旺位。</p></li>
+</ul>
+<p>飞刃：</p>
+<ul class="simple">
+<li><p>ZIPING：仅五阳干有飞刃，取阳刃对冲支。</p></li>
+<li><p>LUMING：十干皆有飞刃，取古禄命羊刃对冲支。</p></li>
+<li><p>DIWANG：十干各取帝旺位的对冲支。</p></li>
+</ul>
+<p><code class="docutils literal notranslate"><span class="pre">BaziSchool.yangren_def</span></code> 与 <code class="docutils literal notranslate"><span class="pre">BaziSchool.feiren_def</span></code> 独立，可任意组合羊刃与飞刃定义。</p>
+<p>羊刃与飞刃的表值及查法出处见知识条目 shensha.yangren_feiren.readings。</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.rules.ShenshaRules.YangrenDef.DIWANG">
+<span class="sig-name descname"><span class="pre">DIWANG</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">2</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/rules.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.rules.ShenshaRules.YangrenDef.DIWANG" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.rules.ShenshaRules.YangrenDef.LUMING">
+<span class="sig-name descname"><span class="pre">LUMING</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/rules.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.rules.ShenshaRules.YangrenDef.LUMING" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.rules.ShenshaRules.YangrenDef.ZIPING">
+<span class="sig-name descname"><span class="pre">ZIPING</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/rules.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.rules.ShenshaRules.YangrenDef.ZIPING" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bazi.rules.ShenshaRules.ZAISHA">
+<span class="sig-name descname"><span class="pre">ZAISHA</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Final</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-common.html#bazi.common.frozendict" title="bazi.common.frozendict"><span class="pre">frozendict</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><span class="pre">Dizhi</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="bazi-defines-dizhi.html#bazi.defines.dizhi.Dizhi" title="bazi.defines.dizhi.Dizhi"><span class="pre">Dizhi</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><a class="reference external" href="https://github.com/0xf3cd/bazi/blob/9f85f8d0f24e0ef339226627d7ae0af4532dd3cf/bazi/rules.py"><span class="viewcode-link"><span class="pre">[源代码]</span></span></a><a class="headerlink" href="#bazi.rules.ShenshaRules.ZAISHA" title="链接到此定义。">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">bazi</a></h1>
+
+
+
+<p class="blurb">排盘、关系与独立知识查阅</p>
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="提交" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>导航</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../guides/quickstart.html">快速开始</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/cli.html">命令行</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/configuration.html">配置与时间口径</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/calendar.html">公历、农历与节气</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/relations-transits.html">关系与流运</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/knowledge.html">查阅知识库</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/integration.html">集成开发</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">API 参考</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../catalog/index.html">知识目录</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guides/rule-coverage.html">规则、知识与出处的覆盖</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api-contract.html">公开接口契约</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../contributing.html">贡献指南</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../release-notes.html">发布说明</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../versions.html">文档版本</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../versioning.html">维护者：构建与归档文档</a></li>
+</ul>
+
+
+<hr />
+<ul>
+    
+    <li class="toctree-l1"><a href="https://0xf3cd.github.io/bazi/versions/">全部版本</a></li>
+    
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">API 参考</a><ul>
+      <li>Previous: <a href="bazi-knowledge.html" title="上一章">bazi.knowledge</a></li>
+      <li>Next: <a href="bazi-school.html" title="下一章">bazi.school</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      
+      
+      
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.2.0</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

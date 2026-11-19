@@ -8,7 +8,7 @@ bazi.bazi
    :undoc-members:
 
 .. autoclass:: bazi.bazi.Bazi
-   :members: config, create, day_master, day_pillar, four_dizhis, four_tiangans, ganzhi_date, ganzhi_year, ganzhi_year_month, gender, hour, hour_pillar, location_time, longitude, minute, month_commander, month_jies, month_pillar, pillars, random, reference_datetime, solar_date, solar_datetime, year_pillar
+   :members: config, create, day_master, day_pillar, four_dizhis, four_tiangans, ganzhi_date, ganzhi_year, ganzhi_year_month, gender, hour, hour_pillar, location_time, longitude, minute, month_commander, month_jies, month_pillar, pillars, random, reference_datetime, solar_date, solar_datetime, year_pillar, 四柱, 日主
    :undoc-members:
 
 .. autoclass:: bazi.bazi.LocationTime

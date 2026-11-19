@@ -13,13 +13,13 @@ README 首例检查
 
 .. testcode:: readme-first
 
-   from bazi.bazi import Bazi
-   from bazi.bazi_chart import BaziChart
+   from bazi.bazi import 八字
+   from bazi.bazi_chart import 命盘
    
-   chart = BaziChart(Bazi.create('1990-05-17 10:30', 'female'))
-   print('四柱', ' '.join(map(str, chart.bazi.pillars)))
-   print('日主', chart.bazi.day_master)
-   print('年干十神', chart.shishen.year.tiangan)
+   盘 = 命盘(八字.create('1990-05-17 10:30', '女'))
+   print('四柱', ' '.join(map(str, 盘.八字.四柱)))
+   print('日主', 盘.八字.日主)
+   print('年干十神', 盘.十神.年.天干)
 
 .. testoutput:: readme-first
 

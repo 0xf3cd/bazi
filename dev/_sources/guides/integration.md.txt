@@ -13,7 +13,7 @@ from bazi.bazi import Bazi
 from bazi.bazi_chart import BaziChart
 
 chart = BaziChart(Bazi.create('1990-05-17 10:30', 'female'))
-print('年干十神', chart.shishen.year.tiangan)
+print('年干十神', chart.十神.年.天干)
 print('月支藏干', ' '.join(map(str, chart.hidden_tiangan.month)))
 print('日柱纳音', chart.nayin.day)
 ```
@@ -24,9 +24,11 @@ print('日柱纳音', chart.nayin.day)
 日柱纳音 杨柳木
 ```
 
-这些属性以 {py:class}`~bazi.data_types.BaziData` 保存四柱数据，字段为 `year`、`month`、`day`、`hour`，
+`chart.十神` 是 `chart.shishen` 的中文只读别名，读取同一份缓存结果。
+上例的十神、藏干和纳音以 {py:class}`~bazi.data_types.BaziData` 保存四柱数据，可用 `年`、`月`、`日`、`时`
+读取 `year`、`month`、`day`、`hour`，
 也可按年、月、日、时顺序遍历。十神和阴阳五行的每柱结果再以 {py:class}`~bazi.data_types.GanzhiData`
-区分 `tiangan` 与 `dizhi`；日主自身的天干十神位置为 `None`。
+区分 `tiangan` 与 `dizhi`，中文只读别名为 `天干`、`地支`；日主自身的天干十神位置为 `None`。
 
 把四柱干支、纳音与天干十神放在一起遍历：
 
@@ -72,7 +74,7 @@ print(next(line for line in text.splitlines() if line.startswith('日：')))
 日：  [壬] [阳水] <*日主*>      [午] [阳火] <正财>     [丁] [阴火] <财> [己] [阴土] <官>
 ```
 
-`bazi demo` 用终端颜色码实现这两个钩子；传给字形钩子的永远是单个字形，不是整段文字。
+`bazi chart` 用终端颜色码实现这两个钩子；传给字形钩子的永远是单个字形，不是整段文字。
 
 ## 四柱之外：胎元与命宫
 
@@ -96,19 +98,20 @@ print('命宫', chart.minggong)
 
 胎元取月干顺移一、月支顺移三，只作符号派生，不倒推实际受孕时间。
 命宫按现有节月，达到中气后月序循环进一，再用掌诀与本盘年干五虎遁配干；大寒后进正月不提前换年。
-时支、精度、地点盘与后端的边界约定见[胎元与命宫契约](../api-contract.md#胎元与命宫附加查询)。
+时支、精度与地点盘的边界约定见[胎元与命宫契约](../api-contract.md#胎元与命宫附加查询)。
 
 这两项供单独查询，不参与五行、十神、神煞、关系或流运分析，也不出现在 `basic_text` 等命盘文本中。
 低层纯计算见 {py:func}`~bazi.utils.bazi_utils.taiyuan` 与 {py:func}`~bazi.utils.bazi_utils.minggong`；
 后者需要已调整的有效命宫月支，不接收裸整数月序。来源与其他读法候选可查知识对象
-`concept.taiyuan`、`concept.minggong`，均须显式包含参考条目，不自动认定解释成立。
+`concept.taiyuan`、`concept.minggong`，查到条目不表示解释成立。
 
 (context-matching)=
 ## 前提匹配：结构事实，不是判断
 
 `evaluate_context` 求值已注册的判据，例如“选定范围内正官与七杀各至少出现一次”。
 `entry_role='premise'` 的判据检查关联条目的完整前提；`entry_role='condition'` 只检查局部事实，不能据此认定条目全文的前提成立。
-`result.reference_ids` 给出参考条目的 ID 元组，用 `result.knowledge.entry(claim_id)` 读取文字。
+`result.reference_ids` 给出参考条目的 ID 元组；需要文字时另行加载 `KnowledgeBase` 并按 ID 读取。
+计算与结果渲染都不加载知识文件，文件缺失或文字编辑不改变判据结果。
 两种语义由 `criterion(result.criterion.criterion_id).entry_role` 区分，即使 ID 元组为空也不改变。
 `SATISFIED` 表示该判据的结构事实成立，不是旺衰、格局或现实事件的判断，也不说明条文本身为真。
 
@@ -118,6 +121,7 @@ from datetime import datetime
 from bazi.bazi import Bazi
 from bazi.bazi_chart import BaziChart
 from bazi.context_matching import NatalObservation, criterion, evaluate_context
+from bazi.knowledge import KnowledgeBase
 
 info = criterion('editorial.guansha_coexistence.v1')
 print(info.definition)
@@ -130,14 +134,9 @@ result = evaluate_context(
 )
 print('状态', result.criterion.status, '范围完整', result.criterion.scope_complete)
 print(dict(result.criterion.observations))
-with_references = evaluate_context(
-  chart,
-  criterion_id=info.criterion_id,
-  observation=NatalObservation(),
-  include_reference_only=True,
-)
-for claim_id in with_references.reference_ids:
-  print(with_references.knowledge.entry(claim_id).text)
+kb = KnowledgeBase.load()
+for claim_id in result.reference_ids:
+  print(kb.entry(claim_id).text)
 ```
 
 ```{testoutput} integration-context
@@ -148,12 +147,11 @@ for claim_id in with_references.reference_ids:
 如在命盘中也见正官，则称为官杀混杂，也许代表在公司里受排挤、职场不顺，或有官司是非。
 ```
 
-上例的结构事实成立，所以状态为 `SATISFIED`。两个关联条目都不默认展示，所以第一次的 `result.reference_ids` 为空，
-第二次传入 `include_reference_only=True` 才读到文字；两次的判据状态相同。
-最后两行是库中仅供参考的文字，前提满足推不出这些职场或法律事件。
+上例的结构事实成立，所以状态为 `SATISFIED`。结果给出两个参考 ID，最后两行通过独立的知识查询取得。
+前提满足推不出这些职场或法律事件。
 
-`reference_ids` 为空只表示这次没有返回关联条目，不表示前提不成立。不默认展示的条目需要显式请求；
-自定义知识库里没有该条目，或条目要求的性别与命盘不符时，也不会返回。
+`reference_ids` 按声明顺序返回，条目要求的性别与命盘不符时省略。空元组不表示前提不成立。
+自定义库可能没有某个参考 ID；可先用 `kb.entries.get(claim_id)` 检查，缺项不改变计算结果。
 返回顺序与筛选规则见[判据目录](../api-contract.md#判据目录)，条目的来源状态见 {doc}`knowledge`。
 
 ### 选择观察范围与读取证据
@@ -189,6 +187,7 @@ from bazi.context_matching import (
   TransitObservation, YearCoordinate, criterion, evaluate_context,
 )
 from bazi.transits import TransitKind
+from bazi.knowledge import KnowledgeBase
 
 chart = BaziChart(Bazi.create('2000-01-09 12:00', 'male'))
 result = evaluate_context(
@@ -198,15 +197,15 @@ result = evaluate_context(
     (TransitKind.DAYUN, TransitKind.LIUNIAN),
     YearCoordinate(ganzhi_year=2016),
   ),
-  include_reference_only=True,
 )
 assert isinstance(result.evidence, RelationshipEvidence)
 assert result.evidence.transits is not None
 print(result.criterion.status, result.criterion.scope_complete)
 print(tuple(kind.value for kind in result.evidence.transits))
 print(criterion(result.criterion.criterion_id).entry_role, len(result.reference_ids))
+kb = KnowledgeBase.load()
 for claim_id in result.reference_ids:
-  print(result.knowledge.entry(claim_id).text)
+  print(kb.entry(claim_id).text)
 ```
 
 ```{testoutput} integration-transits
@@ -217,7 +216,8 @@ condition 1
 ```
 
 本例 `entry_role='condition'`，只检查妻宫刑冲这个局部条件，不认证条目全文或其中的现实事件。
-想连同来源、前提和限度一起显示，用 `result.knowledge.render(entry)`；读取方法见 {doc}`knowledge`。
+`result.render()` 显示判别、证据与参考 ID。想连同来源、前提和限度一起读正文，用 `kb.render(entry)`；
+读取方法见 {doc}`knowledge`。
 
 ## 读取枚举字段
 
@@ -261,6 +261,5 @@ print(anchor_label(KongwangResult(Zhu.日, Ganzhi.from_str('甲子'), ())))
 
 ## 内存结果与对象契约
 
-通常使用 `evaluate_context` 取得结果，不直接手填证据构造。命盘和判别结果没有保存、恢复或格式迁移接口，
-知识 JSON 只作当前编辑来源。命盘对输入作拷贝隔离，已创建结果不随源文件的修改变化。
-直接构造、拷贝、相等、`asdict` 与模式匹配的精确条件见 {doc}`../api-contract`。
+通常使用 `evaluate_context` 取得结果。`BaziChart.bazi` 和 `ContextResult.bazi` 都是传入的同一个 `Bazi`，
+构造和读取均不深拷贝。手工构造、对象共享及重新求值的条件见 {doc}`../api-contract`。

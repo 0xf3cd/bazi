@@ -1,0 +1,32 @@
+bazi.knowledge
+==============
+
+.. automodule:: bazi.knowledge
+
+.. autodata:: bazi.knowledge.SourceState
+   :no-value:
+
+.. autodata:: bazi.knowledge.DEFAULT_SOURCE_PATH
+   :no-value:
+
+.. autoclass:: bazi.knowledge.KnowledgeObject
+   :members: kind, name, object_id
+   :undoc-members:
+
+.. autoclass:: bazi.knowledge.KnowledgeSource
+   :members: attribution, edition, excerpt, limitations, locator, source_id, state, supports, url, work
+   :undoc-members:
+
+.. autoclass:: bazi.knowledge.KnowledgeEntry
+   :members: attribution, claim_id, limits, objects, premise, sources, text, topics, viewpoint
+   :undoc-members:
+
+.. autoclass:: bazi.knowledge.KnowledgeBase
+   :members: entries, entry, filter_values, find_objects, load, objects, query, render, render_subject, search, sources
+   :undoc-members:
+
+.. py:currentmodule:: bazi.knowledge
+
+.. py:data:: 知识库
+
+   :py:obj:`bazi.knowledge.KnowledgeBase` 的别名。

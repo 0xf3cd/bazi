@@ -1,0 +1,30 @@
+bazi.data_types
+===============
+
+.. automodule:: bazi.data_types
+
+.. autoclass:: bazi.data_types.TraitTuple
+   :members: wuxing, yinyang
+   :undoc-members:
+
+.. autoclass:: bazi.data_types.DayunTuple
+   :members: end_moment, ganzhi, ganzhi_year, start_moment
+   :undoc-members:
+
+.. autoclass:: bazi.data_types.XiaoyunTuple
+   :members: ganzhi, xusui
+   :undoc-members:
+
+.. autoclass:: bazi.data_types.LiunianTuple
+   :members: ganzhi, ganzhi_year
+   :undoc-members:
+
+.. autoclass:: bazi.data_types.HiddenTianganDict
+
+.. autoclass:: bazi.data_types.BaziData
+   :members: day, hour, month, year, 年, 日, 时, 月
+   :undoc-members:
+
+.. autoclass:: bazi.data_types.GanzhiData
+   :members: dizhi, tiangan, 地支, 天干
+   :undoc-members:

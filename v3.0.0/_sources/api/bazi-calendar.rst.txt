@@ -1,0 +1,26 @@
+bazi.calendar
+=============
+
+.. automodule:: bazi.calendar
+
+.. py:currentmodule:: bazi.calendar
+
+.. py:data:: CalendarType
+
+   :py:obj:`bazi.calendar.dates.CalendarType` 的重导出。
+
+.. py:currentmodule:: bazi.calendar
+
+.. py:data:: CalendarDate
+
+   :py:obj:`bazi.calendar.dates.CalendarDate` 的重导出。
+
+.. py:currentmodule:: bazi.calendar
+
+.. py:data:: JieqiTime
+
+   :py:obj:`bazi.calendar.dates.JieqiTime` 的重导出。
+
+:py:mod:`bazi.calendar.utils`
+
+:py:mod:`bazi.calendar.solar_time`

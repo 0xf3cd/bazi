@@ -1,0 +1,28 @@
+bazi.utils.tiangan_utils
+========================
+
+.. automodule:: bazi.utils.tiangan_utils
+
+.. autodata:: bazi.utils.tiangan_utils.TianganCombo
+   :no-value:
+
+.. autodata:: bazi.utils.tiangan_utils.TianganRelationCombos
+   :no-value:
+
+.. autoclass:: bazi.utils.tiangan_utils.TianganRelationDiscovery
+   :members: filter, merge, mutual_only
+   :undoc-members:
+
+.. autofunction:: bazi.utils.tiangan_utils.he
+
+.. autofunction:: bazi.utils.tiangan_utils.chong
+
+.. autofunction:: bazi.utils.tiangan_utils.sheng
+
+.. autofunction:: bazi.utils.tiangan_utils.ke
+
+.. autofunction:: bazi.utils.tiangan_utils.search
+
+.. autofunction:: bazi.utils.tiangan_utils.discover
+
+.. autofunction:: bazi.utils.tiangan_utils.discover_mutual

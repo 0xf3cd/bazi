@@ -16,15 +16,15 @@
 
 示例用虚构的出生时间，按东八区（UTC+8）公历钟填写。默认入口的年月与东八区节气表比较，
 日时按输入的钟读取，不自动换算时区；海外当地钟的用法见 {doc}`configuration`。
-`BaziChart` 在 `Bazi` 之上提供十神、藏干、纳音和流运等信息。
+`命盘`（`BaziChart`）在 `八字`（`Bazi`）之上提供十神、藏干、纳音和流运等信息。
 
 ```{testcode} quickstart-chart
-from bazi.bazi import Bazi
-from bazi.bazi_chart import BaziChart
+from bazi.bazi import 八字
+from bazi.bazi_chart import 命盘
 
-chart = BaziChart(Bazi.create('1990-05-17 10:30', 'female'))
-print('四柱', ' '.join(map(str, chart.bazi.pillars)))
-print('日主', chart.bazi.day_master)
+chart = 命盘(八字.create('1990-05-17 10:30', '女'))
+print('四柱', ' '.join(map(str, chart.八字.四柱)))
+print('日主', chart.八字.日主)
 print('性别', chart.bazi.gender)
 ```
 
@@ -37,6 +37,8 @@ print('性别', chart.bazi.gender)
 把出生时间换成你的公历出生钟时；也可传无时区的 `datetime(年, 月, 日, 时, 分)`。
 性别接受 `男`、`女`、`male`、`female`，输出为拉丁写法。
 四柱依次为年、月、日、时，日主是日柱的天干。
+中文类型名指向原类型，中文只读属性读取既有结果；可以和原名混用。
+例如 `chart.十神.年.天干` 与 `chart.shishen.year.tiangan` 都是年干十神。
 
 上例可直接在 Python 交互环境中运行；直接输入 `chart` 还会看到一行对象摘要。
 若喜欢脚本，把程序保存为 UTF-8 文件 `show_chart.py`，在该文件所在目录运行：
@@ -49,15 +51,15 @@ python show_chart.py
 
 ## 查看完整命盘文本
 
-`basic_text(chart)` 返回纯文本，包含出生时刻、四柱十神、阴阳五行、藏干、纳音和十二长生。
+`basic_text(chart)` 返回纯文本，包含出生时刻、四柱十神、阴阳五行、藏干、纳音、十二长生及十神个数。
 下面是完整的独立例子：
 
 ```{testcode} quickstart-text
-from bazi.bazi import Bazi
-from bazi.bazi_chart import BaziChart
+from bazi.bazi import 八字
+from bazi.bazi_chart import 命盘
 from bazi.chart_text import basic_text
 
-chart = BaziChart(Bazi.create('1990-05-17 10:30', 'female'))
+chart = 命盘(八字.create('1990-05-17 10:30', '女'))
 print(basic_text(chart).strip())
 ```
 
@@ -75,6 +77,13 @@ print(basic_text(chart).strip())
   -- 纳音：杨柳木  -- 十二长生：胎
 时：  乙 [阴木] <伤官>      巳 [阴火] <偏财>     丙 [阳火] <才> 庚 [阳金] <枭> 戊 [阳土] <杀>
   -- 纳音：覆灯火  -- 十二长生：绝
+
+十神统计（三处明干与四支主气，不计力量）：
+原局中，伤官有1个，占比14.29%。
+原局中，正财有2个，占比28.57%。
+原局中，偏财有2个，占比28.57%。
+原局中，正印有1个，占比14.29%。
+原局中，偏印有1个，占比14.29%。
 ```
 
 藏干十神采用单字简称，如财、才、官、杀；完整名称见 {py:class}`~bazi.defines.shishen.Shishen`。
@@ -96,11 +105,11 @@ os.chdir(_save_directory.name)
 ```{testcode} quickstart-save
 from pathlib import Path
 
-from bazi.bazi import Bazi
-from bazi.bazi_chart import BaziChart
+from bazi.bazi import 八字
+from bazi.bazi_chart import 命盘
 from bazi.chart_text import basic_text
 
-chart = BaziChart(Bazi.create('1990-05-17 10:30', 'female'))
+chart = 命盘(八字.create('1990-05-17 10:30', '女'))
 path = Path('chart.txt')
 path.write_text(basic_text(chart), encoding='utf-8')
 print('已保存', path)
@@ -120,12 +129,13 @@ _save_directory.cleanup()
 
 ## 下一步
 
-默认采用 `DAY` 精度、`celestial` 后端、23:00 换日柱，以立春换年；`DAY` 不会丢弃出生小时。
+默认采用 `DAY` 精度、23:00 换日柱，以立春换年；`DAY` 不会丢弃出生小时。
 这些是选定的口径，其他读法可以显式配置。
 
 | 想做什么 | 入口 |
 | --- | --- |
-| 选精度、换日点、历法后端、真太阳时或流派 | {doc}`configuration` |
+| 选精度、换日点、真太阳时或流派 | {doc}`configuration` |
+| 换算公历与农历，查询节气时刻 | {doc}`calendar` |
 | 查某年／月／日／时刻的流运，列几步大运，再查关系 | {doc}`relations-transits` |
 | 读取十神、藏干、纳音或检查知识前提 | {doc}`integration` |
 | 不排盘，只读知识文字、出处或编辑本地副本 | {doc}`knowledge` |

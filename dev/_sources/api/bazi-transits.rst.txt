@@ -8,5 +8,5 @@ bazi.transits
    :undoc-members:
 
 .. autoclass:: bazi.transits.TransitSet
-   :members: dayun, ganzhis, items, liunian, liuri, liuyue, select, xiaoyun
+   :members: dayun, ganzhis, items, liunian, liuri, liuyue, select, xiaoyun, 大运, 流年
    :undoc-members:
