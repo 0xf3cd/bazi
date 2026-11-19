@@ -1,16 +1,16 @@
 {
   "schema": 1,
-  "latest": "v2.6.0",
+  "latest": "v3.0.0",
   "versions": [
     {
       "label": "dev",
-      "state": "archived",
+      "state": "ready",
       "commit": "9f85f8d0f24e0ef339226627d7ae0af4532dd3cf",
       "digest": "4b18b92a47a6c356b94f1e84b85cc2268ce0ae24e2800f057694ea54f201bf8f"
     },
     {
       "label": "v3.0.0",
-      "state": "archived",
+      "state": "ready",
       "commit": "9f85f8d0f24e0ef339226627d7ae0af4532dd3cf",
       "digest": "2fce9f363de71d3a9c09e451cdb4fd16cb923c4b8a28a248fa7cdaed9d3ca146"
     },
